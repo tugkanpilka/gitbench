@@ -1,0 +1,27 @@
+:root {
+  --gb-font-ui: -apple-system, 'SF Pro Text', BlinkMacSystemFont, system-ui, sans-serif;
+  --gb-font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --gb-text-2xs: 10px;
+  --gb-text-xs: 11px;
+  --gb-text-sm: 11px;
+  --gb-text-md: 12px;
+  --gb-text-base: 13px;
+  --gb-text-lg: 14px;
+  --gb-text-xl: 26px;
+
+  --gb-code: 12px;
+  --gb-code-sm: 11px;
+  --gb-code-gutter: 10px;
+
+  --gb-weight-regular: 400;
+  --gb-weight-medium: 500;
+  --gb-weight-semibold: 600;
+  --gb-weight-bold: 700;
+
+  --gb-tracking-tight: -0.006em;
+  --gb-tracking-caps: 0.02em;
+
+  --gb-leading-code: 1;
+  --gb-leading-ui: 1.2;
+}

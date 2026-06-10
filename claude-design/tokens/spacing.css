@@ -1,0 +1,36 @@
+/* GitBench Design System — spacing, sizing & radii tokens */
+
+:root {
+  /* spacing scale (px) */
+  --gb-space-1: 2px;
+  --gb-space-2: 4px;
+  --gb-space-3: 6px;
+  --gb-space-4: 8px;
+  --gb-space-5: 12px;
+  --gb-space-6: 16px;
+  --gb-space-7: 24px;
+
+  /* radii — small and native; nothing balloons past 13px except window corners */
+  --gb-radius-row: 5px;        /* sidebar file rows */
+  --gb-radius-item: 6px;       /* worktree rows, menu surfaces inner items ~5.5 */
+  --gb-radius-control: 7px;    /* segmented track, toolbar buttons, alert buttons */
+  --gb-radius-menu: 9px;       /* context menus */
+  --gb-radius-pill: 10px;      /* small floating pills */
+  --gb-radius-float: 11px;     /* main floating bar */
+  --gb-radius-window: 11px;    /* app window corners (12 welcome) */
+  --gb-radius-alert: 13px;     /* alert dialogs */
+  --gb-radius-full: 99px;      /* badges, traffic lights */
+
+  /* fixed heights */
+  --gb-row-h: 25px;            /* sidebar file row */
+  --gb-row-h-compact: 22px;
+  --gb-diff-line-h: 24px;      /* unified & split diff line */
+  --gb-diff-line-h-compact: 20px;
+  --gb-hunk-h: 26px;
+  --gb-file-header-h: 38px;    /* sticky diff file header */
+  --gb-sidebar-w: 264px;
+
+  /* diff gutter */
+  --gb-gutter-w: 42px;         /* line-number column (40 in split) */
+  --gb-sign-w: 18px;           /* +/− sign column */
+}

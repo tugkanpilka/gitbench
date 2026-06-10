@@ -1,0 +1,28 @@
+<!-- @dsCard group="Colors" viewport="700x190" subtitle="Ekleme/silme zeminleri, gutter tonları ve kelime vurgusu" name="Diff Colors" -->
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="../styles.css">
+<style>
+body { margin: 0; font-family: var(--gb-font-mono); display: flex; }
+.half { flex: 1; background: var(--gb-bg); padding: 14px 0; }
+.line { display: flex; align-items: center; height: 24px; font-size: 12px; white-space: pre; }
+.g { width: 36px; flex: none; text-align: right; padding-right: 8px; font-size: 10.5px; color: var(--gb-gutter-text); align-self: stretch; display: flex; align-items: center; justify-content: flex-end; }
+.s { width: 16px; flex: none; text-align: center; }
+.lbl { padding: 10px 14px 2px; font-size: 10px; color: var(--gb-faint); font-family: var(--gb-font-ui); }
+.hunk { height: 24px; display: flex; align-items: center; background: var(--gb-hunk-bg); color: var(--gb-hunk-text); font-size: 11px; padding-left: 52px; }
+code { font-family: inherit; }
+</style></head><body>
+<div class="half">
+  <div class="hunk">@@ -14,3 +14,4 @@</div>
+  <div class="line"><span class="g">14</span><span class="s" style="color: transparent;"> </span><span style="color: var(--gb-syn-pl);">const ttl = 1800;</span></div>
+  <div class="line" style="background: var(--gb-del-bg);"><span class="g" style="background: var(--gb-del-gutter);">15</span><span class="s" style="color: var(--gb-del-text);">−</span><span style="color: var(--gb-syn-pl);">return <span style="background: var(--gb-del-word); border-radius: 2px;">check</span>(token);</span></div>
+  <div class="line" style="background: var(--gb-add-bg);"><span class="g" style="background: var(--gb-add-gutter);">15</span><span class="s" style="color: var(--gb-add-text);">+</span><span style="color: var(--gb-syn-pl);">return <span style="background: var(--gb-add-word); border-radius: 2px;">await verify</span>(token);</span></div>
+  <div class="lbl">--gb-add-* / --gb-del-* / --gb-hunk-* (dark)</div>
+</div>
+<div class="half" data-theme="light">
+  <div class="hunk">@@ -14,3 +14,4 @@</div>
+  <div class="line"><span class="g">14</span><span class="s" style="color: transparent;"> </span><span style="color: var(--gb-syn-pl);">const ttl = 1800;</span></div>
+  <div class="line" style="background: var(--gb-del-bg);"><span class="g" style="background: var(--gb-del-gutter);">15</span><span class="s" style="color: var(--gb-del-text);">−</span><span style="color: var(--gb-syn-pl);">return <span style="background: var(--gb-del-word); border-radius: 2px;">check</span>(token);</span></div>
+  <div class="line" style="background: var(--gb-add-bg);"><span class="g" style="background: var(--gb-add-gutter);">15</span><span class="s" style="color: var(--gb-add-text);">+</span><span style="color: var(--gb-syn-pl);">return <span style="background: var(--gb-add-word); border-radius: 2px;">await verify</span>(token);</span></div>
+  <div class="lbl">--gb-add-* / --gb-del-* / --gb-hunk-* (light)</div>
+</div>
+</body></html>

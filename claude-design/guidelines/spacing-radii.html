@@ -1,0 +1,17 @@
+<!-- @dsCard group="Spacing" viewport="700x150" subtitle="Küçük ve native köşeler — 5px satırdan 13px alert'e" name="Radii" -->
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="../styles.css">
+<style>
+body { margin: 0; font-family: var(--gb-font-ui); background: var(--gb-bg); padding: 16px; display: flex; gap: 10px; align-items: flex-end; }
+.r { flex: 1; text-align: center; }
+.box { height: 64px; background: var(--gb-panel); border: 1px solid var(--gb-border); }
+.r b { display: block; font-size: 10.5px; color: var(--gb-text); font-weight: 500; margin-top: 6px; }
+.r span { font-size: 9.5px; color: var(--gb-faint); font-family: var(--gb-font-mono); }
+</style></head><body>
+<div class="r"><div class="box" style="border-radius: var(--gb-radius-row);"></div><b>5 · satır</b><span>radius-row</span></div>
+<div class="r"><div class="box" style="border-radius: var(--gb-radius-item);"></div><b>6 · öğe</b><span>radius-item</span></div>
+<div class="r"><div class="box" style="border-radius: var(--gb-radius-control);"></div><b>7 · kontrol</b><span>radius-control</span></div>
+<div class="r"><div class="box" style="border-radius: var(--gb-radius-menu);"></div><b>9 · menü</b><span>radius-menu</span></div>
+<div class="r"><div class="box" style="border-radius: var(--gb-radius-float);"></div><b>11 · pill/pencere</b><span>radius-float</span></div>
+<div class="r"><div class="box" style="border-radius: var(--gb-radius-alert);"></div><b>13 · alert</b><span>radius-alert</span></div>
+</body></html>

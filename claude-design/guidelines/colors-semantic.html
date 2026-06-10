@@ -1,0 +1,24 @@
+<!-- @dsCard group="Colors" viewport="700x130" subtitle="Trafik ışıkları ve yıkıcı eylem rengi" name="Semantic & Traffic" -->
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="../styles.css">
+<style>
+body { margin: 0; font-family: var(--gb-font-ui); background: var(--gb-bg); padding: 18px 16px; display: flex; align-items: center; gap: 28px; }
+.traffic { display: flex; gap: 8px; }
+.traffic span { width: 12px; height: 12px; border-radius: 99px; box-shadow: var(--gb-shadow-traffic); }
+.lbl { font-size: 10px; color: var(--gb-faint); font-family: var(--gb-font-mono); margin-top: 8px; }
+.btn { padding: 6.5px 22px; border-radius: var(--gb-radius-control); font-size: 12.5px; font-weight: 600; color: #fff; background: var(--gb-destructive); box-shadow: 0 1px 2.5px rgba(0,0,0,.2); }
+.stat { font-family: var(--gb-font-mono); font-size: 13px; font-variant-numeric: tabular-nums; }
+</style></head><body>
+<div>
+  <div class="traffic"><span style="background: var(--gb-traffic-red);"></span><span style="background: var(--gb-traffic-yellow);"></span><span style="background: var(--gb-traffic-green);"></span></div>
+  <div class="lbl">--gb-traffic-*</div>
+</div>
+<div>
+  <div class="btn">Kaldır</div>
+  <div class="lbl">--gb-destructive</div>
+</div>
+<div>
+  <div class="stat"><span style="color: var(--gb-add-text);">+124</span> <span style="color: var(--gb-del-text);">−56</span></div>
+  <div class="lbl">--gb-add-text / --gb-del-text</div>
+</div>
+</body></html>

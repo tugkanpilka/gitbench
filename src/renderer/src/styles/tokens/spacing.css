@@ -1,0 +1,30 @@
+:root {
+  --gb-space-1: 2px;
+  --gb-space-2: 4px;
+  --gb-space-3: 6px;
+  --gb-space-4: 8px;
+  --gb-space-5: 12px;
+  --gb-space-6: 16px;
+  --gb-space-7: 24px;
+
+  --gb-radius-row: 5px;
+  --gb-radius-item: 6px;
+  --gb-radius-control: 7px;
+  --gb-radius-menu: 9px;
+  --gb-radius-pill: 10px;
+  --gb-radius-float: 11px;
+  --gb-radius-window: 11px;
+  --gb-radius-alert: 13px;
+  --gb-radius-full: 99px;
+
+  --gb-row-h: 22px;
+  --gb-row-h-compact: 20px;
+  --gb-diff-line-h: 20px;
+  --gb-diff-line-h-compact: 18px;
+  --gb-hunk-h: 22px;
+  --gb-file-header-h: 34px;
+  --gb-sidebar-w: 264px;
+
+  --gb-gutter-w: 42px;
+  --gb-sign-w: 18px;
+}

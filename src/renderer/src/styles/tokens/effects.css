@@ -1,0 +1,37 @@
+:root {
+  --gb-vibrancy: blur(28px) saturate(1.6);
+  --gb-vibrancy-float: blur(24px) saturate(1.6);
+  --gb-vibrancy-alert: blur(34px) saturate(1.6);
+
+  --gb-shadow-window:
+    0 30px 70px rgba(0, 0, 0, 0.45), 0 0 0 0.5px rgba(0, 0, 0, 0.3);
+  --gb-shadow-float:
+    0 5px 18px rgba(0, 0, 0, 0.22), 0 0 0 0.5px rgba(0, 0, 0, 0.18);
+  --gb-shadow-float-hover:
+    0 10px 32px rgba(0, 0, 0, 0.32), 0 0 0 0.5px rgba(0, 0, 0, 0.22);
+  --gb-shadow-menu:
+    0 12px 36px rgba(0, 0, 0, 0.32), 0 0 0 0.5px rgba(0, 0, 0, 0.25);
+  --gb-shadow-alert:
+    0 24px 60px rgba(0, 0, 0, 0.4), 0 0 0 0.5px rgba(0, 0, 0, 0.28);
+  --gb-shadow-seg:
+    0 1px 2.5px rgba(0, 0, 0, 0.18), inset 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+  --gb-shadow-control: 0 1px 2.5px rgba(0, 0, 0, 0.2);
+  --gb-shadow-traffic: inset 0 0 0 0.5px rgba(0, 0, 0, 0.15);
+
+  --gb-ease: ease;
+  --gb-dur-fast: 0.08s;
+  --gb-dur-quick: 0.12s;
+  --gb-dur-base: 0.15s;
+  --gb-dur-slow: 0.22s;
+  --gb-dur-theme: 0.3s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --gb-dur-fast: 0s;
+    --gb-dur-quick: 0s;
+    --gb-dur-base: 0s;
+    --gb-dur-slow: 0s;
+    --gb-dur-theme: 0s;
+  }
+}

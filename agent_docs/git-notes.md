@@ -1,0 +1,66 @@
+# Git Notes
+
+Everything quirky about driving git from this app. Read this before touching `src/infrastructure/git/`.
+
+## Spawning git — rules baked into `runGit.ts`
+
+All application-runtime git invocations go through `runGit.ts`. Integration tests may invoke Git directly to create and modify fixture repositories.
+
+- `execFile('git', ['-C', targetPath, ...args])` — **argument arrays only**. Never template a shell string with a user-controlled path (spaces, quotes, injection).
+- `-C <path>` instead of setting `cwd`: the invocation is self-describing and immune to process-cwd drift.
+- Environment additions on every call:
+  - `GIT_TERMINAL_PROMPT: '0'` — never hang on a credential prompt.
+  - `GIT_OPTIONAL_LOCKS: '0'` — read-only commands must not take optional locks.
+  - `LC_ALL: 'C'` — untranslated, stable English output. We sniff stderr for error classification; a localized git would break that.
+- `maxBuffer`: Node's default is **1 MiB** and a large diff will exceed it (`ERR_CHILD_PROCESS_STDIO_MAXBUFFER`, process killed). Set it explicitly high (e.g. 64 MiB). If real-world diffs ever exceed that, switch to streaming `spawn` — do not keep raising the number forever.
+- Encoding `'utf8'`. Non-UTF-8 paths/content are out of MVP scope: document, don't crash.
+
+## Error classification
+
+| Signal                                              | Meaning                  | Error → IPC code                               |
+| --------------------------------------------------- | ------------------------ | ---------------------------------------------- |
+| spawn error `ENOENT`                                 | git not on PATH          | `GitNotInstalledError` → `GIT_NOT_INSTALLED`   |
+| exit 128 + `not a git repository` in stderr          | bad `repoPath`           | `NotARepositoryError` → `NOT_A_REPOSITORY`     |
+| requested path absent from `worktree list` output    | stale/removed worktree   | `WorktreeNotFoundError` → `WORKTREE_NOT_FOUND` |
+| any other non-zero exit                              | —                        | `GIT_COMMAND_FAILED` (stderr → `message`)      |
+
+**Never validate a repository by checking whether `.git` is a directory.** In a linked worktree, `.git` is a *file* containing `gitdir: <path>`. Validate with `git -C <path> rev-parse --git-dir` instead. (This same fact is why isomorphic-git was rejected.)
+
+## `git worktree list --porcelain` (the `worktrees:list` channel)
+
+Run as `git -C <repoPath> worktree list --porcelain`. It works from the main worktree *or* any linked worktree and always lists all of them.
+
+Format:
+
+- Entries are separated by a **blank line**. The **first entry is always the main worktree** → `isMain: true`.
+- Attribute lines we consume:
+  - `worktree <absolute path>`
+  - `HEAD <sha>`
+  - `branch refs/heads/<name>` — strip the `refs/heads/` prefix for `WorktreeDto.branch`
+  - `detached` — appears instead of `branch`; map to `branch: null`
+  - `locked` (optionally `locked <reason>` on the same line) → `isLocked: true`
+  - `bare` — a bare main worktree may carry only this attribute (no branch). Tolerate it.
+- `prunable [reason]` lines may appear — ignore them for now (future: surface in UI).
+- Hardening option: `--porcelain -z` (git ≥ 2.36) NUL-terminates lines and survives newlines in paths. The parser is written against the newline format; only switch with fixtures proving both.
+
+## `git diff HEAD` (the `diff:get` channel)
+
+Run as `git -C <worktreePath> --no-pager diff --no-color HEAD`.
+
+Why `HEAD`: it shows **staged + unstaged changes in one diff** — "everything that would change if you committed right now". Plain `git diff` would hide staged changes.
+
+Gotchas, in order of how much they will bite:
+
+1. **Untracked files are invisible** to `git diff HEAD`. MVP accepts this; the UI copy must say "uncommitted changes to *tracked* files". If/when untracked support is added: detect via `git ls-files --others --exclude-standard` (one call, not per file) and render as additions.
+2. **Unborn HEAD** (repo with zero commits): `git diff HEAD` fails with `ambiguous argument 'HEAD'`. Detect first with `git rev-parse --verify --quiet HEAD` (non-zero exit = unborn) and map to `GIT_COMMAND_FAILED` with the message `"Repository has no commits yet."` Do **not** fake an empty diff — there may be staged files, and an empty diff would lie.
+3. `""` output = clean worktree = **success**. Never convert it to an error; the renderer shows the dedicated empty state.
+4. `--no-color` is belt-and-suspenders: git disables color for non-TTY output by default, but a user's gitconfig can force `color.diff=always`, which would corrupt parsing/rendering.
+5. **Binary changes** appear as `Binary files a/… and b/… differ` lines; the diff renderer must tolerate them.
+6. **Renames** appear as `rename from` / `rename to` headers (rename detection is on by default in modern git). The diff renderer must tolerate these too.
+
+## Adding a new git command — checklist
+
+1. Add it behind an application port; implement it in `src/infrastructure/git/`.
+2. Route through `runGit.ts` — never spawn directly.
+3. Classify its failure modes into the table above; extend `ErrorDto` codes only if genuinely new (and update `ipc-contract.md` in the same commit).
+4. If output is parsed: prefer a `--porcelain`/`-z` mode, write the parser as a pure function, add fixtures.

@@ -1,0 +1,48 @@
+@import './tokens/index.css';
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  background: transparent;
+}
+
+body {
+  min-width: 640px;
+  font-family: var(--gb-font-ui);
+  font-size: var(--gb-text-base);
+  color: var(--gb-text);
+  overflow: hidden;
+  cursor: default;
+  -webkit-font-smoothing: auto;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+input,
+textarea,
+[contenteditable] {
+  cursor: text;
+}
+
+button:focus-visible,
+[tabindex]:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gb-accent) 40%, transparent);
+}
+
+::selection {
+  color: var(--gb-text);
+  background: var(--gb-accent-bg);
+}
+

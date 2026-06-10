@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GitBench — Görsel Yön Keşfi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=IBM+Plex+Mono:wght@400;500&family=Geist+Mono:wght@400;500&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  body { margin: 0; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="gitbench-data.jsx"></script>
+<script type="text/babel" src="gitbench-themes.jsx"></script>
+<script type="text/babel" src="gitbench-ui.jsx"></script>
+<script type="text/babel" src="gitbench-native.jsx"></script>
+<script type="text/babel">
+const { graphite, ink, paper } = THEMES;
+
+function App() {
+  return (
+    <DesignCanvas>
+      <DCSection id="directions" title="1 · Görsel Yönler" subtitle="Aynı ekran, üç farklı karakter — worktree sidebar + sonsuz kaydırmalı diff akışı">
+        <DCArtboard id="dir-a" label="A · Graphite — nötr koyu, klasik diff blokları, JetBrains Mono" width={1240} height={800}>
+          <AppWindow t={graphite} mode="classic"></AppWindow>
+        </DCArtboard>
+        <DCArtboard id="dir-b" label="B · Ink — mavi-mor koyu, gutter-bar diff, IBM Plex Mono" width={1240} height={800}>
+          <AppWindow t={ink} mode="bars"></AppWindow>
+        </DCArtboard>
+        <DCArtboard id="dir-c" label="C · Paper — sıcak aydınlık, baskı hissi, Geist Mono" width={1240} height={800}>
+          <AppWindow t={paper} mode="classic"></AppWindow>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="native" title="1b · Native macOS Yönü" subtitle="D — vibrancy sidebar (traffic light'lar içinde), NSToolbar, source-list seçimi, SF Pro + SF Mono">
+        <DCArtboard id="dir-d-light" label="D · macOS Light — Finder/Xcode hissi" width={1320} height={880}>
+          <MacWindow t={MAC_THEMES.macLight}></MacWindow>
+        </DCArtboard>
+        <DCArtboard id="dir-d-dark" label="D · macOS Dark — aynı yapı, koyu vibrancy" width={1320} height={880}>
+          <MacWindow t={MAC_THEMES.macDark}></MacWindow>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="diff-styles" title="2 · Diff Renklendirme Stilleri" subtitle="Graphite teması üzerinde üç yaklaşım — satır zemini, gutter bar, kelime odaklı">
+        <DCArtboard id="ds-1" label="Klasik — tam satır zemini + gutter tonu" width={620} height={300}>
+          <div style={{ padding: 16, background: graphite.bg, height: "100%", boxSizing: "border-box" }}>
+            <DiffBlock t={graphite} lines={DIFFS[0].lines.slice(3, 14)} mode="classic"></DiffBlock>
+          </div>
+        </DCArtboard>
+        <DCArtboard id="ds-2" label="Gutter bar — sol şerit + hafif ton" width={620} height={300}>
+          <div style={{ padding: 16, background: graphite.bg, height: "100%", boxSizing: "border-box" }}>
+            <DiffBlock t={graphite} lines={DIFFS[0].lines.slice(3, 14)} mode="bars"></DiffBlock>
+          </div>
+        </DCArtboard>
+        <DCArtboard id="ds-3" label="Kelime odaklı — zayıf satır, güçlü intra-line vurgu" width={620} height={300}>
+          <div style={{ padding: 16, background: graphite.bg, height: "100%", boxSizing: "border-box" }}>
+            <DiffBlock t={graphite} lines={DIFFS[0].lines.slice(3, 14)} mode="word"></DiffBlock>
+          </div>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="density" title="3 · Sidebar Yoğunluğu" subtitle="Comfortable: branch adı görünür · Compact: daha çok worktree, daha az meta">
+        <DCArtboard id="den-1" label="Comfortable" width={252} height={560}>
+          <div style={{ height: "100%", display: "flex" }}>
+            <Sidebar t={graphite} dense={false} width={252}></Sidebar>
+          </div>
+        </DCArtboard>
+        <DCArtboard id="den-2" label="Compact" width={252} height={560}>
+          <div style={{ height: "100%", display: "flex" }}>
+            <Sidebar t={graphite} dense={true} width={252}></Sidebar>
+          </div>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="type" title="4 · Mono Font Seçenekleri" subtitle="Aynı diff, dört monospace — okunabilirlik ve karakter farkı">
+        <DCArtboard id="ty-1" label="JetBrains Mono" width={620} height={260}>
+          <div style={{ padding: 16, background: graphite.bg, height: "100%", boxSizing: "border-box" }}>
+            <TypeSample t={graphite} mono="'JetBrains Mono', monospace" label="JetBrains Mono" note="dengeli, IDE standardı"></TypeSample>
+          </div>
+        </DCArtboard>
+        <DCArtboard id="ty-2" label="IBM Plex Mono" width={620} height={260}>
+          <div style={{ padding: 16, background: graphite.bg, height: "100%", boxSizing: "border-box" }}>
+            <TypeSample t={graphite} mono="'IBM Plex Mono', monospace" label="IBM Plex Mono" note="karakterli, hafif retro"></TypeSample>
+          </div>
+        </DCArtboard>
+        <DCArtboard id="ty-3" label="Geist Mono" width={620} height={260}>
+          <div style={{ padding: 16, background: graphite.bg, height: "100%", boxSizing: "border-box" }}>
+            <TypeSample t={graphite} mono="'Geist Mono', monospace" label="Geist Mono" note="modern, geometrik"></TypeSample>
+          </div>
+        </DCArtboard>
+        <DCArtboard id="ty-4" label="Fira Code" width={620} height={260}>
+          <div style={{ padding: 16, background: graphite.bg, height: "100%", boxSizing: "border-box" }}>
+            <TypeSample t={graphite} mono="'Fira Code', monospace" label="Fira Code" note="ligature destekli"></TypeSample>
+          </div>
+        </DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App></App>);
+</script>
+</body>
+</html>

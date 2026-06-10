@@ -1,0 +1,34 @@
+.workspace {
+  min-height: 100%;
+  padding: var(--gb-space-6);
+}
+
+.workspace--diff {
+  padding: 0;
+}
+
+.workspace__placeholder {
+  display: grid;
+  min-height: calc(100vh - (var(--gb-space-6) * 2));
+  margin: 0;
+  place-items: center;
+  font-size: var(--gb-text-sm);
+  color: var(--gb-dim);
+  text-align: center;
+}
+
+.workspace__loading {
+  display: grid;
+  min-height: calc(100vh - (var(--gb-space-6) * 2));
+  place-items: center;
+  font-size: var(--gb-text-sm);
+  color: var(--gb-dim);
+}
+
+.workspace__error {
+  padding: 10px var(--gb-space-5);
+  border: 1px solid color-mix(in srgb, var(--gb-destructive) 45%, transparent);
+  border-radius: var(--gb-radius-control);
+  color: var(--gb-del-text);
+  background: var(--gb-del-bg);
+}
