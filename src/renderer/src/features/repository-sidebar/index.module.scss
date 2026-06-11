@@ -1,0 +1,56 @@
+.repository-sidebar {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+  background: transparent;
+}
+
+.repository-sidebar__header {
+  display: flex;
+  height: var(--gb-toolbar-h);
+  /* Left padding clears the macOS traffic lights (content-toolbar.css
+     applies the same clearance when the sidebar is hidden). */
+  padding: 0 16px 0 var(--gb-traffic-clearance);
+  align-items: center;
+  flex: none;
+  -webkit-app-region: drag;
+}
+
+.repository-sidebar__section-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-left: 9px;
+  padding-right: 9px;
+}
+
+.repository-sidebar__section-label {
+  margin: 0;
+  font-size: var(--gb-text-xs);
+  font-weight: var(--gb-weight-bold);
+  color: var(--gb-faint);
+}
+
+.repository-sidebar__repo-name {
+  margin: 0;
+  font-size: var(--gb-text-xs);
+  font-weight: var(--gb-weight-semibold);
+  color: var(--gb-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.repository-sidebar__navigation {
+  min-height: 0;
+  padding: 12px 9px 64px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  mask-image: linear-gradient(to bottom, transparent, black 12px);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, black 12px);
+}
+
+.repository-sidebar__navigation::-webkit-scrollbar {
+  display: none;
+}

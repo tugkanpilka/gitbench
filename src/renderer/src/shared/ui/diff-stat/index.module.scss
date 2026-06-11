@@ -1,0 +1,24 @@
+.gb-diff-stat {
+  display: inline-flex;
+  gap: var(--gb-space-3);
+  font-family: var(--gb-font-mono);
+  font-size: var(--gb-text-2xs);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.gb-diff-stat__add {
+  color: var(--gb-add-text);
+}
+
+.gb-diff-stat__delete {
+  color: var(--gb-del-text);
+}
+
+.gb-diff-stat--on-selection .gb-diff-stat__add {
+  color: var(--gb-sel-add-text);
+}
+
+.gb-diff-stat--on-selection .gb-diff-stat__delete {
+  color: var(--gb-sel-del-text);
+}

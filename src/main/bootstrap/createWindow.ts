@@ -20,6 +20,9 @@ export function createWindow(): void {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
       nodeIntegration: false,
+      // The electron-vite preload bundle is CommonJS and needs Node's require
+      // at load time, which the Chromium sandbox forbids. The security boundary
+      // remains contextIsolation + nodeIntegration:false (CLAUDE.md hard rule 1).
       sandbox: false,
     },
   });

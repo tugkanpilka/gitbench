@@ -1,0 +1,105 @@
+.welcome-screen {
+  display: grid;
+  min-height: 100%;
+  padding: clamp(var(--gb-space-6), 5vw, 48px);
+  place-items: center;
+  background: var(--gb-desktop);
+  transition: background var(--gb-dur-theme) var(--gb-ease);
+}
+
+.welcome-screen__drag-region {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--gb-toolbar-h);
+  -webkit-app-region: drag;
+}
+
+.welcome-card {
+  display: flex;
+  width: min(100%, 460px);
+  min-height: 420px;
+  padding: 42px;
+  border: 1px solid var(--gb-window-edge);
+  border-radius: var(--gb-radius-window);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--gb-text);
+  background: var(--gb-bg);
+  box-shadow: var(--gb-shadow-window);
+  text-align: center;
+}
+
+.welcome-card__icon {
+  display: block;
+  width: 96px;
+  height: 96px;
+}
+
+.welcome-card__heading {
+  margin-top: var(--gb-space-5);
+}
+
+.welcome-card__heading h1 {
+  margin: 0;
+  font-size: var(--gb-text-xl);
+  font-weight: var(--gb-weight-bold);
+  letter-spacing: var(--gb-tracking-tight);
+}
+
+.welcome-card__heading p {
+  margin: var(--gb-space-1) 0 0;
+  font-size: var(--gb-text-sm);
+  color: var(--gb-faint);
+}
+
+.welcome-card__description {
+  max-width: 330px;
+  margin: var(--gb-space-7) 0 0;
+  font-size: var(--gb-text-md);
+  line-height: var(--gb-leading-ui);
+  color: var(--gb-dim);
+}
+
+.welcome-card__action {
+  width: min(100%, 250px);
+  min-height: 34px;
+  margin-top: var(--gb-space-7);
+}
+
+.welcome-card__error {
+  width: 100%;
+  margin-top: var(--gb-space-5);
+  padding: var(--gb-space-4) var(--gb-space-5);
+  border: 1px solid color-mix(in srgb, var(--gb-destructive) 45%, transparent);
+  border-radius: var(--gb-radius-control);
+  font-size: var(--gb-text-sm);
+  line-height: var(--gb-leading-ui);
+  color: var(--gb-del-text);
+  background: var(--gb-del-bg);
+}
+
+.welcome-card__hint {
+  margin: var(--gb-space-5) 0 0;
+  font-size: var(--gb-text-xs);
+  color: var(--gb-faint);
+}
+
+@media (max-height: 560px) {
+  .welcome-card {
+    min-height: 0;
+    padding-block: var(--gb-space-7);
+  }
+
+  .welcome-card__icon {
+    width: 72px;
+    height: 72px;
+  }
+
+  .welcome-card__description,
+  .welcome-card__action {
+    margin-top: var(--gb-space-5);
+  }
+}

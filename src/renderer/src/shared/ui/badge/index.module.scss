@@ -1,0 +1,20 @@
+.gb-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+  padding: 0 7px;
+  border-radius: 9px;
+  font-family: var(--gb-font-ui);
+  font-size: var(--gb-text-2xs);
+  font-weight: var(--gb-weight-medium);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--gb-dim);
+  background: var(--gb-badge-bg);
+}
+
+.gb-badge--on-selection {
+  color: var(--gb-sel-text);
+  background: var(--gb-sel-badge-bg);
+}

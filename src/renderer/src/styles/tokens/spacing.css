@@ -17,6 +17,9 @@
   --gb-radius-alert: 13px;
   --gb-radius-full: 99px;
 
+  --gb-toolbar-h: 38px;
+  /* Left padding that keeps window chrome clear of the macOS traffic lights. */
+  --gb-traffic-clearance: 90px;
   --gb-row-h: 22px;
   --gb-row-h-compact: 20px;
   --gb-diff-line-h: 20px;

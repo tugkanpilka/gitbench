@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 
 import { NotARepositoryError } from '../../application/worktrees/errors/NotARepositoryError';
 import { WorktreeNotFoundError } from '../../application/worktrees/errors/WorktreeNotFoundError';
@@ -39,6 +39,9 @@ function git(repoPath: string, ...args: string[]): void {
 }
 
 describe.skipIf(!gitAvailable())('git CLI readers (integration)', () => {
+  const worktreeReader = new GitCliWorktreeReader();
+  const diffReader = new GitCliDiffReader();
+
   let root: string;
   let repo: string;
   let linked: string;
@@ -61,8 +64,15 @@ describe.skipIf(!gitAvailable())('git CLI readers (integration)', () => {
     rmSync(root, { recursive: true, force: true });
   });
 
+  // Restore the shared fixture even when an assertion fails, so no test can
+  // poison the ones after it (e.g. the clean-worktree case).
+  afterEach(() => {
+    git(repo, 'reset', '--hard');
+    git(repo, 'clean', '-fd');
+  });
+
   it('lists main and linked worktrees with branches', async () => {
-    const worktrees = await new GitCliWorktreeReader().listWorktrees(repo);
+    const worktrees = await worktreeReader.listWorktrees(repo);
 
     expect(worktrees).toHaveLength(2);
     expect(worktrees[0]).toMatchObject({ path: repo, isMain: true, branch: 'main' });
@@ -71,53 +81,46 @@ describe.skipIf(!gitAvailable())('git CLI readers (integration)', () => {
   });
 
   it('lists all worktrees when asked from a linked worktree', async () => {
-    const worktrees = await new GitCliWorktreeReader().listWorktrees(linked);
+    const worktrees = await worktreeReader.listWorktrees(linked);
 
     expect(worktrees).toHaveLength(2);
     expect(worktrees[0].isMain).toBe(true);
   });
 
   it('returns "" for a clean worktree', async () => {
-    await expect(new GitCliDiffReader().getUncommittedDiff(repo)).resolves.toBe('');
+    await expect(diffReader.getUncommittedDiff(repo)).resolves.toBe('');
   });
 
   it('returns a unified diff for modified tracked files', async () => {
     writeFileSync(join(repo, 'file.txt'), 'hello\nworld\n');
 
-    const diff = await new GitCliDiffReader().getUncommittedDiff(repo);
+    const diff = await diffReader.getUncommittedDiff(repo);
 
     expect(diff).toContain('diff --git');
     expect(diff).toContain('+world');
-
-    git(repo, 'checkout', '--', 'file.txt');
   });
 
   it('includes staged changes (diff against HEAD, not the index)', async () => {
     writeFileSync(join(repo, 'staged.txt'), 'staged content\n');
     git(repo, 'add', 'staged.txt');
 
-    const diff = await new GitCliDiffReader().getUncommittedDiff(repo);
+    const diff = await diffReader.getUncommittedDiff(repo);
 
     expect(diff).toContain('staged.txt');
     expect(diff).toContain('+staged content');
-
-    git(repo, 'rm', '--cached', '-f', 'staged.txt');
-    rmSync(join(repo, 'staged.txt'));
   });
 
   it('throws NotARepositoryError for a plain directory', async () => {
     const plain = join(root, 'plain');
     mkdirSync(plain);
 
-    await expect(new GitCliWorktreeReader().listWorktrees(plain)).rejects.toBeInstanceOf(
-      NotARepositoryError
-    );
+    await expect(worktreeReader.listWorktrees(plain)).rejects.toBeInstanceOf(NotARepositoryError);
   });
 
   it('throws WorktreeNotFoundError for a removed path', async () => {
-    await expect(
-      new GitCliDiffReader().getUncommittedDiff(join(root, 'gone'))
-    ).rejects.toBeInstanceOf(WorktreeNotFoundError);
+    await expect(diffReader.getUncommittedDiff(join(root, 'gone'))).rejects.toBeInstanceOf(
+      WorktreeNotFoundError
+    );
   });
 
   it('reports an unborn HEAD as "no commits yet", not a fake empty diff', async () => {
@@ -125,11 +128,9 @@ describe.skipIf(!gitAvailable())('git CLI readers (integration)', () => {
     mkdirSync(unborn);
     git(unborn, 'init', '-b', 'main');
 
-    const promise = new GitCliDiffReader().getUncommittedDiff(unborn);
+    const rejection = expect(diffReader.getUncommittedDiff(unborn)).rejects;
 
-    await expect(promise).rejects.toBeInstanceOf(GitCommandFailedError);
-    await expect(
-      new GitCliDiffReader().getUncommittedDiff(unborn)
-    ).rejects.toThrow('Repository has no commits yet.');
+    await rejection.toBeInstanceOf(GitCommandFailedError);
+    await rejection.toThrow('Repository has no commits yet.');
   });
 });

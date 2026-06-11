@@ -1,4 +1,4 @@
-import { execFile } from 'node:child_process';
+import { execFile, type ExecFileException } from 'node:child_process';
 
 import { NotARepositoryError } from '../../application/worktrees/errors/NotARepositoryError';
 import { WorktreeNotFoundError } from '../../application/worktrees/errors/WorktreeNotFoundError';
@@ -39,9 +39,8 @@ export function runGit(targetPath: string, args: readonly string[]): Promise<str
   });
 }
 
-function classify(error: Error, stderr: string, targetPath: string): Error {
-  const code = (error as NodeJS.ErrnoException).code;
-  if (code === 'ENOENT') {
+function classify(error: ExecFileException, stderr: string, targetPath: string): Error {
+  if (error.code === 'ENOENT') {
     return new GitNotInstalledError();
   }
   if (stderr.includes('not a git repository')) {

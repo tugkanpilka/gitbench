@@ -1,0 +1,87 @@
+.gb-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  min-height: 30px;
+  padding: var(--gb-space-3) 10px;
+  border: 1px solid transparent;
+  border-radius: var(--gb-radius-control);
+  font-family: var(--gb-font-ui);
+  font-size: var(--gb-text-md);
+  font-weight: var(--gb-weight-medium);
+  color: var(--gb-text);
+  background: transparent;
+  cursor: default;
+  user-select: none;
+  transition:
+    background var(--gb-dur-quick) var(--gb-ease),
+    border-color var(--gb-dur-quick) var(--gb-ease),
+    filter var(--gb-dur-quick) var(--gb-ease);
+}
+
+.gb-button:not(:disabled) {
+  cursor: pointer;
+}
+
+.gb-button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.gb-button__icon {
+  display: inline-flex;
+  width: 18px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+}
+
+.gb-button__label {
+  min-width: 0;
+}
+
+.gb-button--plain:hover:not(:disabled) {
+  background: var(--gb-hover);
+}
+
+.gb-button--plain .gb-button__icon {
+  color: var(--gb-accent);
+}
+
+.gb-button--primary,
+.gb-button--destructive {
+  justify-content: center;
+  color: var(--gb-sel-text);
+  box-shadow: var(--gb-shadow-control);
+}
+
+.gb-button--primary {
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--gb-accent) 100%, white 8%) 0%,
+    var(--gb-accent) 100%);
+}
+
+.gb-button--destructive {
+  background: var(--gb-destructive);
+}
+
+.gb-button--primary:hover:not(:disabled),
+.gb-button--destructive:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.gb-button:active:not(:disabled) {
+  filter: brightness(0.92);
+  transition-duration: 0.05s;
+}
+
+.gb-button--secondary {
+  border-color: var(--gb-border);
+  background: var(--gb-control-bg);
+}
+
+.gb-button--secondary:hover:not(:disabled) {
+  background: var(--gb-row-sel);
+}

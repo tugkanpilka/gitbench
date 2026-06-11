@@ -1,0 +1,45 @@
+.app-shell {
+  --gb-active-sidebar-w: var(--gb-sidebar-w);
+
+  position: relative;
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  color: var(--gb-text);
+  background: transparent;
+}
+
+.app-shell[data-sidebar-open='false'] {
+  --gb-active-sidebar-w: 0px;
+}
+
+.app-shell__sidebar {
+  width: var(--gb-active-sidebar-w);
+  min-height: 0;
+  flex: none;
+  overflow: hidden;
+  border-right: 1px solid var(--gb-sidebar-edge);
+  background: color-mix(in srgb, var(--gb-sidebar) 72%, transparent);
+  backdrop-filter: var(--gb-vibrancy);
+  -webkit-backdrop-filter: var(--gb-vibrancy);
+  transition:
+    width var(--gb-dur-slow) var(--gb-ease),
+    border-color var(--gb-dur-slow) var(--gb-ease);
+}
+
+.app-shell[data-sidebar-open='false'] .app-shell__sidebar {
+  border-right-color: transparent;
+}
+
+.app-shell__sidebar > * {
+  width: var(--gb-sidebar-w);
+}
+
+.app-shell__content {
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+  background: var(--gb-bg);
+}
+

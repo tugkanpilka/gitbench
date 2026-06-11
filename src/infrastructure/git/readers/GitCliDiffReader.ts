@@ -19,7 +19,8 @@ export class GitCliDiffReader implements DiffReader {
       await runGit(worktreePath, ['rev-parse', '--verify', '--quiet', 'HEAD']);
     } catch (error) {
       if (error instanceof GitCommandFailedError) {
-        throw new GitCommandFailedError('Repository has no commits yet.');
+        // Keep the original stderr detail reachable for debugging via `cause`.
+        throw new GitCommandFailedError('Repository has no commits yet.', { cause: error });
       }
       throw error; // GitNotInstalledError / NotARepositoryError / WorktreeNotFoundError
     }

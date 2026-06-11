@@ -1,0 +1,41 @@
+import gitbenchIcon from '../../assets/gitbench-icon.svg';
+import { Button } from '../../shared/ui/button';
+import type { TProps } from './index.types';
+import styles from './index.module.scss';
+
+export function WelcomeScreen({ loading, error, onOpenRepository }: TProps) {
+  return (
+    <main className={styles['welcome-screen']}>
+      <div className={styles['welcome-screen__drag-region']} aria-hidden="true" />
+      <section className={styles['welcome-card']} aria-labelledby="welcome-title" aria-busy={loading}>
+        <img className={styles['welcome-card__icon']} src={gitbenchIcon} width="96" height="96" alt="" />
+        <div className={styles['welcome-card__heading']}>
+          <h1 id="welcome-title">GitBench</h1>
+          <p>Worktree diff viewer</p>
+        </div>
+
+        <p className={styles['welcome-card__description']}>
+          Review uncommitted changes in tracked files across Git worktrees in one place.
+        </p>
+
+        <Button
+          className={styles['welcome-card__action']}
+          variant="primary"
+          onClick={onOpenRepository}
+          disabled={loading}
+          aria-busy={loading}
+        >
+          {loading ? 'Opening repository…' : 'Open Repository…'}
+        </Button>
+
+        {error && (
+          <div className={styles['welcome-card__error']} role="alert">
+            {error}
+          </div>
+        )}
+
+        <p className={styles['welcome-card__hint']}>Select a local Git repository to get started.</p>
+      </section>
+    </main>
+  );
+}

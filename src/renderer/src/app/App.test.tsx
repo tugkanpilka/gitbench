@@ -46,6 +46,16 @@ function stubApi(overrides: Partial<Window['api']> = {}): void {
   };
 }
 
+function clickOpenRepository(): void {
+  fireEvent.click(screen.getByRole('button', { name: 'Open Repository…' }));
+}
+
+/** Picks the stubbed repository and waits for its worktrees to render. */
+async function openRepository(): Promise<HTMLElement[]> {
+  clickOpenRepository();
+  return screen.findAllByText('main');
+}
+
 describe('App', () => {
   beforeEach(() => {
     installMemoryStorage();
@@ -67,30 +77,35 @@ describe('App', () => {
   it('lists worktrees as a flat list after picking a repository', async () => {
     render(<App />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open Repository…' }));
+    const mainLabels = await openRepository();
 
-    expect((await screen.findAllByText('main'))[0]).toBeTruthy();
+    expect(mainLabels[0]).toBeTruthy();
     expect(screen.getByText('feature/login')).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Worktrees' })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Refresh' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Open Another Repository…' })).toBeNull();
     expect(window.api.listWorktrees).toHaveBeenCalledWith('/repo');
   });
 
+  it('keeps refresh and repository switching out of the MVP workspace', async () => {
+    render(<App />);
+
+    await openRepository();
+
+    expect(screen.queryByRole('button', { name: 'Refresh' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Open Another Repository…' })).toBeNull();
+  });
+
   it('toggles the sidebar and persists its visibility', async () => {
-    const { container } = render(<App />);
+    render(<App />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open Repository…' }));
-    await screen.findAllByText('main');
+    await openRepository();
 
-    const shell = container.querySelector('.app-shell');
-    const toggle = screen.getByRole('button', { name: "Hide sidebar" });
-    expect(shell?.getAttribute('data-sidebar-open')).toBe('true');
+    const toggle = screen.getByRole('button', { name: 'Hide sidebar' });
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
 
     fireEvent.click(toggle);
 
-    expect(shell?.getAttribute('data-sidebar-open')).toBe('false');
-    expect(screen.getByRole('button', { name: "Show sidebar" })).toBeTruthy();
+    const collapsedToggle = screen.getByRole('button', { name: 'Show sidebar' });
+    expect(collapsedToggle.getAttribute('aria-expanded')).toBe('false');
     expect(
       JSON.parse(window.localStorage.getItem('gitbench.ui-preferences.v1') ?? '')
         .sidebarOpen
@@ -100,8 +115,7 @@ describe('App', () => {
   it('changes and persists the selected file-list view', async () => {
     render(<App />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open Repository…' }));
-    await screen.findAllByText('main');
+    await openRepository();
 
     const treeMode = screen.getByRole('radio', { name: 'Tree' });
     fireEvent.click(treeMode);
@@ -117,7 +131,7 @@ describe('App', () => {
     stubApi({ pickRepo: vi.fn().mockResolvedValue(okResult<string | null>(null)) });
     render(<App />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open Repository…' }));
+    clickOpenRepository();
 
     expect(await screen.findByText('Select a local Git repository to get started.')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Open Repository…' })).toBeTruthy();
@@ -132,7 +146,7 @@ describe('App', () => {
     stubApi({ pickRepo: vi.fn().mockReturnValue(pickResult) });
     render(<App />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open Repository…' }));
+    clickOpenRepository();
 
     const loadingButton = await screen.findByRole('button', { name: 'Opening repository…' });
     expect(loadingButton.hasAttribute('disabled')).toBe(true);
@@ -144,7 +158,7 @@ describe('App', () => {
   it('shows the diff of a selected worktree', async () => {
     render(<App />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open Repository…' }));
+    clickOpenRepository();
     fireEvent.click(await screen.findByText('feature/login'));
 
     expect(
@@ -163,8 +177,7 @@ describe('App', () => {
     stubApi({ getDiff: vi.fn().mockResolvedValue(okResult({ diffText: '' })) });
     render(<App />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open Repository…' }));
-    fireEvent.click((await screen.findAllByText('main'))[0]);
+    fireEvent.click((await openRepository())[0]);
 
     expect(
       await screen.findByText('Worktree is clean; no changes in tracked files.')
@@ -179,7 +192,7 @@ describe('App', () => {
     stubApi({ getDiff: vi.fn().mockReturnValue(diffResult) });
     render(<App />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open Repository…' }));
+    clickOpenRepository();
     fireEvent.click(await screen.findByText('feature/login'));
 
     expect((await screen.findByRole('status')).textContent).toBe('Loading diff…');
@@ -198,7 +211,7 @@ describe('App', () => {
     });
     render(<App />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open Repository…' }));
+    clickOpenRepository();
 
     expect(await screen.findByText('Not a git repository: /repo')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Open Repository…' })).toBeTruthy();
@@ -212,8 +225,7 @@ describe('App', () => {
     });
     render(<App />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open Repository…' }));
-    fireEvent.click((await screen.findAllByText('main'))[0]);
+    fireEvent.click((await openRepository())[0]);
 
     expect(await screen.findByText('Repository has no commits yet.')).toBeTruthy();
   });

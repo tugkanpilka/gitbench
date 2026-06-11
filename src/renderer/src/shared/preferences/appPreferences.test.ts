@@ -77,6 +77,9 @@ describe('appPreferences', () => {
     expect(getValue()).toBe(
       JSON.stringify({ theme: 'light', sidebarOpen: false, fileListMode: 'tree' })
     );
+  });
+
+  it('exposes the versioned storage key', () => {
     expect(APP_PREFERENCES_STORAGE_KEY).toBe('gitbench.ui-preferences.v1');
   });
 });

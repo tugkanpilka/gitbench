@@ -1,4 +1,4 @@
-import { Menu, MenuItemConstructorOptions } from 'electron';
+import { Menu, MenuItemConstructorOptions, shell } from 'electron';
 
 export function createMenu(): void {
   const isMac = process.platform === 'darwin';
@@ -27,10 +27,7 @@ export function createMenu(): void {
       submenu: [
         {
           label: 'Learn More',
-          click: async () => {
-            const { shell } = require('electron');
-            await shell.openExternal('https://electronjs.org');
-          },
+          click: () => shell.openExternal('https://electronjs.org'),
         },
       ],
     },
