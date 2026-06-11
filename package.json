@@ -6,6 +6,7 @@
   "main": "./out/main/index.js",
   "private": true,
   "license": "MIT",
+  "author": "Tugkan Pilka <tugkan@pilka.com.tr>",
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
@@ -14,7 +15,9 @@
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "dist": "electron-vite build && electron-builder --mac",
+    "dist:unsigned": "electron-vite build && electron-builder --mac -c.mac.identity=null -c.mac.notarize=false -c.mac.hardenedRuntime=false"
   },
   "dependencies": {
     "react": "^19.2.7",
@@ -34,6 +37,7 @@
     "@vitejs/plugin-react": "^5.2.0",
     "@vitest/coverage-v8": "^4.1.8",
     "electron": "^42.4.0",
+    "electron-builder": "^26.15.2",
     "electron-vite": "^5.0.0",
     "eslint": "^10.4.1",
     "jsdom": "^29.1.1",
