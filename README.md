@@ -1,7 +1,5 @@
 <div align="center">
 
-<img src="docs/banner.svg" alt="GitBench — watch every worktree your agents touch" width="100%" />
-
 <h1>GitBench</h1>
 
 <p><strong>A desktop diff viewer for parallel, agent-driven Git worktree workflows.</strong></p>
@@ -37,13 +35,9 @@ Open source, MIT-licensed, and TypeScript everywhere.
 
 ## Screenshot
 
-<!--
-  📸 Drop a real screenshot at docs/screenshot.png and uncomment the line below.
-  (The banner above already previews the UI.)
--->
-<!-- <p align="center"><img src="docs/screenshot.png" alt="GitBench main window" width="900"></p> -->
-
-> _Screenshot coming soon — the banner above previews the interface._
+<p align="center">
+  <img src="docs/screenshot.png" alt="GitBench showing a worktree file tree and unified diff" width="100%">
+</p>
 
 ## Features
 
