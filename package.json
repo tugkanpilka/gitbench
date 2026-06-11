@@ -16,8 +16,8 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint .",
-    "dist": "electron-vite build && electron-builder --mac",
-    "dist:unsigned": "electron-vite build && electron-builder --mac -c.mac.identity=null -c.mac.notarize=false -c.mac.hardenedRuntime=false"
+    "dist": "electron-vite build && electron-builder --mac --publish never",
+    "dist:unsigned": "electron-vite build && electron-builder --mac --publish never -c.mac.identity=null -c.mac.notarize=false -c.mac.hardenedRuntime=false"
   },
   "dependencies": {
     "react": "^19.2.7",
