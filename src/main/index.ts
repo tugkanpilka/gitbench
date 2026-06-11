@@ -4,19 +4,36 @@ import { createApplicationServices } from './bootstrap/compositionRoot';
 import { createMenu } from './bootstrap/createMenu';
 import { createWindow } from './bootstrap/createWindow';
 import { registerHandlers } from './ipc/registerHandlers';
+import { createWatchController } from './ipc/watchController';
 
 app.setName('GitBench');
 
+const services = createApplicationServices();
+const watchController = createWatchController(services);
+
+// A filesystem watch must never outlive the window that asked for it: dispose it when
+// the window closes (renderer unmount cannot be relied on once webContents is gone).
+function spawnWindow(): void {
+  const window = createWindow();
+  window.on('closed', () => {
+    void watchController.stop();
+  });
+}
+
 app.whenReady().then(() => {
-  registerHandlers(createApplicationServices());
+  registerHandlers(services, watchController);
   createMenu();
-  createWindow();
+  spawnWindow();
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    if (BrowserWindow.getAllWindows().length === 0) spawnWindow();
   });
 });
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
+});
+
+app.on('before-quit', () => {
+  void watchController.stop();
 });

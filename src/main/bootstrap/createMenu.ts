@@ -1,4 +1,4 @@
-import { Menu, MenuItemConstructorOptions, shell } from 'electron';
+import { Menu, shell, type MenuItemConstructorOptions } from 'electron';
 
 import { isExternalUrlSafe } from './createWindow';
 

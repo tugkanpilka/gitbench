@@ -4,7 +4,7 @@
 
   --gb-text-2xs: 10px;
   --gb-text-xs: 11px;
-  --gb-text-sm: 11px;
+  --gb-text-sm: 12px;
   --gb-text-md: 12px;
   --gb-text-base: 13px;
   --gb-text-lg: 14px;
@@ -24,4 +24,5 @@
 
   --gb-leading-code: 1;
   --gb-leading-ui: 1.2;
+  --gb-leading-sidebar: 1.35;
 }

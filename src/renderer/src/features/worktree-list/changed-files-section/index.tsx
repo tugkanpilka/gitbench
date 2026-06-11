@@ -7,9 +7,7 @@ import styles from '../index.module.scss';
 export function ChangedFilesSection({
   changedFiles,
   fileListMode,
-  activeFileId,
   diffStats,
-  onSelectFile,
 }: ChangedFilesSectionProps) {
   return (
     <div className={styles['worktree-files-section']}>
@@ -17,12 +15,7 @@ export function ChangedFilesSection({
         <h2 className={styles['worktree-files-section__label']}>Changes</h2>
         {diffStats && <DiffStat additions={diffStats.additions} deletions={diffStats.deletions} />}
       </header>
-      <FileNavigationList
-        files={changedFiles}
-        mode={fileListMode}
-        activeFileId={activeFileId}
-        onSelectFile={onSelectFile}
-      />
+      <FileNavigationList files={changedFiles} mode={fileListMode} />
     </div>
   );
 }

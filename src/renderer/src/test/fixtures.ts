@@ -43,6 +43,9 @@ export function stubApi(overrides: Partial<Window['api']> = {}): void {
     pickRepo: vi.fn().mockResolvedValue(okResult<string | null>('/repo')),
     listWorktrees: vi.fn().mockResolvedValue(okResult([MAIN_WORKTREE, FEATURE_WORKTREE])),
     getDiff: vi.fn().mockResolvedValue(okResult({ diffText: 'diff' })),
+    startWatch: vi.fn().mockResolvedValue(okResult(null)),
+    stopWatch: vi.fn().mockResolvedValue(okResult(null)),
+    onRepoChanged: vi.fn().mockReturnValue(() => {}),
     ...overrides,
   };
 }

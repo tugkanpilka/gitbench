@@ -1,4 +1,5 @@
 import { ChangedFilesSection } from './changed-files-section';
+import { FileListProvider } from './file-list-context';
 import { WorktreeRow } from './worktree-row';
 import type { WorktreeListProps } from './index.types';
 import styles from './index.module.scss';
@@ -39,13 +40,17 @@ export function WorktreeList({
                 onSelect={onSelect}
               />
               {selected && fileCount !== null && fileCount > 0 && (
-                <ChangedFilesSection
-                  changedFiles={changedFiles}
-                  fileListMode={fileListMode}
+                <FileListProvider
+                  files={changedFiles}
                   activeFileId={activeFileId}
-                  diffStats={diffStats}
                   onSelectFile={onSelectFile}
-                />
+                >
+                  <ChangedFilesSection
+                    changedFiles={changedFiles}
+                    fileListMode={fileListMode}
+                    diffStats={diffStats}
+                  />
+                </FileListProvider>
               )}
             </li>
           );

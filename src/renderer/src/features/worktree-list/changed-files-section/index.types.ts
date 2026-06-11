@@ -5,7 +5,5 @@ import type { DiffFileModel } from '../../diff-viewer/utils/diffModel.types';
 export type ChangedFilesSectionProps = {
   changedFiles: DiffFileModel[];
   fileListMode: FileListMode;
-  activeFileId: string | null;
   diffStats: DiffStats | null;
-  onSelectFile: (fileId: string) => void;
 };

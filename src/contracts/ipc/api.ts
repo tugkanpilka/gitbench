@@ -7,4 +7,8 @@ export interface DesktopApi {
   pickRepo(): Promise<Result<PickRepositoryResponse>>;
   listWorktrees(repoPath: string): Promise<Result<ListWorktreesResponse>>;
   getDiff(worktreePath: string): Promise<Result<GetDiffResponse>>;
+  startWatch(repoPath: string, selectedWorktreePath: string | null): Promise<Result<null>>;
+  stopWatch(): Promise<Result<null>>;
+  /** Subscribe to the "repo changed, re-query now" signal. Returns an unsubscribe fn. */
+  onRepoChanged(listener: () => void): () => void;
 }

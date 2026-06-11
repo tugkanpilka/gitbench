@@ -4,6 +4,4 @@ import type { DiffFileModel } from '../../diff-viewer/utils/diffModel.types';
 export type FileNavigationListProps = {
   files: DiffFileModel[];
   mode: FileListMode;
-  activeFileId: string | null;
-  onSelectFile: (fileId: string) => void;
 };

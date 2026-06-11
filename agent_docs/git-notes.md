@@ -60,6 +60,19 @@ Gotchas, in order of how much they will bite:
 5. **Binary changes** appear as `Binary files a/… and b/… differ` lines; the diff renderer must tolerate them.
 6. **Renames** appear as `rename from` / `rename to` headers (rename detection is on by default in modern git). The diff renderer must tolerate these too.
 
+## File watching (the `watch:start` channel)
+
+`src/infrastructure/watch/ChokidarRepoWatcher.ts` turns filesystem changes into a debounced "re-query" signal. It never reads diffs — git stays the source of truth; the renderer re-runs `worktrees:list` / `diff:get` on each signal.
+
+Two watch targets, one debounced `onChange`:
+
+1. **Selected worktree's working tree** — file edits/adds/deletes. Ignores `node_modules` and `.git` (the object store under `.git` would storm).
+2. **Shared git dir** — resolved with `git -C <repoPath> rev-parse --path-format=absolute --git-common-dir` (absolute output; `--git-common-dir` alone can be relative). This one dir holds `refs`, `logs`, `index`, and `worktrees/` — so it catches commits/resets/checkouts **and** add/remove/lock for *every* worktree, including linked ones (their per-worktree `HEAD`/`index`/`logs` live under `worktrees/<name>/`). Only the `objects` and `lfs` stores are ignored.
+
+Why not watch each worktree's `.git/HEAD` file directly: a commit on a branch leaves the symbolic `HEAD` file unchanged — what moves is `refs/heads/<branch>` and `logs/HEAD`. Watching the whole git dir (minus `objects`) covers all of these without per-worktree path resolution.
+
+Failure handling: if `rev-parse` fails (repo removed, git missing) the git-dir watcher silently does not attach — the list/diff queries surface the real error to the user. The watcher must not throw across this boundary.
+
 ## Adding a new git command — checklist
 
 1. Add it behind an application port; implement it in `src/infrastructure/git/`.

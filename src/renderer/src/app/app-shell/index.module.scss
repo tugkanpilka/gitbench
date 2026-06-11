@@ -1,5 +1,7 @@
 .app-shell {
-  --gb-active-sidebar-w: var(--gb-sidebar-w);
+  /* Runtime width override set by the resize handle via inline style.
+     Falls back to the design-token default when not dragged. */
+  --gb-active-sidebar-w: var(--gb-sidebar-w-runtime, var(--gb-sidebar-w));
 
   position: relative;
   display: flex;
@@ -22,9 +24,7 @@
   background: color-mix(in srgb, var(--gb-sidebar) 72%, transparent);
   backdrop-filter: var(--gb-vibrancy);
   -webkit-backdrop-filter: var(--gb-vibrancy);
-  transition:
-    width var(--gb-dur-slow) var(--gb-ease),
-    border-color var(--gb-dur-slow) var(--gb-ease);
+  transition: border-color var(--gb-dur-slow) var(--gb-ease);
 }
 
 .app-shell[data-sidebar-open='false'] .app-shell__sidebar {
@@ -32,7 +32,8 @@
 }
 
 .app-shell__sidebar > * {
-  width: var(--gb-sidebar-w);
+  width: var(--gb-active-sidebar-w);
+  min-width: var(--gb-sidebar-min);
 }
 
 .app-shell__content {

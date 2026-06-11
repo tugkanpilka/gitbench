@@ -21,7 +21,7 @@ export function isExternalUrlSafe(url: string): boolean {
   }
 }
 
-export function createWindow(): void {
+export function createWindow(): BrowserWindow {
   const isMac = process.platform === 'darwin';
   const window = new BrowserWindow({
     width: WINDOW_WIDTH,
@@ -32,9 +32,15 @@ export function createWindow(): void {
     backgroundColor: isMac ? '#00000000' : '#1f2025',
     transparent: isMac,
     titleBarStyle: isMac ? 'hiddenInset' : 'default',
-    trafficLightPosition: isMac ? TRAFFIC_LIGHT_POSITION : undefined,
-    vibrancy: isMac ? 'sidebar' : undefined,
-    visualEffectState: isMac ? 'active' : undefined,
+    // exactOptionalPropertyTypes: omit the mac-only keys entirely off-mac
+    // rather than passing `undefined`.
+    ...(isMac
+      ? {
+          trafficLightPosition: TRAFFIC_LIGHT_POSITION,
+          vibrancy: 'sidebar' as const,
+          visualEffectState: 'active' as const,
+        }
+      : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
@@ -70,4 +76,6 @@ export function createWindow(): void {
   } else {
     window.loadFile(indexFile);
   }
+
+  return window;
 }

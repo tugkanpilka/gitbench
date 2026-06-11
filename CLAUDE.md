@@ -46,7 +46,7 @@ Layer rules, import matrix, directory layout: `agent_docs/architecture.md`.
 ## Open decisions — surface them, do not decide silently
 
 - ~~Diff rendering library~~ — **decided (2026-06-10): `react-diff-view`** (consumes git unified diff directly via `parseDiff`; lives only in `renderer/src/features/diff-viewer/DiffView.tsx`).
-- Refresh model: MVP is manual refresh. No file watching yet.
+- ~~Refresh model: MVP is manual refresh. No file watching yet.~~ — **decided (2026-06-11): Chokidar-based file watching** (debounced `.git` + working-tree signals via `watch:start` / `watch:stop` / `repo:changed` IPC channels; renderer auto-refreshes silently without loading spinners).
 - Untracked files: MVP shows changes to tracked files only (`git diff HEAD` limitation — see `agent_docs/git-notes.md`). UI copy must say "uncommitted changes to tracked files".
 
 If a task forces one of these decisions, stop and raise it instead of picking one implicitly.
