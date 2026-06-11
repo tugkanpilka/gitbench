@@ -9,6 +9,10 @@ Pick a repository, browse its worktrees in a sidebar, and read the uncommitted d
 </p>
 
 <p>
+  <a href="https://github.com/tugkanpilka/gitbench/releases/latest"><img alt="Download GitBench for macOS" src="https://img.shields.io/badge/Download_for_macOS-000000?style=for-the-badge&logo=apple&logoColor=white"></a>
+</p>
+
+<p>
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-2e8bff.svg"></a>
   <a href="https://github.com/tugkanpilka/gitbench/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/tugkanpilka/gitbench/actions/workflows/ci.yml/badge.svg"></a>
   <img alt="Electron" src="https://img.shields.io/badge/Electron-42-47848f?logo=electron&logoColor=white">
@@ -38,6 +42,15 @@ Open source, MIT-licensed, and TypeScript everywhere.
 <p align="center">
   <img src="docs/screenshot.png" alt="GitBench showing a worktree file tree and unified diff" width="100%">
 </p>
+
+## Download
+
+[Download the latest GitBench release for macOS](https://github.com/tugkanpilka/gitbench/releases/latest), then choose the `.dmg` for your Mac:
+
+- **Apple Silicon** (`M1`, `M2`, `M3`, `M4`, or newer): `arm64`
+- **Intel Mac:** `x64`
+
+Open the downloaded `.dmg` and drag GitBench into Applications. Installed releases check for updates automatically when the app starts.
 
 ## Features
 
