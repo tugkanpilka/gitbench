@@ -3,6 +3,7 @@ import { BrowserWindow, app } from 'electron';
 import { createApplicationServices } from './bootstrap/compositionRoot';
 import { createMenu } from './bootstrap/createMenu';
 import { createWindow } from './bootstrap/createWindow';
+import { setupAutoUpdater } from './bootstrap/setupAutoUpdater';
 import { registerHandlers } from './ipc/registerHandlers';
 import { createWatchController } from './ipc/watchController';
 
@@ -24,6 +25,7 @@ app.whenReady().then(() => {
   registerHandlers(services, watchController);
   createMenu();
   spawnWindow();
+  setupAutoUpdater();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) spawnWindow();

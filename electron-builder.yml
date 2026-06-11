@@ -11,6 +11,15 @@ directories:
   output: dist
   buildResources: build
 
+# Update feed for electron-updater. Baked into app-update.yml at build time so
+# the packaged app knows where to look; the CI publish step uploads the matching
+# latest-mac.yml + blockmaps to a draft GitHub Release.
+publish:
+  provider: github
+  owner: tugkanpilka
+  repo: gitbench
+  releaseType: draft
+
 # macOS, signed + notarized.
 # Signing identity comes from a "Developer ID Application" certificate
 # (CSC_LINK / CSC_KEY_PASSWORD env). Notarization reads APPLE_ID /
