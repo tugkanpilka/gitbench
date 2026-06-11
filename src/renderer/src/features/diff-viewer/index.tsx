@@ -72,9 +72,7 @@ export function DiffView({
   if (clean) {
     return (
       <div className={styles['diff-view']}>
-        <div className={styles['diff-view__clean']}>
-          Worktree is clean; no changes in tracked files.
-        </div>
+        <div className={styles['diff-view__clean']}>Worktree is clean; no uncommitted changes.</div>
       </div>
     );
   }

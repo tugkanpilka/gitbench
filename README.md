@@ -30,8 +30,8 @@ You're running coding agents in parallel. Each one works in its own [Git worktre
 Worktrees scatter across sibling directories, and the only built-in way to see an agent's progress is to `cd` into its checkout and run `git diff` — for every worktree, repeatedly, as the agents churn. GitBench replaces that loop with one window:
 
 - **One sidebar, every worktree.** See all of a repository's worktrees at a glance, with branch, HEAD SHA, and main/locked/detached status.
-- **One click, the full diff.** Select a worktree and read everything it would commit right now — staged and unstaged together — in a fast, readable diff pane.
-- **Built for watching agents work.** Refresh on demand to see what your agents have produced since you last looked.
+- **One click, the full diff.** Select a worktree and read staged, unstaged, untracked, and deleted files together in a fast, readable diff pane.
+- **Built for watching agents work.** Filesystem and Git metadata changes refresh the selected worktree automatically.
 
 Open source, MIT-licensed, and TypeScript everywhere.
 
@@ -49,12 +49,8 @@ Open source, MIT-licensed, and TypeScript everywhere.
 
 - **Repository picker** — choose any local Git repository via the system folder dialog.
 - **Worktree sidebar** — every worktree of the repository as a flat list (they're sibling checkouts, not a hierarchy), with branch name, HEAD SHA, and main/locked/detached status. Works whether you open the main worktree or a linked one.
-- **Diff viewer** — the uncommitted diff of the selected worktree, rendered from `git diff HEAD` so staged and unstaged changes appear together: everything that would change if you committed right now. A clean worktree shows a dedicated empty state, not an error. Binary changes and renames are tolerated.
-- **Manual refresh** — refresh on demand to pick up new agent output. (No file watching yet — see [open decisions](#open-decisions).)
-
-### Current limitation: tracked files only
-
-The diff shows **uncommitted changes to tracked files**. Untracked (new, never-added) files are invisible to `git diff HEAD` and are out of scope for the MVP. See [`agent_docs/git-notes.md`](agent_docs/git-notes.md) for the planned approach (`git ls-files --others --exclude-standard`).
+- **Diff viewer** — the selected worktree's staged, unstaged, untracked, and deleted files in one unified view. A clean worktree shows a dedicated empty state, not an error. Binary changes, empty files, and renames are tolerated.
+- **Automatic refresh** — filesystem and Git metadata changes trigger a debounced re-query, so agent output appears without a manual refresh loop.
 
 > GitBench requires `git` on your `PATH` — it drives the system Git CLI rather than bundling a Git implementation ([how](#how-gitbench-talks-to-git)).
 
@@ -100,15 +96,6 @@ Details live in `agent_docs/`:
 GitBench drives the system `git` CLI directly rather than bundling a Git implementation. The CLI resolves linked worktrees correctly — a worktree's `.git` is a file (`gitdir: <path>`), not a directory — and needs no native modules to rebuild against Electron.
 
 All invocations go through a single wrapper ([`src/infrastructure/git/runGit.ts`](src/infrastructure/git/runGit.ts)) that uses argument arrays — paths are never interpolated into shell strings — and pins the environment (`LC_ALL=C`, no terminal prompts, no optional locks) for stable, parseable output. The quirks are documented in [`agent_docs/git-notes.md`](agent_docs/git-notes.md).
-
-## Open decisions
-
-A couple of design questions are intentionally still open; contributions should surface them, not decide them silently:
-
-- **Refresh model** — MVP is manual refresh. No file watching yet.
-- **Untracked files** — MVP shows changes to tracked files only (see the limitation above).
-
-If a task forces one of these decisions, [open an issue](https://github.com/tugkanpilka/gitbench/issues) to discuss it rather than picking one implicitly.
 
 ## Contributing
 

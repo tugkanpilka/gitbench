@@ -11,7 +11,10 @@ export function AppShell({ sidebar, sidebarOpen, children }: AppShellProps) {
     setSidebarWidth(width);
   }, []);
 
-  const sidebarStyle = sidebarWidth !== null ? { '--gb-sidebar-w-runtime': `${sidebarWidth}px` } as React.CSSProperties : undefined;
+  const sidebarStyle =
+    sidebarWidth !== null
+      ? ({ '--gb-sidebar-w-runtime': `${sidebarWidth}px` } as React.CSSProperties)
+      : undefined;
 
   return (
     <div className={styles['app-shell']} data-sidebar-open={sidebarOpen} style={sidebarStyle}>

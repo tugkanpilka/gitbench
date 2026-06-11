@@ -29,7 +29,7 @@ export function Workspace({
       )}
       {!hasDiff && !diffLoading && !error && (
         <p className={styles['workspace__placeholder']}>
-          Select a worktree to view uncommitted changes in tracked files.
+          Select a worktree to view all uncommitted changes.
         </p>
       )}
       {hasDiff && !error && (

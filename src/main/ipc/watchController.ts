@@ -1,4 +1,7 @@
-import type { RepoWatchHandle, RepoWatchTarget } from '../../application/worktrees/ports/RepoWatcher';
+import type {
+  RepoWatchHandle,
+  RepoWatchTarget,
+} from '../../application/worktrees/ports/RepoWatcher';
 import type { ApplicationServices } from '../bootstrap/compositionRoot';
 
 /**

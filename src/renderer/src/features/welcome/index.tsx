@@ -25,7 +25,7 @@ export function WelcomeScreen({ loading, error, onOpenRepository }: WelcomeScree
         </div>
 
         <p className={styles['welcome-card__description']}>
-          Review uncommitted changes in tracked files across Git worktrees in one place.
+          Review all uncommitted changes across Git worktrees in one place.
         </p>
 
         <Button

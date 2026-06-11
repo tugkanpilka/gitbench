@@ -3,7 +3,7 @@
   min-height: 100%;
   padding: clamp(var(--gb-space-6), 5vw, 48px);
   place-items: center;
-  background: var(--gb-desktop);
+  background: transparent;
   transition: background var(--gb-dur-theme) var(--gb-ease);
 }
 
@@ -21,14 +21,10 @@
   width: min(100%, 460px);
   min-height: 420px;
   padding: 42px;
-  border: 1px solid var(--gb-window-edge);
-  border-radius: var(--gb-radius-window);
   flex-direction: column;
   align-items: center;
   justify-content: center;
   color: var(--gb-text);
-  background: var(--gb-bg);
-  box-shadow: var(--gb-shadow-window);
   text-align: center;
 }
 

@@ -172,7 +172,7 @@
   min-width: 0;
   overflow: hidden;
   font-size: var(--gb-text-sm);
-  font-weight: var(--gb-weight-medium);
+  font-weight: var(--gb-weight-regular);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -221,12 +221,12 @@
 
 .file-navigation-row__name {
   flex: none;
-  font-weight: var(--gb-weight-regular);
-  color: currentColor;
+  font-weight: var(--gb-weight-semibold);
+  color: var(--gb-text);
 }
 
 .file-navigation-row[aria-current='location'] .file-navigation-row__name {
-  font-weight: var(--gb-weight-medium);
+  font-weight: var(--gb-weight-semibold);
 }
 
 .file-navigation-row :global(.gb-diff-stat) {

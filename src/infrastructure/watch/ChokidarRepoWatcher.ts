@@ -1,6 +1,4 @@
-import { join, sep } from 'node:path';
-
-import { watch, type FSWatcher } from 'chokidar';
+import { isAbsolute, join, relative, sep } from 'node:path';
 
 import type {
   RepoWatchHandle,
@@ -8,18 +6,17 @@ import type {
   RepoWatcher,
 } from '../../application/worktrees/ports/RepoWatcher';
 import { runGit } from '../git/runGit';
+import { startRecursiveWatch, type StopRecursiveWatch } from './recursiveWatch';
 
 // One signal per burst. Editors and git both touch many files per logical change;
 // coalesce them so the renderer re-queries once, not dozens of times.
 const DEBOUNCE_MS = 250;
 
-// node_modules is large and noisy; .git's object store churns on every git operation
-// and would storm. The shared git dir is watched separately (far more cheaply) below.
-const WORKING_TREE_IGNORED = /(^|[\\/])(node_modules|\.git)([\\/]|$)/;
+const WORKING_TREE_IGNORED_SEGMENTS = new Set(['node_modules', '.git']);
 
 export class ChokidarRepoWatcher implements RepoWatcher {
   watch(target: RepoWatchTarget, onChange: () => void): RepoWatchHandle {
-    const watchers: FSWatcher[] = [];
+    const stopWatchers: StopRecursiveWatch[] = [];
     let stopped = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
 
@@ -31,37 +28,37 @@ export class ChokidarRepoWatcher implements RepoWatcher {
       }, DEBOUNCE_MS);
     };
 
-    // The git dir watcher attaches asynchronously; guard against a stop() that races
-    // ahead of it so we never leak a watcher after the handle is disposed.
-    const register = (watcher: FSWatcher): void => {
+    // Watchers attach asynchronously; guard against a stop() that races ahead
+    // of setup so no native stream survives after the handle is disposed.
+    const register = (stopWatcher: StopRecursiveWatch): void => {
       if (stopped) {
-        void watcher.close();
+        void stopWatcher();
         return;
       }
-      watcher.on('all', signal);
-      watchers.push(watcher);
+      stopWatchers.push(stopWatcher);
+    };
+
+    const attach = (watcher: Promise<StopRecursiveWatch>): void => {
+      void watcher.then(register).catch(() => {
+        // Auto-refresh is best-effort. List/diff queries surface repository and
+        // Git failures without taking down Electron's main process.
+      });
     };
 
     // 1) The selected worktree's working tree: edits, adds, deletes.
     if (target.selectedWorktreePath !== null) {
-      register(
-        watch(target.selectedWorktreePath, {
-          ignoreInitial: true,
-          ignored: WORKING_TREE_IGNORED,
-          // Wait for a file to stop changing before signalling, so a half-written
-          // editor save does not fire mid-write.
-          awaitWriteFinish: { stabilityThreshold: 150, pollInterval: 50 },
-        })
+      const worktreePath = target.selectedWorktreePath;
+      attach(
+        startRecursiveWatch(worktreePath, signal, (path) =>
+          isWorkingTreePathIgnored(worktreePath, path)
+        )
       );
     }
 
     // 2) The shared git dir: refs, logs, index, worktrees/ admin — covers commits,
     //    resets, checkouts, and add/remove/lock for every worktree. Needs git to
     //    resolve, so it attaches async.
-    void this.watchSharedGitDir(target.repoPath, register).catch(() => {
-      // repoPath is gone or git is unavailable — the list/diff queries surface the
-      // real error to the user. Nothing watchable here; leave it.
-    });
+    attach(this.watchSharedGitDir(target.repoPath, signal));
 
     return {
       async stop() {
@@ -70,16 +67,16 @@ export class ChokidarRepoWatcher implements RepoWatcher {
           clearTimeout(timer);
           timer = null;
         }
-        await Promise.all(watchers.map((w) => w.close()));
-        watchers.length = 0;
+        await Promise.all(stopWatchers.map((stopWatcher) => stopWatcher()));
+        stopWatchers.length = 0;
       },
     };
   }
 
   private async watchSharedGitDir(
     repoPath: string,
-    register: (watcher: FSWatcher) => void
-  ): Promise<void> {
+    onChange: () => void
+  ): Promise<StopRecursiveWatch> {
     const commonDir = (
       await runGit(repoPath, ['rev-parse', '--path-format=absolute', '--git-common-dir'])
     ).trim();
@@ -87,11 +84,13 @@ export class ChokidarRepoWatcher implements RepoWatcher {
     const insideObjectStore = (path: string): boolean =>
       stores.some((store) => path === store || path.startsWith(store + sep));
 
-    register(
-      watch(commonDir, {
-        ignoreInitial: true,
-        ignored: insideObjectStore,
-      })
-    );
+    return startRecursiveWatch(commonDir, onChange, insideObjectStore);
   }
+}
+
+function isWorkingTreePathIgnored(rootPath: string, changedPath: string): boolean {
+  const pathWithinRoot = isAbsolute(changedPath) ? relative(rootPath, changedPath) : changedPath;
+  return pathWithinRoot
+    .split(/[\\/]+/)
+    .some((segment) => WORKING_TREE_IGNORED_SEGMENTS.has(segment));
 }

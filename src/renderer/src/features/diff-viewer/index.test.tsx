@@ -34,6 +34,28 @@ index 3333333..4444444 100644
 +export const c = 2;
 `;
 
+const CSS_DIFF = `diff --git a/src/app.css b/src/app.css
+index 5555555..6666666 100644
+--- a/src/app.css
++++ b/src/app.css
+@@ -1,3 +1,3 @@
+ .button {
+-  color: red;
++  color: blue;
+ }
+`;
+
+const HCL_DIFF = `diff --git a/infra/main.tf b/infra/main.tf
+index 7777777..8888888 100644
+--- a/infra/main.tf
++++ b/infra/main.tf
+@@ -1,3 +1,4 @@
+ resource "aws_s3_bucket" "example" {
+   bucket = "example"
++  force_destroy = true
+ }
+`;
+
 afterEach(() => cleanup());
 
 type DiffViewProps = Parameters<typeof DiffView>[0];
@@ -59,6 +81,22 @@ describe('DiffView', () => {
     expect(container.querySelector('.diff-unified')).toBeTruthy();
     expect(container.querySelector('.token.keyword')).toBeTruthy();
     expect(container.querySelector('.token.number')).toBeTruthy();
+    expect(container.querySelector('.diff-code-edit')).toBeNull();
+  });
+
+  it('renders syntax tokens for CSS diffs', () => {
+    const { container } = renderDiffView({ model: buildDiffModel(CSS_DIFF) });
+
+    expect(container.querySelector('.token.selector')).toBeTruthy();
+    expect(container.querySelector('.token.property')).toBeTruthy();
+  });
+
+  it('renders syntax tokens from the full Refractor language set', () => {
+    const { container } = renderDiffView({ model: buildDiffModel(HCL_DIFF) });
+
+    expect(container.querySelector('.token.keyword')).toBeTruthy();
+    expect(container.querySelector('.token.type')).toBeTruthy();
+    expect(container.querySelector('.token.variable')).toBeTruthy();
   });
 
   it('renders in split mode when viewType is split', () => {
@@ -90,7 +128,7 @@ describe('DiffView', () => {
   it('renders the clean-worktree state for an empty diff', () => {
     renderDiffView({ model: EMPTY_DIFF_MODEL, clean: true });
 
-    expect(screen.getByText('Worktree is clean; no changes in tracked files.')).toBeTruthy();
+    expect(screen.getByText('Worktree is clean; no uncommitted changes.')).toBeTruthy();
   });
 
   it('opens a collapsed file and scrolls to a requested sidebar target', () => {

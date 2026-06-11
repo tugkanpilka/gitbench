@@ -18,3 +18,8 @@
   color: var(--gb-sel-text);
   background: var(--gb-sel-badge-bg);
 }
+
+.gb-badge__content {
+  display: inline-flex;
+  transform: translateY(2px);
+}

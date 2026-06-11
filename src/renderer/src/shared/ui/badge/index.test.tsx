@@ -10,8 +10,8 @@ describe('Badge', () => {
   it('applies the on-selection styling hook without changing its content', () => {
     render(<Badge onSelection>8</Badge>);
 
-    const badge = screen.getByText('8');
+    const badge = screen.getByText('8').parentElement;
     // Using CSS Modules, the class name will be different, so checking for the prop effect:
-    expect(badge.className).toContain('badge--on-selection');
+    expect(badge?.className).toContain('badge--on-selection');
   });
 });

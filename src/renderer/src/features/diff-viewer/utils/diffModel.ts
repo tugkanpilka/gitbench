@@ -1,7 +1,6 @@
 import {
   isDelete,
   isInsert,
-  markEdits,
   parseDiff,
   tokenize,
   type FileData,
@@ -84,17 +83,13 @@ function countChanges(file: FileData): { additions: number; deletions: number } 
 }
 
 function tokenizeHunks(file: FileData, language: string | null): HunkTokens | null {
-  if (file.hunks.length === 0) {
+  if (file.hunks.length === 0 || language === null) {
     return null;
-  }
-  if (language === null) {
-    return tokenize(file.hunks, { enhancers: [markEdits(file.hunks)] });
   }
   return tokenize(file.hunks, {
     highlight: true,
     refractor,
     language,
-    enhancers: [markEdits(file.hunks)],
   });
 }
 

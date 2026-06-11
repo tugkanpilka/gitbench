@@ -80,4 +80,29 @@ describe('runGit', () => {
       new GitCommandFailedError('Command failed: git diff')
     );
   });
+
+  it('accepts an explicitly allowed data-bearing exit code when stderr is empty', async () => {
+    const diff = 'diff --git a/new.txt b/new.txt\n';
+    stubGitOutcome(Object.assign(new Error('files differ'), { code: 1 }), diff, '');
+
+    await expect(
+      runGit('/tmp/repo', ['diff', '--no-index', '/dev/null', 'new.txt'], {
+        acceptedExitCodes: [1],
+      })
+    ).resolves.toBe(diff);
+  });
+
+  it('does not accept an allowed exit code when git also reports an error', async () => {
+    stubGitOutcome(
+      Object.assign(new Error('files differ'), { code: 1 }),
+      '',
+      "error: Could not access 'missing.txt'\n"
+    );
+
+    await expect(
+      runGit('/tmp/repo', ['diff', '--no-index', '/dev/null', 'missing.txt'], {
+        acceptedExitCodes: [1],
+      })
+    ).rejects.toThrow("Could not access 'missing.txt'");
+  });
 });

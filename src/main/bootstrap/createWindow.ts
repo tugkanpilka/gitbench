@@ -30,7 +30,6 @@ export function createWindow(): BrowserWindow {
     minHeight: WINDOW_MIN_HEIGHT,
     show: false,
     backgroundColor: isMac ? '#00000000' : '#1f2025',
-    transparent: isMac,
     titleBarStyle: isMac ? 'hiddenInset' : 'default',
     // exactOptionalPropertyTypes: omit the mac-only keys entirely off-mac
     // rather than passing `undefined`.
@@ -38,7 +37,6 @@ export function createWindow(): BrowserWindow {
       ? {
           trafficLightPosition: TRAFFIC_LIGHT_POSITION,
           vibrancy: 'sidebar' as const,
-          visualEffectState: 'active' as const,
         }
       : {}),
     webPreferences: {

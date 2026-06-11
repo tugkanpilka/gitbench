@@ -66,7 +66,9 @@ export const DiffFileSection = memo(function DiffFileSection({
             data-type={model.file.type}
             aria-hidden="true"
           >
-            {CHANGE_TYPE_LABEL[model.file.type]}
+            <span className={styles['diff-file__change-type-label']}>
+              {CHANGE_TYPE_LABEL[model.file.type]}
+            </span>
           </span>
           <FilePath model={model} />
           <DiffStat additions={model.additions} deletions={model.deletions} />

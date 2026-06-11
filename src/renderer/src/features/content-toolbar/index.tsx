@@ -29,7 +29,7 @@ export function ContentToolbar({
   onFileListModeChange,
 }: ContentToolbarProps) {
   return (
-    <div className={styles['content-toolbar']}>
+    <div className={styles['content-toolbar']} data-sidebar-open={sidebarOpen}>
       <button
         type="button"
         className={styles['content-toolbar__sidebar-toggle']}

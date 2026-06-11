@@ -55,6 +55,7 @@ describe.skipIf(!gitAvailable())('git CLI readers (integration)', () => {
     mkdirSync(repo);
     git(repo, 'init', '-b', 'main');
     writeFileSync(join(repo, 'file.txt'), 'hello\n');
+    writeFileSync(join(repo, '.gitignore'), 'ignored.txt\n');
     git(repo, 'add', '.');
     git(repo, 'commit', '-m', 'initial');
     git(repo, 'worktree', 'add', linked, '-b', 'feature');
@@ -108,6 +109,32 @@ describe.skipIf(!gitAvailable())('git CLI readers (integration)', () => {
 
     expect(diff).toContain('staged.txt');
     expect(diff).toContain('+staged content');
+  });
+
+  it('includes deleted tracked files', async () => {
+    rmSync(join(repo, 'file.txt'));
+
+    const diff = await diffReader.getUncommittedDiff(repo);
+
+    expect(diff).toContain('deleted file mode');
+    expect(diff).toContain('--- a/file.txt');
+    expect(diff).toContain('-hello');
+  });
+
+  it('includes untracked text, empty, and binary files but excludes ignored files', async () => {
+    writeFileSync(join(repo, 'new.txt'), 'new content\n');
+    writeFileSync(join(repo, 'empty.txt'), '');
+    writeFileSync(join(repo, 'image.bin'), Buffer.from([0, 1, 2, 3]));
+    writeFileSync(join(repo, 'ignored.txt'), 'ignored\n');
+
+    const diff = await diffReader.getUncommittedDiff(repo);
+
+    expect(diff).toContain('diff --git a/new.txt b/new.txt');
+    expect(diff).toContain('+new content');
+    expect(diff).toContain('diff --git a/empty.txt b/empty.txt');
+    expect(diff).toContain('new file mode 100644');
+    expect(diff).toContain('Binary files /dev/null and b/image.bin differ');
+    expect(diff).not.toContain('ignored.txt');
   });
 
   it('throws NotARepositoryError for a plain directory', async () => {

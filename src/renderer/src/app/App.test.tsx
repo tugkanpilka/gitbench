@@ -69,11 +69,13 @@ describe('App', () => {
 
     const toggle = screen.getByRole('button', { name: 'Hide sidebar' });
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(toggle.parentElement?.dataset.sidebarOpen).toBe('true');
 
     fireEvent.click(toggle);
 
     const collapsedToggle = screen.getByRole('button', { name: 'Show sidebar' });
     expect(collapsedToggle.getAttribute('aria-expanded')).toBe('false');
+    expect(collapsedToggle.parentElement?.dataset.sidebarOpen).toBe('false');
     expect(
       JSON.parse(window.localStorage.getItem('gitbench.ui-preferences.v1') ?? '').sidebarOpen
     ).toBe(false);
@@ -143,7 +145,7 @@ describe('App', () => {
 
     fireEvent.click((await openRepository())[0]);
 
-    expect(await screen.findByText('Worktree is clean; no changes in tracked files.')).toBeTruthy();
+    expect(await screen.findByText('Worktree is clean; no uncommitted changes.')).toBeTruthy();
   });
 
   it('shows a loading state while the selected worktree diff is requested', async () => {

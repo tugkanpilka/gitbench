@@ -14,6 +14,7 @@ All application-runtime git invocations go through `runGit.ts`. Integration test
   - `LC_ALL: 'C'` — untranslated, stable English output. We sniff stderr for error classification; a localized git would break that.
 - `maxBuffer`: Node's default is **1 MiB** and a large diff will exceed it (`ERR_CHILD_PROCESS_STDIO_MAXBUFFER`, process killed). Set it explicitly high (e.g. 64 MiB). If real-world diffs ever exceed that, switch to streaming `spawn` — do not keep raising the number forever.
 - Encoding `'utf8'`. Non-UTF-8 paths/content are out of MVP scope: document, don't crash.
+- Commands such as `git diff --no-index` use exit code `1` to mean "differences found". `runGit` may accept explicitly declared non-zero exit codes only when stderr is empty; stderr still means a real failure and is classified normally.
 
 ## Error classification
 
@@ -45,29 +46,44 @@ Format:
 - `prunable [reason]` lines may appear — ignore them for now (future: surface in UI).
 - Hardening option: `--porcelain -z` (git ≥ 2.36) NUL-terminates lines and survives newlines in paths. The parser is written against the newline format; only switch with fixtures proving both.
 
-## `git diff HEAD` (the `diff:get` channel)
+## Uncommitted diff (the `diff:get` channel)
 
-Run as `git -C <worktreePath> --no-pager diff --no-color HEAD`.
+Tracked paths run as `git -C <worktreePath> --no-pager diff --no-color HEAD`.
 
 Why `HEAD`: it shows **staged + unstaged changes in one diff** — "everything that would change if you committed right now". Plain `git diff` would hide staged changes.
 
+Untracked paths are discovered in one NUL-delimited call:
+
+```text
+git -C <worktreePath> ls-files --others --exclude-standard -z
+```
+
+Each returned file is rendered by Git as a standard addition from `/dev/null`:
+
+```text
+git -C <worktreePath> diff --no-index --no-color --no-ext-diff --no-textconv -- /dev/null <path>
+```
+
+This leaves the real index untouched and preserves Git's mode, binary-file, path-quoting, symlink, and empty-file semantics. The per-file commands run with bounded concurrency. Untracked nested Git repositories are reported by `ls-files` as directory entries and are intentionally skipped rather than recursively diffing another repository.
+
 Gotchas, in order of how much they will bite:
 
-1. **Untracked files are invisible** to `git diff HEAD`. MVP accepts this; the UI copy must say "uncommitted changes to _tracked_ files". If/when untracked support is added: detect via `git ls-files --others --exclude-standard` (one call, not per file) and render as additions.
-2. **Unborn HEAD** (repo with zero commits): `git diff HEAD` fails with `ambiguous argument 'HEAD'`. Detect first with `git rev-parse --verify --quiet HEAD` (non-zero exit = unborn) and map to `GIT_COMMAND_FAILED` with the message `"Repository has no commits yet."` Do **not** fake an empty diff — there may be staged files, and an empty diff would lie.
-3. `""` output = clean worktree = **success**. Never convert it to an error; the renderer shows the dedicated empty state.
-4. `--no-color` is belt-and-suspenders: git disables color for non-TTY output by default, but a user's gitconfig can force `color.diff=always`, which would corrupt parsing/rendering.
-5. **Binary changes** appear as `Binary files a/… and b/… differ` lines; the diff renderer must tolerate them.
-6. **Renames** appear as `rename from` / `rename to` headers (rename detection is on by default in modern git). The diff renderer must tolerate these too.
+1. **Unborn HEAD** (repo with zero commits): `git diff HEAD` fails with `ambiguous argument 'HEAD'`. Detect first with `git rev-parse --verify --quiet HEAD` (non-zero exit = unborn) and map to `GIT_COMMAND_FAILED` with the message `"Repository has no commits yet."` Do **not** fake an empty diff — there may be staged files, and an empty diff would lie.
+2. `""` output = clean worktree = **success**. Never convert it to an error; the renderer shows the dedicated empty state.
+3. `--no-color` is belt-and-suspenders: git disables color for non-TTY output by default, but a user's gitconfig can force `color.diff=always`, which would corrupt parsing/rendering.
+4. **Binary changes** appear as `Binary files a/… and b/… differ` lines; the diff renderer must tolerate them.
+5. **Renames** appear as `rename from` / `rename to` headers (rename detection is on by default in modern git). The diff renderer must tolerate these too.
 
 ## File watching (the `watch:start` channel)
 
 `src/infrastructure/watch/ChokidarRepoWatcher.ts` turns filesystem changes into a debounced "re-query" signal. It never reads diffs — git stays the source of truth; the renderer re-runs `worktrees:list` / `diff:get` on each signal.
 
+On macOS, recursive paths use the native `fsevents` API directly. Chokidar v4 performs an initial directory crawl and opens one watcher per directory there; large repositories can exhaust the default file-descriptor limit and stall Electron's main process even when `git diff` is empty. FSEvents observes a whole tree through one native stream without that crawl. Other platforms keep the Chokidar fallback.
+
 Two watch targets, one debounced `onChange`:
 
 1. **Selected worktree's working tree** — file edits/adds/deletes. Ignores `node_modules` and `.git` (the object store under `.git` would storm).
-2. **Shared git dir** — resolved with `git -C <repoPath> rev-parse --path-format=absolute --git-common-dir` (absolute output; `--git-common-dir` alone can be relative). This one dir holds `refs`, `logs`, `index`, and `worktrees/` — so it catches commits/resets/checkouts **and** add/remove/lock for *every* worktree, including linked ones (their per-worktree `HEAD`/`index`/`logs` live under `worktrees/<name>/`). Only the `objects` and `lfs` stores are ignored.
+2. **Shared git dir** — resolved with `git -C <repoPath> rev-parse --path-format=absolute --git-common-dir` (absolute output; `--git-common-dir` alone can be relative). This one dir holds `refs`, `logs`, `index`, and `worktrees/` — so it catches commits/resets/checkouts **and** add/remove/lock for _every_ worktree, including linked ones (their per-worktree `HEAD`/`index`/`logs` live under `worktrees/<name>/`). Only the `objects` and `lfs` stores are ignored.
 
 Why not watch each worktree's `.git/HEAD` file directly: a commit on a branch leaves the symbolic `HEAD` file unchanged — what moves is `refs/heads/<branch>` and `logs/HEAD`. Watching the whole git dir (minus `objects`) covers all of these without per-worktree path resolution.
 

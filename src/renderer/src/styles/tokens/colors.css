@@ -5,10 +5,6 @@
   --gb-bg: #1f2025;
   --gb-panel: #27282e;
   --gb-sidebar: rgba(44, 44, 50, 0.48);
-  --gb-desktop:
-    radial-gradient(1000px 700px at 18% 10%, #4a3a78 0%, transparent 55%),
-    radial-gradient(1100px 800px at 85% 22%, #7a3358 0%, transparent 60%),
-    radial-gradient(1200px 900px at 50% 98%, #1f4d7a 0%, transparent 65%), #14151c;
 
   --gb-border: #3a3a42;
   --gb-border-soft: #2c2d34;
@@ -36,12 +32,10 @@
   --gb-add-bg: rgba(82, 196, 118, 0.13);
   --gb-add-gutter: rgba(82, 196, 118, 0.22);
   --gb-add-text: #5fcb82;
-  --gb-add-word: rgba(82, 196, 118, 0.32);
 
   --gb-del-bg: rgba(255, 105, 97, 0.12);
   --gb-del-gutter: rgba(255, 105, 97, 0.2);
   --gb-del-text: #ff7b72;
-  --gb-del-word: rgba(255, 105, 97, 0.3);
 
   --gb-hunk-bg: #252a36;
   --gb-hunk-text: #7d90ba;
@@ -74,10 +68,6 @@
   --gb-bg: #ffffff;
   --gb-panel: #f5f5f7;
   --gb-sidebar: rgba(238, 238, 240, 0.55);
-  --gb-desktop:
-    radial-gradient(1000px 700px at 18% 10%, #ffd9a8 0%, transparent 55%),
-    radial-gradient(1100px 800px at 85% 22%, #ffb3c8 0%, transparent 60%),
-    radial-gradient(1200px 900px at 50% 98%, #9ec5ff 0%, transparent 65%), #e8edf5;
 
   --gb-border: #d9d9de;
   --gb-border-soft: #e8e8ec;
@@ -105,12 +95,10 @@
   --gb-add-bg: #e9f6ec;
   --gb-add-gutter: #d3ebd8;
   --gb-add-text: #1e8a3c;
-  --gb-add-word: #c4e8cb;
 
   --gb-del-bg: #fdedec;
   --gb-del-gutter: #f6d6d3;
   --gb-del-text: #c5403a;
-  --gb-del-word: #f6d0cc;
 
   --gb-hunk-bg: #eef3fb;
   --gb-hunk-text: #5a76a8;

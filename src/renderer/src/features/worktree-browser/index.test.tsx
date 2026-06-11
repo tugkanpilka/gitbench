@@ -281,9 +281,7 @@ describe('useWorktreeBrowser', () => {
       render(<BrowserHarness />);
 
       fireEvent.click(screen.getByRole('button', { name: 'Pick repository' }));
-      await waitFor(() =>
-        expect(screen.getByLabelText('Repository').textContent).toBe('/repo')
-      );
+      await waitFor(() => expect(screen.getByLabelText('Repository').textContent).toBe('/repo'));
 
       expect(window.api.startWatch).toHaveBeenCalledWith('/repo', null);
     });
@@ -292,9 +290,7 @@ describe('useWorktreeBrowser', () => {
       render(<BrowserHarness />);
 
       fireEvent.click(screen.getByRole('button', { name: 'Pick repository' }));
-      await waitFor(() =>
-        expect(screen.getByLabelText('Repository').textContent).toBe('/repo')
-      );
+      await waitFor(() => expect(screen.getByLabelText('Repository').textContent).toBe('/repo'));
 
       fireEvent.click(screen.getByRole('button', { name: 'Select feature' }));
       await waitFor(() =>
@@ -332,13 +328,9 @@ describe('useWorktreeBrowser', () => {
       render(<BrowserHarness />);
 
       fireEvent.click(screen.getByRole('button', { name: 'Pick repository' }));
-      await waitFor(() =>
-        expect(screen.getByLabelText('Repository').textContent).toBe('/repo')
-      );
+      await waitFor(() => expect(screen.getByLabelText('Repository').textContent).toBe('/repo'));
       fireEvent.click(screen.getByRole('button', { name: 'Select feature' }));
-      await waitFor(() =>
-        expect(screen.getByLabelText('Diff loading').textContent).toBe('false')
-      );
+      await waitFor(() => expect(screen.getByLabelText('Diff loading').textContent).toBe('false'));
 
       vi.mocked(window.api.listWorktrees).mockClear();
       vi.mocked(window.api.getDiff).mockClear();
@@ -380,9 +372,7 @@ describe('useWorktreeBrowser', () => {
       render(<BrowserHarness />);
 
       fireEvent.click(screen.getByRole('button', { name: 'Pick repository' }));
-      await waitFor(() =>
-        expect(screen.getByLabelText('Repository').textContent).toBe('/repo')
-      );
+      await waitFor(() => expect(screen.getByLabelText('Repository').textContent).toBe('/repo'));
 
       expect(screen.getByLabelText('Error').textContent).toBe('(none)');
     });

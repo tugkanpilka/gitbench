@@ -14,11 +14,24 @@ const MAX_BUFFER_BYTES = 64 * 1024 * 1024;
 const GIT_NOT_REPO_PATTERN = 'not a git repository';
 const GIT_CANNOT_CHANGE_DIR_PATTERN = 'cannot change to';
 
+interface RunGitOptions {
+  /**
+   * Git uses non-zero exit codes for some successful, data-bearing commands.
+   * The exit is accepted only when stderr is empty, so real command failures
+   * are still classified and surfaced.
+   */
+  acceptedExitCodes?: readonly number[];
+}
+
 /**
  * The single choke point for spawning git. All quirks and rules: agent_docs/git-notes.md.
  * Argument arrays only — never interpolate a path into a shell string.
  */
-export function runGit(targetPath: string, args: readonly string[]): Promise<string> {
+export function runGit(
+  targetPath: string,
+  args: readonly string[],
+  options: RunGitOptions = {}
+): Promise<string> {
   return new Promise((resolve, reject) => {
     execFile(
       'git',
@@ -34,7 +47,7 @@ export function runGit(targetPath: string, args: readonly string[]): Promise<str
         },
       },
       (error, stdout, stderr) => {
-        if (!error) {
+        if (!error || isAcceptedExit(error, stderr, options.acceptedExitCodes)) {
           resolve(stdout);
           return;
         }
@@ -42,6 +55,18 @@ export function runGit(targetPath: string, args: readonly string[]): Promise<str
       }
     );
   });
+}
+
+function isAcceptedExit(
+  error: ExecFileException,
+  stderr: string,
+  acceptedExitCodes: readonly number[] | undefined
+): boolean {
+  return (
+    typeof error.code === 'number' &&
+    acceptedExitCodes?.includes(error.code) === true &&
+    stderr.length === 0
+  );
 }
 
 function classify(error: ExecFileException, stderr: string, targetPath: string): Error {

@@ -11,7 +11,7 @@ export function Badge({ onSelection = false, className, children, ...props }: Ba
 
   return (
     <span className={classes} {...props}>
-      {children}
+      <span className={styles['gb-badge__content']}>{children}</span>
     </span>
   );
 }

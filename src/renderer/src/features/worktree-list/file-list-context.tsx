@@ -65,8 +65,7 @@ export function FileListProvider({
       activeFileId,
       collapsedDirectories,
       onSelectFile,
-      onToggleDirectory: (path) =>
-        setCollapsedDirectories((current) => toggledSet(current, path)),
+      onToggleDirectory: (path) => setCollapsedDirectories((current) => toggledSet(current, path)),
     }),
     [activeFileId, collapsedDirectories, onSelectFile]
   );

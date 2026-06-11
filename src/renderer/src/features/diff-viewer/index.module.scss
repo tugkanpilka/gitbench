@@ -13,10 +13,6 @@
   --diff-code-insert-text-color: var(--gb-text);
   --diff-code-delete-background-color: var(--gb-del-bg);
   --diff-code-delete-text-color: var(--gb-text);
-  --diff-code-insert-edit-background-color: var(--gb-add-word);
-  --diff-code-insert-edit-text-color: var(--gb-text);
-  --diff-code-delete-edit-background-color: var(--gb-del-word);
-  --diff-code-delete-edit-text-color: var(--gb-text);
 }
 
 .diff-view__title {
@@ -126,6 +122,11 @@
   color: #fff;
 }
 
+.diff-file__change-type-label {
+  display: block;
+  transform: translateY(2px);
+}
+
 .diff-file__change-type[data-type='modify'] {
   background: hsl(35, 80%, 50%);
 }
@@ -203,8 +204,21 @@
   background: var(--gb-del-gutter);
 }
 
+/* Zed-style change markers at the leading edge of each diff pane. */
+.diff-view :global(.diff-unified .diff-line > .diff-gutter-insert:first-child),
+.diff-view :global(.diff-split .diff-line > .diff-gutter-insert:nth-child(1)),
+.diff-view :global(.diff-split .diff-line > .diff-gutter-insert:nth-child(3)) {
+  box-shadow: inset 3px 0 var(--gb-add-text);
+}
+
+.diff-view :global(.diff-unified .diff-line > .diff-gutter-delete:first-child),
+.diff-view :global(.diff-split .diff-line > .diff-gutter-delete:nth-child(1)),
+.diff-view :global(.diff-split .diff-line > .diff-gutter-delete:nth-child(3)) {
+  box-shadow: inset 3px 0 var(--gb-del-text);
+}
+
 /* Split view center divider */
-.diff-view :global(.diff-split) .diff-code:nth-child(2) {
+.diff-view :global(.diff-split .diff-code:nth-child(2)) {
   border-right: 1px solid var(--gb-border);
 }
 
@@ -242,55 +256,78 @@
   color: var(--gb-del-text);
 }
 
-.diff-view :global(.token).comment,
-.diff-view :global(.token).prolog,
-.diff-view :global(.token).doctype,
-.diff-view :global(.token).cdata {
+.diff-view :global(.token.comment),
+.diff-view :global(.token.prolog),
+.diff-view :global(.token.doctype),
+.diff-view :global(.token.cdata) {
   color: var(--gb-syn-cm);
 }
 
-.diff-view :global(.token).keyword,
-.diff-view :global(.token).atrule,
-.diff-view :global(.token).important {
+.diff-view :global(.token.keyword),
+.diff-view :global(.token.atrule),
+.diff-view :global(.token.important),
+.diff-view :global(.token.annotation),
+.diff-view :global(.token.decorator),
+.diff-view :global(.token.directive),
+.diff-view :global(.token.macro),
+.diff-view :global(.token.rule),
+.diff-view :global(.token.statement) {
   color: var(--gb-syn-kw);
 }
 
-.diff-view :global(.token).function,
-.diff-view :global(.token).function-variable,
-.diff-view :global(.token).method {
+.diff-view :global(.token.function),
+.diff-view :global(.token.function-variable),
+.diff-view :global(.token.method),
+.diff-view :global(.token.parameter),
+.diff-view :global(.token.variable) {
   color: var(--gb-syn-fn);
 }
 
-.diff-view :global(.token).string,
-.diff-view :global(.token).char,
-.diff-view :global(.token).regex,
-.diff-view :global(.token).attr-value {
+.diff-view :global(.token.string),
+.diff-view :global(.token.char),
+.diff-view :global(.token.regex),
+.diff-view :global(.token.attr-value),
+.diff-view :global(.token.entity),
+.diff-view :global(.token.scalar),
+.diff-view :global(.token.url) {
   color: var(--gb-syn-str);
 }
 
-.diff-view :global(.token).number,
-.diff-view :global(.token).boolean,
-.diff-view :global(.token).constant,
-.diff-view :global(.token).symbol {
+.diff-view :global(.token.number),
+.diff-view :global(.token.boolean),
+.diff-view :global(.token.constant),
+.diff-view :global(.token.symbol) {
   color: var(--gb-syn-num);
 }
 
-.diff-view :global(.token).class-name,
-.diff-view :global(.token).builtin,
-.diff-view :global(.token).namespace {
+.diff-view :global(.token.class-name),
+.diff-view :global(.token.builtin),
+.diff-view :global(.token.namespace),
+.diff-view :global(.token.type),
+.diff-view :global(.token.type-expression) {
   color: var(--gb-syn-ty);
 }
 
-.diff-view :global(.token).property,
-.diff-view :global(.token).tag,
-.diff-view :global(.token).selector,
-.diff-view :global(.token).attr-name {
+.diff-view :global(.token.property),
+.diff-view :global(.token.tag),
+.diff-view :global(.token.selector),
+.diff-view :global(.token.attr-name),
+.diff-view :global(.token.field),
+.diff-view :global(.token.key) {
   color: var(--gb-syn-pr);
 }
 
-.diff-view :global(.token).operator,
-.diff-view :global(.token).punctuation {
+.diff-view :global(.token.operator),
+.diff-view :global(.token.punctuation) {
   color: var(--gb-dim);
+}
+
+.diff-view :global(.token.bold) {
+  font-weight: var(--gb-weight-bold);
+}
+
+.diff-view :global(.token.italic) {
+  font-style: italic;
 }
 
 .diff-view :global(.diff-decoration) {

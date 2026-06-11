@@ -11,24 +11,20 @@
   background: var(--gb-toolbar-bg);
   backdrop-filter: blur(20px) saturate(1.5);
   -webkit-backdrop-filter: blur(20px) saturate(1.5);
-  -webkit-app-region: drag;
-  transition:
-    background var(--gb-dur-theme) var(--gb-ease),
-    padding-left var(--gb-dur-slow) var(--gb-ease);
+  app-region: no-drag;
+  -webkit-app-region: no-drag;
+  transition: background var(--gb-dur-theme) var(--gb-ease);
 }
 
 /* Clears the macOS traffic lights when the sidebar (which normally
    hosts that clearance — see repository-sidebar.css) is hidden. */
-:global(.app-shell[data-sidebar-open='false']) .content-toolbar {
+.content-toolbar[data-sidebar-open='false'] {
   padding-left: var(--gb-traffic-clearance);
-}
-
-.content-toolbar > * {
-  -webkit-app-region: no-drag;
 }
 
 .content-toolbar__sidebar-toggle,
 .content-toolbar__theme-toggle {
+  position: relative;
   display: grid;
   width: 26px;
   padding: 0;
@@ -39,6 +35,8 @@
   color: var(--gb-dim);
   background: transparent;
   cursor: pointer;
+  app-region: no-drag;
+  -webkit-app-region: no-drag;
   transition:
     color var(--gb-dur-quick) var(--gb-ease),
     background var(--gb-dur-quick) var(--gb-ease);
@@ -58,11 +56,29 @@
   background: var(--gb-row-sel);
 }
 
+.content-toolbar__sidebar-toggle:focus-visible,
+.content-toolbar__theme-toggle:focus-visible {
+  box-shadow: none;
+}
+
+.content-toolbar__sidebar-toggle:focus-visible::after,
+.content-toolbar__theme-toggle:focus-visible::after {
+  position: absolute;
+  inset: 2px;
+  border: 2px solid color-mix(in srgb, var(--gb-accent) 55%, transparent);
+  border-radius: 4px;
+  content: '';
+  pointer-events: none;
+}
+
 .content-toolbar__info {
   display: flex;
   min-width: 0;
   flex-direction: column;
   gap: 0;
+  user-select: none;
+  app-region: drag;
+  -webkit-app-region: drag;
 }
 
 .content-toolbar__worktree-name {
@@ -85,6 +101,9 @@
 
 .content-toolbar__spacer {
   flex: 1;
+  align-self: stretch;
+  app-region: drag;
+  -webkit-app-region: drag;
 }
 
 .content-toolbar__file-list-toggle :global(.gb-segmented-control__item) {
