@@ -1,0 +1,153 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="420" viewBox="0 0 1280 420" role="img" aria-label="GitBench — watch every worktree your agents touch">
+  <defs>
+    <radialGradient id="d1" cx="18%" cy="10%" r="55%">
+      <stop offset="0" stop-color="#4a3a78" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#4a3a78" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="d2" cx="86%" cy="20%" r="60%">
+      <stop offset="0" stop-color="#7a3358" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#7a3358" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="d3" cx="50%" cy="100%" r="70%">
+      <stop offset="0" stop-color="#1f4d7a" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#1f4d7a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="gbicon" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3c4350"/>
+      <stop offset="1" stop-color="#1c2129"/>
+    </linearGradient>
+    <linearGradient id="winfade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#23242b"/>
+      <stop offset="1" stop-color="#1c1d23"/>
+    </linearGradient>
+    <style>
+      .ui { font-family: 'SF Pro Display','Helvetica Neue',Arial,sans-serif; }
+      .mono { font-family: 'SF Mono','JetBrains Mono',Menlo,Consolas,monospace; }
+    </style>
+  </defs>
+
+  <!-- desktop -->
+  <rect width="1280" height="420" rx="20" fill="#14151c"/>
+  <rect width="1280" height="420" rx="20" fill="url(#d1)"/>
+  <rect width="1280" height="420" rx="20" fill="url(#d2)"/>
+  <rect width="1280" height="420" rx="20" fill="url(#d3)"/>
+  <rect x="0.5" y="0.5" width="1279" height="419" rx="20" fill="none" stroke="rgba(255,255,255,.10)"/>
+
+  <!-- ===== left column ===== -->
+  <!-- app icon -->
+  <g transform="translate(64,60) scale(0.72)">
+    <rect x="6" y="6" width="84" height="84" rx="19" fill="url(#gbicon)"/>
+    <rect x="6" y="6" width="84" height="84" rx="19" fill="none" stroke="rgba(255,255,255,.14)"/>
+    <line x1="34" y1="26" x2="34" y2="70" stroke="#8b95a5" stroke-width="4.5" stroke-linecap="round"/>
+    <circle cx="34" cy="26" r="7" fill="#28c840"/>
+    <circle cx="34" cy="70" r="7" fill="#8b95a5"/>
+    <path d="M34 44 C34 56 58 48 58 60" fill="none" stroke="#ff5f57" stroke-width="4.5" stroke-linecap="round"/>
+    <circle cx="58" cy="66" r="7" fill="#ff5f57"/>
+  </g>
+
+  <text class="ui" x="138" y="108" font-size="44" font-weight="700" fill="#e8e8ed" letter-spacing="-0.5">GitBench</text>
+
+  <text class="ui" x="66" y="186" font-size="26" font-weight="600" fill="#e8e8ed">Watch every worktree your</text>
+  <text class="ui" x="66" y="220" font-size="26" font-weight="600" fill="#e8e8ed">agents touch.</text>
+
+  <text class="ui" x="66" y="262" font-size="15.5" fill="#9a9aa2">A native diff viewer for parallel, agent-driven</text>
+  <text class="ui" x="66" y="284" font-size="15.5" fill="#9a9aa2">Git worktree workflows.</text>
+
+  <!-- flow chips -->
+  <g class="mono" font-size="13" fill="#cfe0ff">
+    <rect x="66" y="316" width="118" height="30" rx="8" fill="rgba(46,139,255,.16)" stroke="rgba(46,139,255,.35)"/>
+    <text x="125" y="335" text-anchor="middle">repo:pick</text>
+    <text x="196" y="335" fill="#67676f" class="ui" font-size="15">›</text>
+
+    <rect x="210" y="316" width="150" height="30" rx="8" fill="rgba(46,139,255,.16)" stroke="rgba(46,139,255,.35)"/>
+    <text x="285" y="335" text-anchor="middle">worktrees:list</text>
+    <text x="372" y="335" fill="#67676f" class="ui" font-size="15">›</text>
+
+    <rect x="386" y="316" width="104" height="30" rx="8" fill="rgba(46,139,255,.16)" stroke="rgba(46,139,255,.35)"/>
+    <text x="438" y="335" text-anchor="middle">diff:get</text>
+  </g>
+
+  <!-- ===== right: app window mockup ===== -->
+  <g transform="translate(624,58)">
+    <rect x="0" y="0" width="596" height="304" rx="12" fill="url(#winfade)"/>
+    <rect x="0.5" y="0.5" width="595" height="303" rx="12" fill="none" stroke="rgba(255,255,255,.12)"/>
+
+    <!-- title bar -->
+    <circle cx="22" cy="20" r="6" fill="#ff5f57"/>
+    <circle cx="42" cy="20" r="6" fill="#febc2e"/>
+    <circle cx="62" cy="20" r="6" fill="#28c840"/>
+
+    <!-- sidebar -->
+    <rect x="0" y="40" width="172" height="264" fill="rgba(44,44,50,.45)"/>
+    <line x1="172" y1="40" x2="172" y2="304" stroke="rgba(255,255,255,.07)"/>
+    <text class="ui" x="18" y="66" font-size="10" letter-spacing="1" fill="#67676f">WORKTREES</text>
+
+    <!-- selected row -->
+    <rect x="10" y="78" width="152" height="26" rx="6" fill="#2466d1"/>
+    <circle cx="26" cy="91" r="4" fill="#ffffff"/>
+    <text class="ui" x="40" y="95" font-size="12.5" fill="#ffffff" font-weight="600">main</text>
+    <!-- rows -->
+    <circle cx="26" cy="121" r="4" fill="#28c840"/>
+    <text class="ui" x="40" y="125" font-size="12.5" fill="#c2c2cb">feature/auth</text>
+    <circle cx="26" cy="149" r="4" fill="#28c840"/>
+    <text class="ui" x="40" y="153" font-size="12.5" fill="#c2c2cb">agent/refactor</text>
+    <circle cx="26" cy="177" r="4" fill="#8b95a5"/>
+    <text class="ui" x="40" y="181" font-size="12.5" fill="#c2c2cb">hotfix/login</text>
+    <circle cx="26" cy="205" r="4" fill="#28c840"/>
+    <text class="ui" x="40" y="209" font-size="12.5" fill="#c2c2cb">agent/tests</text>
+
+    <!-- diff pane -->
+    <!-- file header -->
+    <rect x="172" y="40" width="424" height="28" fill="#27282e"/>
+    <text class="mono" x="188" y="58" font-size="12" fill="#c2c2cb">src/app/App.tsx</text>
+    <text class="mono" x="560" y="58" font-size="11.5" text-anchor="end"><tspan fill="#5fcb82">+12</tspan> <tspan fill="#ff7b72">−4</tspan></text>
+
+    <!-- hunk band -->
+    <rect x="172" y="68" width="424" height="22" fill="#252a36"/>
+    <text class="mono" x="188" y="83" font-size="11.5" fill="#7d90ba">@@ -18,7 +18,9 @@ function App() {</text>
+
+    <!-- diff rows (gutter strip + code bar) -->
+    <!-- context -->
+    <g class="mono" font-size="11.5">
+      <rect x="172" y="90" width="424" height="22" fill="none"/>
+      <rect x="196" y="98" width="220" height="6" rx="3" fill="rgba(232,232,237,.16)"/>
+
+      <!-- del -->
+      <rect x="172" y="112" width="424" height="22" fill="rgba(255,105,97,.12)"/>
+      <rect x="172" y="112" width="6" height="22" fill="rgba(255,105,97,.45)"/>
+      <text x="186" y="127" fill="#ff7b72">−</text>
+      <rect x="196" y="120" width="180" height="6" rx="3" fill="rgba(255,123,114,.45)"/>
+
+      <!-- add -->
+      <rect x="172" y="134" width="424" height="22" fill="rgba(82,196,118,.13)"/>
+      <rect x="172" y="134" width="6" height="22" fill="rgba(82,196,118,.5)"/>
+      <text x="186" y="149" fill="#5fcb82">+</text>
+      <rect x="196" y="142" width="150" height="6" rx="3" fill="rgba(95,203,130,.5)"/>
+
+      <!-- add -->
+      <rect x="172" y="156" width="424" height="22" fill="rgba(82,196,118,.13)"/>
+      <rect x="172" y="156" width="6" height="22" fill="rgba(82,196,118,.5)"/>
+      <text x="186" y="171" fill="#5fcb82">+</text>
+      <rect x="196" y="164" width="244" height="6" rx="3" fill="rgba(95,203,130,.5)"/>
+
+      <!-- context -->
+      <rect x="196" y="186" width="200" height="6" rx="3" fill="rgba(232,232,237,.16)"/>
+
+      <!-- del -->
+      <rect x="172" y="200" width="424" height="22" fill="rgba(255,105,97,.12)"/>
+      <rect x="172" y="200" width="6" height="22" fill="rgba(255,105,97,.45)"/>
+      <text x="186" y="215" fill="#ff7b72">−</text>
+      <rect x="196" y="208" width="120" height="6" rx="3" fill="rgba(255,123,114,.45)"/>
+
+      <!-- add -->
+      <rect x="172" y="222" width="424" height="22" fill="rgba(82,196,118,.13)"/>
+      <rect x="172" y="222" width="6" height="22" fill="rgba(82,196,118,.5)"/>
+      <text x="186" y="237" fill="#5fcb82">+</text>
+      <rect x="196" y="230" width="206" height="6" rx="3" fill="rgba(95,203,130,.5)"/>
+
+      <!-- context -->
+      <rect x="196" y="252" width="170" height="6" rx="3" fill="rgba(232,232,237,.16)"/>
+      <rect x="196" y="274" width="230" height="6" rx="3" fill="rgba(232,232,237,.16)"/>
+    </g>
+  </g>
+</svg>
