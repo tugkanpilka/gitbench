@@ -22,6 +22,7 @@ src/contracts/ipc/
   errors.ts       # ErrorDto
   repository.ts   # repository picker response
   result.ts       # Result<T>
+  watch.ts        # watch lifecycle request
   worktrees.ts    # worktree request/response and WorktreeDto
   index.ts        # public exports
 ```
@@ -44,18 +45,28 @@ interface GetDiffResponse {
 }
 
 interface ErrorDto {
-  code:
-    | 'GIT_NOT_INSTALLED'
-    | 'NOT_A_REPOSITORY'
-    | 'WORKTREE_NOT_FOUND'
-    | 'GIT_COMMAND_FAILED';
+  code: ErrorCode; // see ERROR_CODES below
   message: string;
 }
 ```
 
+Error codes have a single source of truth in `src/contracts/ipc/errors.ts`:
+
+```ts
+const ERROR_CODES = {
+  GIT_NOT_INSTALLED: 'GIT_NOT_INSTALLED',
+  NOT_A_REPOSITORY: 'NOT_A_REPOSITORY',
+  WORKTREE_NOT_FOUND: 'WORKTREE_NOT_FOUND',
+  GIT_COMMAND_FAILED: 'GIT_COMMAND_FAILED',
+} as const;
+type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
+```
+
+`ErrorDto.code` derives its union from `ERROR_CODES`; the string values themselves are unchanged. Add or rename a code only here, and update this document in the same commit.
+
 Domain entities never cross IPC. `src/main/ipc/mappers/worktreeMapper.ts` maps `Worktree` into `WorktreeDto`.
 
-Error mapping lives in `src/main/ipc/mappers/errorMapper.ts`:
+Error mapping lives in `src/main/ipc/mappers/errorMapper.ts` (it imports `ERROR_CODES` rather than inlining literals):
 
 - `GitNotInstalledError` -> `GIT_NOT_INSTALLED`
 - `NotARepositoryError` -> `NOT_A_REPOSITORY`
@@ -83,6 +94,24 @@ Error mapping lives in `src/main/ipc/mappers/errorMapper.ts`:
 - Response: `Result<GetDiffResponse>`
 - Flow: IPC handler -> `getUncommittedDiff` -> `DiffReader` -> Git CLI reader -> raw unified diff.
 
+### `watch:start`
+
+- Request: `StartWatchRequest` with `{ repoPath: string; selectedWorktreePath: string | null }`
+- Response: `Result<null>` (`null` data is the start acknowledgement)
+- Starts (and replaces any existing) filesystem watcher for the active repo. Watches the repo's `.git` for worktree-list changes and the selected worktree's tree for diff changes.
+- Flow: IPC handler -> `watchRepository` -> `RepoWatcher` port -> infrastructure watcher. On change it emits the `repo:changed` event (below).
+
+### `watch:stop`
+
+- Request: none
+- Response: `Result<null>`
+- Disposes the active watcher. Idempotent — stopping when nothing is watched succeeds.
+
+### `repo:changed` (push: main -> renderer)
+
+- This is the **only** main-initiated channel; every other channel is renderer-initiated request/response.
+- **No payload and not a `Result` envelope** — it is a debounced "something changed, re-query now" signal, not data. The renderer responds by re-invoking `worktrees:list` and `diff:get`. Git stays the single source of truth; the watcher never computes a diff.
+
 ## Preload
 
 `src/preload/index.ts` is the only file where `ipcRenderer` appears. It exposes the `DesktopApi` contract:
@@ -92,8 +121,16 @@ interface DesktopApi {
   pickRepo(): Promise<Result<string | null>>;
   listWorktrees(repoPath: string): Promise<Result<WorktreeDto[]>>;
   getDiff(worktreePath: string): Promise<Result<GetDiffResponse>>;
+  startWatch(repoPath: string, selectedWorktreePath: string | null): Promise<Result<null>>;
+  stopWatch(): Promise<Result<null>>;
+  onRepoChanged(listener: () => void): () => void; // returns an unsubscribe fn
 }
 ```
+
+`onRepoChanged` is the one non-`Promise` member: it subscribes to the `repo:changed`
+push event via `ipcRenderer.on` and returns an unsubscribe function. The listener
+receives no arguments — the preload wrapper strips Electron's event object, which is
+not structured-clone-safe.
 
 `contextIsolation: true` and `nodeIntegration: false` are non-negotiable.
 

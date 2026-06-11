@@ -2,55 +2,16 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ErrorDto, Result, WorktreeDto } from '../../../../contracts/ipc';
+import type { Result } from '../../../../contracts/ipc';
+import {
+  deferred,
+  failResult,
+  FEATURE_WORKTREE,
+  MAIN_WORKTREE,
+  okResult,
+  stubApi,
+} from '../../test/fixtures';
 import { useWorktreeBrowser } from '.';
-
-const okResult = <T,>(data: T): Result<T> => ({ ok: true, data });
-const failResult = <T,>(code: ErrorDto['code'], message: string): Result<T> => ({
-  ok: false,
-  error: { code, message },
-});
-
-const MAIN_WORKTREE: WorktreeDto = {
-  path: '/repo',
-  branch: 'main',
-  headSha: 'a'.repeat(40),
-  isMain: true,
-  isLocked: false,
-};
-
-const FEATURE_WORKTREE: WorktreeDto = {
-  path: '/repo-feature',
-  branch: 'feature/login',
-  headSha: 'b'.repeat(40),
-  isMain: false,
-  isLocked: false,
-};
-
-function stubApi(overrides: Partial<Window['api']> = {}): void {
-  window.api = {
-    pickRepo: vi.fn().mockResolvedValue(okResult<string | null>('/repo')),
-    listWorktrees: vi.fn().mockResolvedValue(okResult([MAIN_WORKTREE, FEATURE_WORKTREE])),
-    getDiff: vi.fn().mockResolvedValue(okResult({ diffText: 'diff' })),
-    ...overrides,
-  };
-}
-
-interface Deferred<T> {
-  promise: Promise<T>;
-  resolve: (value: T) => void;
-  reject: (reason: unknown) => void;
-}
-
-function deferred<T>(): Deferred<T> {
-  let resolve!: (value: T) => void;
-  let reject!: (reason: unknown) => void;
-  const promise = new Promise<T>((res, rej) => {
-    resolve = res;
-    reject = rej;
-  });
-  return { promise, resolve, reject };
-}
 
 function BrowserHarness() {
   const browser = useWorktreeBrowser();
@@ -145,6 +106,34 @@ describe('useWorktreeBrowser', () => {
     expect(screen.getByLabelText('Error').textContent).toBe('(none)');
     expect(screen.getByLabelText('Diff').textContent).toBe('/repo:main changes');
     expect(screen.getByLabelText('Diff loading').textContent).toBe('false');
+  });
+
+  it('ignores a stale result when the same worktree is re-selected before it resolves', async () => {
+    const firstDiff = deferred<Result<{ diffText: string }>>();
+    const secondDiff = deferred<Result<{ diffText: string }>>();
+    stubApi({
+      getDiff: vi
+        .fn()
+        .mockReturnValueOnce(firstDiff.promise)
+        .mockReturnValueOnce(secondDiff.promise),
+    });
+    render(<BrowserHarness />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select main' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Select main' }));
+    await act(async () => {
+      secondDiff.resolve(okResult({ diffText: 'fresh main changes' }));
+    });
+
+    expect(screen.getByLabelText('Diff').textContent).toBe('/repo:fresh main changes');
+    expect(screen.getByLabelText('Diff loading').textContent).toBe('false');
+
+    await act(async () => {
+      firstDiff.resolve(okResult({ diffText: 'stale main changes' }));
+    });
+
+    expect(screen.getByLabelText('Diff').textContent).toBe('/repo:fresh main changes');
+    expect(screen.getByLabelText('Error').textContent).toBe('(none)');
   });
 
   it('keeps the open repository path when picking another repository fails to list worktrees', async () => {
@@ -285,5 +274,117 @@ describe('useWorktreeBrowser', () => {
     expect(await screen.findByText('Unexpected error.')).toBeTruthy();
     expect(screen.getByLabelText('Diff').textContent).toBe('(none)');
     expect(screen.getByLabelText('Diff loading').textContent).toBe('false');
+  });
+
+  describe('file watching', () => {
+    it('starts watching after a repository is picked', async () => {
+      render(<BrowserHarness />);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Pick repository' }));
+      await waitFor(() =>
+        expect(screen.getByLabelText('Repository').textContent).toBe('/repo')
+      );
+
+      expect(window.api.startWatch).toHaveBeenCalledWith('/repo', null);
+    });
+
+    it('restarts the watch when a worktree is selected', async () => {
+      render(<BrowserHarness />);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Pick repository' }));
+      await waitFor(() =>
+        expect(screen.getByLabelText('Repository').textContent).toBe('/repo')
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: 'Select feature' }));
+      await waitFor(() =>
+        expect(screen.getByLabelText('Selected').textContent).toBe('/repo-feature')
+      );
+
+      expect(window.api.startWatch).toHaveBeenLastCalledWith('/repo', '/repo-feature');
+    });
+
+    it('stops watching on unmount', () => {
+      const { unmount } = render(<BrowserHarness />);
+      unmount();
+      expect(window.api.stopWatch).toHaveBeenCalled();
+    });
+
+    it('subscribes to repo:changed and unsubscribes on unmount', () => {
+      const unsubscribe = vi.fn();
+      stubApi({ onRepoChanged: vi.fn().mockReturnValue(unsubscribe) });
+
+      const { unmount } = render(<BrowserHarness />);
+      expect(window.api.onRepoChanged).toHaveBeenCalledTimes(1);
+
+      unmount();
+      expect(unsubscribe).toHaveBeenCalled();
+    });
+
+    it('silently reloads the worktree list and diff on a repo:changed signal', async () => {
+      let signal!: () => void;
+      stubApi({
+        onRepoChanged: vi.fn().mockImplementation((fn: () => void) => {
+          signal = fn;
+          return () => {};
+        }),
+      });
+      render(<BrowserHarness />);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Pick repository' }));
+      await waitFor(() =>
+        expect(screen.getByLabelText('Repository').textContent).toBe('/repo')
+      );
+      fireEvent.click(screen.getByRole('button', { name: 'Select feature' }));
+      await waitFor(() =>
+        expect(screen.getByLabelText('Diff loading').textContent).toBe('false')
+      );
+
+      vi.mocked(window.api.listWorktrees).mockClear();
+      vi.mocked(window.api.getDiff).mockClear();
+
+      await act(async () => {
+        signal();
+      });
+
+      await waitFor(() => {
+        expect(window.api.listWorktrees).toHaveBeenCalledWith('/repo');
+      });
+      expect(window.api.getDiff).toHaveBeenCalledWith('/repo-feature');
+      // Silent refresh: no loading spinner shown.
+      expect(screen.getByLabelText('Loading').textContent).toBe('false');
+    });
+
+    it('does not re-query when repo:changed fires before a repo is opened', async () => {
+      let signal!: () => void;
+      stubApi({
+        onRepoChanged: vi.fn().mockImplementation((fn: () => void) => {
+          signal = fn;
+          return () => {};
+        }),
+      });
+      render(<BrowserHarness />);
+
+      await act(async () => {
+        signal();
+      });
+
+      expect(window.api.listWorktrees).not.toHaveBeenCalled();
+      expect(window.api.getDiff).not.toHaveBeenCalled();
+    });
+
+    it('a startWatch failure is non-fatal — the UI continues working', async () => {
+      stubApi({
+        startWatch: vi.fn().mockResolvedValue(failResult('GIT_COMMAND_FAILED', 'watch error')),
+      });
+      render(<BrowserHarness />);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Pick repository' }));
+      await waitFor(() =>
+        expect(screen.getByLabelText('Repository').textContent).toBe('/repo')
+      );
+
+      expect(screen.getByLabelText('Error').textContent).toBe('(none)');
+    });
   });
 });

@@ -24,4 +24,14 @@ export const desktopApi = {
   async getDiff(worktreePath: string): Promise<GetDiffResponse> {
     return unwrap(await window.api.getDiff(worktreePath));
   },
+  async startWatch(repoPath: string, selectedWorktreePath: string | null): Promise<null> {
+    return unwrap(await window.api.startWatch(repoPath, selectedWorktreePath));
+  },
+  async stopWatch(): Promise<null> {
+    return unwrap(await window.api.stopWatch());
+  },
+  // Not a Result envelope — a direct subscription that returns its unsubscribe fn.
+  onRepoChanged(listener: () => void): () => void {
+    return window.api.onRepoChanged(listener);
+  },
 };

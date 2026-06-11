@@ -26,15 +26,15 @@ Violations are architecture bugs even when the code works. ESLint enforces the m
 
 ## Responsibilities
 
-| Layer | Location | Responsibility |
-| --- | --- | --- |
-| Domain | `src/domain` | Business entities and invariants. Pure TypeScript. |
-| Application | `src/application` | Use cases, output ports, and application-level errors. Pure TypeScript. |
-| Infrastructure | `src/infrastructure` | Output adapters. The Git CLI implementation and parsing live here. |
-| Contracts | `src/contracts` | IPC channels, request/response DTOs, `Result<T>`, and the preload API type. |
-| Main | `src/main` | Electron lifecycle, composition root, IPC input adapters, DTO/error mapping. |
-| Preload | `src/preload` | The single `ipcRenderer` bridge exposing `window.api`. |
-| Renderer | `src/renderer` | React UI organized by feature. It communicates only through `window.api`. |
+| Layer          | Location             | Responsibility                                                               |
+| -------------- | -------------------- | ---------------------------------------------------------------------------- |
+| Domain         | `src/domain`         | Business entities and invariants. Pure TypeScript.                           |
+| Application    | `src/application`    | Use cases, output ports, and application-level errors. Pure TypeScript.      |
+| Infrastructure | `src/infrastructure` | Output adapters. The Git CLI implementation and parsing live here.           |
+| Contracts      | `src/contracts`      | IPC channels, request/response DTOs, `Result<T>`, and the preload API type.  |
+| Main           | `src/main`           | Electron lifecycle, composition root, IPC input adapters, DTO/error mapping. |
+| Preload        | `src/preload`        | The single `ipcRenderer` bridge exposing `window.api`.                       |
+| Renderer       | `src/renderer`       | React UI organized by feature. It communicates only through `window.api`.    |
 
 ## Directory layout
 
@@ -80,10 +80,16 @@ src/
       compositionRoot.ts
       createWindow.ts
     ipc/
-      handlers/
-      mappers/
-      registerHandlers.ts
-      result.ts
+      handle.ts            # wraps a handler so it always returns a Result<T>, never throws across IPC
+      handlers/            # one input adapter per channel
+        pickRepositoryHandler.ts
+        listWorktreesHandler.ts
+        getDiffHandler.ts
+      mappers/             # domain entities -> contract DTOs, application errors -> error codes
+        worktreeMapper.ts
+        errorMapper.ts
+      registerHandlers.ts  # binds each channel to its handler on app startup
+      result.ts            # ok()/err() helpers for building Result<T> envelopes
     index.ts
 
   preload/

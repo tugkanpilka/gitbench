@@ -1,3 +1,3 @@
-export type TProps = {
+export type IndentGuidesProps = {
   depth: number;
 };

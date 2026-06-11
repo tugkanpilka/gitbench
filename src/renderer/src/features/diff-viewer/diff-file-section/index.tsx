@@ -1,7 +1,9 @@
+import { memo } from 'react';
 import { Diff, Hunk, type FileData } from 'react-diff-view';
 
+import { Chevron } from '../../../shared/ui/icons';
 import { DiffStat } from '../../../shared/ui/diff-stat';
-import type { TProps } from './index.types';
+import type { DiffFileSectionProps } from './index.types';
 import type { DiffFileModel } from '../utils/diffModel.types';
 import styles from '../index.module.scss';
 
@@ -12,28 +14,6 @@ const CHANGE_TYPE_LABEL: Record<FileData['type'], string> = {
   rename: 'R',
   copy: 'C',
 };
-
-function Chevron({ collapsed }: { collapsed: boolean }) {
-  return (
-    <svg
-      className={styles['diff-file__chevron']}
-      data-collapsed={collapsed}
-      width="8"
-      height="8"
-      viewBox="0 0 8 8"
-      aria-hidden="true"
-    >
-      <path
-        d="M2.5 1 L6 4 L2.5 7"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
 
 function FilePath({ model }: { model: DiffFileModel }) {
   if (model.previousPath !== null) {
@@ -57,7 +37,13 @@ function FilePath({ model }: { model: DiffFileModel }) {
   );
 }
 
-export function DiffFileSection({ model, viewType, collapsed, onToggle, sectionRef }: TProps) {
+export const DiffFileSection = memo(function DiffFileSection({
+  model,
+  viewType,
+  collapsed,
+  onToggle,
+  sectionRef,
+}: DiffFileSectionProps) {
   const contentId = `diff-file-${model.id.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
 
   return (
@@ -74,7 +60,7 @@ export function DiffFileSection({ model, viewType, collapsed, onToggle, sectionR
           aria-controls={contentId}
           onClick={onToggle}
         >
-          <Chevron collapsed={collapsed} />
+          <Chevron collapsed={collapsed} className={styles['diff-file__chevron']} />
           <span
             className={styles['diff-file__change-type']}
             data-type={model.file.type}
@@ -101,10 +87,7 @@ export function DiffFileSection({ model, viewType, collapsed, onToggle, sectionR
             >
               {(hunks) =>
                 hunks.map((hunk) => (
-                  <Hunk
-                    key={`${hunk.oldStart}:${hunk.newStart}:${hunk.content}`}
-                    hunk={hunk}
-                  />
+                  <Hunk key={`${hunk.oldStart}:${hunk.newStart}:${hunk.content}`} hunk={hunk} />
                 ))
               }
             </Diff>
@@ -113,4 +96,4 @@ export function DiffFileSection({ model, viewType, collapsed, onToggle, sectionR
       )}
     </section>
   );
-}
+});

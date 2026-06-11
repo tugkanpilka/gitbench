@@ -70,13 +70,14 @@ appleid.apple.com → Sign-In and Security → App-Specific Passwords. Note your
 Repo → Settings → Secrets and variables → Actions. These match the Docbook
 desktop pipeline, so the same values are reused:
 
-| Secret | Value |
-| --- | --- |
-| `CSC_LINK` | base64 of the Developer ID Application `.p12` |
-| `CSC_KEY_PASSWORD` | the `.p12` password |
-| `APPLE_ID` | your Apple ID email |
-| `APPLE_ID_PASS` | app-specific password (notarization) |
-| `APPLE_TEAM_ID` | your 10-char Team ID |
+| Secret                    | Value                                                    |
+| ------------------------- | -------------------------------------------------------- |
+| `CSC_LINK`                | base64 of the Developer ID Application `.p12`            |
+| `CSC_KEY_PASSWORD`        | the `.p12` password                                      |
+| `APPLE_ID`                | your Apple ID email                                      |
+| `APPLE_ID_PASS`           | app-specific password (notarization)                     |
+| `APPLE_TEAM_ID`           | your 10-char Team ID                                     |
+| `HOMEBREW_TAP_DEPLOY_KEY` | **already set** — SSH deploy key for the tap (see below) |
 
 No publish token is needed — electron-builder publishes with the workflow's
 built-in `GITHUB_TOKEN`.

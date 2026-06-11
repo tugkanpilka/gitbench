@@ -9,9 +9,7 @@ afterEach(() => cleanup());
 describe('WelcomeScreen', () => {
   it('exposes the working repository action', () => {
     const onOpenRepository = vi.fn();
-    render(
-      <WelcomeScreen loading={false} error={null} onOpenRepository={onOpenRepository} />
-    );
+    render(<WelcomeScreen loading={false} error={null} onOpenRepository={onOpenRepository} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Open Repository…' }));
 
@@ -19,21 +17,17 @@ describe('WelcomeScreen', () => {
   });
 
   it('keeps cloning out of the MVP welcome screen', () => {
-    render(
-      <WelcomeScreen loading={false} error={null} onOpenRepository={() => undefined} />
-    );
+    render(<WelcomeScreen loading={false} error={null} onOpenRepository={() => undefined} />);
 
     expect(screen.queryByText(/clone/i)).toBeNull();
   });
 
   it('disables the action while opening', () => {
-    render(
-      <WelcomeScreen loading error={null} onOpenRepository={() => undefined} />
-    );
+    render(<WelcomeScreen loading error={null} onOpenRepository={() => undefined} />);
 
-    expect(screen.getByRole('button', { name: 'Opening repository…' }).hasAttribute('disabled')).toBe(
-      true
-    );
+    expect(
+      screen.getByRole('button', { name: 'Opening repository…' }).hasAttribute('disabled')
+    ).toBe(true);
   });
 
   it('announces errors via an alert', () => {

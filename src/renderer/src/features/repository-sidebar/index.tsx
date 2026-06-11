@@ -1,6 +1,6 @@
 import { nameFromPath } from '../../shared/path/nameFromPath';
 import { WorktreeList } from '../worktree-list';
-import type { TProps } from './index.types';
+import type { RepositorySidebarProps } from './index.types';
 import styles from './index.module.scss';
 
 export function RepositorySidebar({
@@ -13,13 +13,15 @@ export function RepositorySidebar({
   diffStats,
   onSelectWorktree,
   onSelectFile,
-}: TProps) {
+}: RepositorySidebarProps) {
   const repositoryName = nameFromPath(repoPath);
 
   return (
     <div className={styles['repository-sidebar']}>
       <header className={styles['repository-sidebar__header']}>
-        <span className={styles['repository-sidebar__repo-name']} title={repoPath}>{repositoryName}</span>
+        <span className={styles['repository-sidebar__repo-name']} title={repoPath}>
+          {repositoryName}
+        </span>
       </header>
 
       <nav className={styles['repository-sidebar__navigation']} aria-label="Worktrees">

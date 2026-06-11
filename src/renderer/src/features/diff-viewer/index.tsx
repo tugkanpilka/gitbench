@@ -1,11 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { RefCallback } from 'react';
 import 'react-diff-view/style/index.css';
 
 import { toggledSet } from '../../shared/collections/toggledSet';
 import { DiffFileSection } from './diff-file-section';
 import { useScrollToSection } from './hooks/useScrollToSection';
 import { useActiveFileScrollSpy } from './hooks/useActiveFileScrollSpy';
-import type { TProps } from './index.types';
+import type { DiffViewProps } from './index.types';
 import styles from './index.module.scss';
 
 export function DiffView({
@@ -14,7 +15,7 @@ export function DiffView({
   viewType,
   navigationTarget,
   onActiveFileChange,
-}: TProps) {
+}: DiffViewProps) {
   const [collapsedFiles, setCollapsedFiles] = useState<Set<string>>(() => new Set());
   const rootRef = useRef<HTMLDivElement>(null);
   const sectionRefs = useRef(new Map<string, HTMLElement>());
@@ -39,9 +40,34 @@ export function DiffView({
 
   useActiveFileScrollSpy(rootRef, sectionRefs, model, onActiveFileChange);
 
-  const toggleFile = (fileId: string) => {
-    setCollapsedFiles((current) => toggledSet(current, fileId));
-  };
+  // Cache one stable callback per file id so each memoized DiffFileSection keeps
+  // referentially-equal onToggle / sectionRef props across re-renders.
+  const toggleHandlers = useRef(new Map<string, () => void>());
+  const sectionRefHandlers = useRef(new Map<string, RefCallback<HTMLElement>>());
+
+  const getToggleHandler = useCallback((fileId: string) => {
+    let handler = toggleHandlers.current.get(fileId);
+    if (handler === undefined) {
+      handler = () => setCollapsedFiles((current) => toggledSet(current, fileId));
+      toggleHandlers.current.set(fileId, handler);
+    }
+    return handler;
+  }, []);
+
+  const getSectionRef = useCallback((fileId: string) => {
+    let handler = sectionRefHandlers.current.get(fileId);
+    if (handler === undefined) {
+      handler = (element) => {
+        if (element === null) {
+          sectionRefs.current.delete(fileId);
+        } else {
+          sectionRefs.current.set(fileId, element);
+        }
+      };
+      sectionRefHandlers.current.set(fileId, handler);
+    }
+    return handler;
+  }, []);
 
   if (clean) {
     return (
@@ -70,14 +96,8 @@ export function DiffView({
           model={file}
           viewType={viewType}
           collapsed={collapsedFiles.has(file.id)}
-          onToggle={() => toggleFile(file.id)}
-          sectionRef={(element) => {
-            if (element === null) {
-              sectionRefs.current.delete(file.id);
-            } else {
-              sectionRefs.current.set(file.id, element);
-            }
-          }}
+          onToggle={getToggleHandler(file.id)}
+          sectionRef={getSectionRef(file.id)}
         />
       ))}
     </div>

@@ -16,8 +16,8 @@
   --gb-window-edge: rgba(255, 255, 255, 0.12);
 
   --gb-text: #e8e8ed;
-  --gb-dim: #9a9aa2;
-  --gb-faint: #67676f;
+  --gb-dim: #cacacf;
+  --gb-faint: #a4a4ac;
 
   --gb-accent: #2e8bff;
   --gb-accent-bg: rgba(46, 139, 255, 0.16);
@@ -85,8 +85,8 @@
   --gb-window-edge: transparent;
 
   --gb-text: #1d1d1f;
-  --gb-dim: #6e6e73;
-  --gb-faint: #9b9ba1;
+  --gb-dim: #48484d;
+  --gb-faint: #636369;
 
   --gb-accent: #0a6ce8;
   --gb-accent-bg: rgba(10, 108, 232, 0.1);

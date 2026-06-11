@@ -2,7 +2,7 @@ import type { ViewType } from '../../features/diff-viewer/index.types';
 import type { DiffModel } from '../../features/diff-viewer/utils/diffModel.types';
 import type { DiffNavigationTarget } from '../../features/diff-viewer/index.types';
 
-export type TProps = {
+export type WorkspaceProps = {
   error: string | null;
   diffLoading: boolean;
   hasDiff: boolean;

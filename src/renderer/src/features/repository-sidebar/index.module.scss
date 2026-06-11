@@ -28,14 +28,17 @@
 .repository-sidebar__section-label {
   margin: 0;
   font-size: var(--gb-text-xs);
-  font-weight: var(--gb-weight-bold);
+  font-weight: var(--gb-weight-semibold);
   color: var(--gb-faint);
+  text-transform: uppercase;
+  letter-spacing: var(--gb-tracking-caps);
 }
 
 .repository-sidebar__repo-name {
   margin: 0;
-  font-size: var(--gb-text-xs);
+  font-size: var(--gb-text-sm);
   font-weight: var(--gb-weight-semibold);
+  line-height: var(--gb-leading-sidebar);
   color: var(--gb-text);
   overflow: hidden;
   text-overflow: ellipsis;

@@ -3,7 +3,7 @@
   margin: 0;
   padding: 0;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   list-style: none;
 }
 
@@ -58,6 +58,7 @@
   overflow: hidden;
   font-size: var(--gb-text-sm);
   font-weight: var(--gb-weight-regular);
+  line-height: var(--gb-leading-sidebar);
   letter-spacing: var(--gb-tracking-tight);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -75,9 +76,8 @@
 
 .worktree-row__reference {
   overflow: hidden;
-  font-family: var(--gb-font-mono);
   font-size: var(--gb-text-xs);
-  color: var(--gb-faint);
+  color: var(--gb-dim);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -109,8 +109,10 @@
 .worktree-files-section__label {
   margin: 0;
   font-size: var(--gb-text-xs);
-  font-weight: var(--gb-weight-bold);
+  font-weight: var(--gb-weight-semibold);
   color: var(--gb-faint);
+  text-transform: uppercase;
+  letter-spacing: var(--gb-tracking-caps);
 }
 
 .worktree-list__empty {
@@ -207,8 +209,7 @@
   flex: 1;
   overflow: hidden;
   align-items: center;
-  font-family: var(--gb-font-mono);
-  font-size: var(--gb-code-sm);
+  font-size: var(--gb-text-sm);
   white-space: nowrap;
 }
 

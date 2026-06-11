@@ -10,11 +10,11 @@ delivery adapters. The layering is enforced by ESLint, and **a boundary violatio
 bug even when the code works.** Before you change anything non-trivial, skim the docs
 that govern it:
 
-| If your change touches…                       | Read first                     |
-| --------------------------------------------- | ------------------------------ |
-| IPC channels, DTOs, error codes               | [`agent_docs/ipc-contract.md`](agent_docs/ipc-contract.md) |
-| Anything that runs git or parses its output   | [`agent_docs/git-notes.md`](agent_docs/git-notes.md)       |
-| Layer boundaries, new modules, imports        | [`agent_docs/architecture.md`](agent_docs/architecture.md) |
+| If your change touches…                     | Read first                                                 |
+| ------------------------------------------- | ---------------------------------------------------------- |
+| IPC channels, DTOs, error codes             | [`agent_docs/ipc-contract.md`](agent_docs/ipc-contract.md) |
+| Anything that runs git or parses its output | [`agent_docs/git-notes.md`](agent_docs/git-notes.md)       |
+| Layer boundaries, new modules, imports      | [`agent_docs/architecture.md`](agent_docs/architecture.md) |
 
 A few rules are non-negotiable (the full list lives in [`CLAUDE.md`](CLAUDE.md)):
 
@@ -69,7 +69,7 @@ New behavior should arrive with the matching kind of test.
 ## Pull requests
 
 - Keep PRs focused; one logical change per PR.
-- Write a clear description of *what* and *why*. Link any related issue.
+- Write a clear description of _what_ and _why_. Link any related issue.
 - Make sure `typecheck`, `test`, and `lint` are green locally.
 - If you changed an IPC channel, DTO, or error code, confirm `agent_docs/ipc-contract.md`
   is updated in the same commit.

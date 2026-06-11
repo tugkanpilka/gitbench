@@ -2,25 +2,17 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { WorktreeDto } from '../../../../contracts/ipc';
 import { buildDiffModel } from '../diff-viewer/utils/diffModel';
+import { MAIN_WORKTREE, makeWorktree } from '../../test/fixtures';
 import { WorktreeList } from '.';
 
-const MAIN_WORKTREE: WorktreeDto = {
-  path: '/repo',
-  branch: 'main',
-  headSha: 'a'.repeat(40),
-  isMain: true,
-  isLocked: false,
-};
-
-const DETACHED_WORKTREE: WorktreeDto = {
+const DETACHED_WORKTREE = makeWorktree({
   path: '/repo-detached',
   branch: null,
   headSha: 'bcdef1234567890',
   isMain: false,
   isLocked: true,
-};
+});
 
 const FILES = buildDiffModel(`diff --git a/src/a.ts b/src/a.ts
 index 1111111..2222222 100644
@@ -132,9 +124,7 @@ describe('WorktreeList', () => {
       />
     );
 
-    fireEvent.click(
-      screen.getByRole('button', { name: 'src/a.ts, 1 addition, 0 deletions' })
-    );
+    fireEvent.click(screen.getByRole('button', { name: 'src/a.ts, 1 addition, 0 deletions' }));
 
     expect(onSelectFile).toHaveBeenCalledWith(FILES[0].id);
   });
@@ -169,9 +159,7 @@ describe('WorktreeList', () => {
     const onSelectFile = vi.fn();
     renderTreeMode(onSelectFile);
 
-    fireEvent.click(
-      screen.getByRole('button', { name: 'src/a.ts, 1 addition, 0 deletions' })
-    );
+    fireEvent.click(screen.getByRole('button', { name: 'src/a.ts, 1 addition, 0 deletions' }));
 
     expect(onSelectFile).toHaveBeenCalledWith(FILES[0].id);
   });
@@ -183,8 +171,6 @@ describe('WorktreeList', () => {
     fireEvent.click(folder);
 
     expect(folder.getAttribute('aria-expanded')).toBe('false');
-    expect(
-      screen.queryByRole('button', { name: 'src/a.ts, 1 addition, 0 deletions' })
-    ).toBeNull();
+    expect(screen.queryByRole('button', { name: 'src/a.ts, 1 addition, 0 deletions' })).toBeNull();
   });
 });

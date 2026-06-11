@@ -52,7 +52,7 @@ export function languageFromPath(path: string): string | null {
     return 'bash';
   }
 
-  const extension = filename.includes('.') ? filename.split('.').at(-1) ?? '' : '';
+  const extension = filename.includes('.') ? (filename.split('.').at(-1) ?? '') : '';
   return LANGUAGE_BY_EXTENSION[extension] ?? null;
 }
 

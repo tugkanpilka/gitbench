@@ -2,48 +2,16 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ErrorDto, Result, WorktreeDto } from '../../../contracts/ipc';
+import type { Result } from '../../../contracts/ipc';
+import { failResult, okResult, SAMPLE_DIFF, stubApi } from '../test/fixtures';
 import { installMemoryStorage } from '../test/installMemoryStorage';
 import App from './App';
 
-const okResult = <T,>(data: T): Result<T> => ({ ok: true, data });
-const failResult = <T,>(code: ErrorDto['code'], message: string): Result<T> => ({
-  ok: false,
-  error: { code, message },
-});
-
-const MAIN_WORKTREE: WorktreeDto = {
-  path: '/repo',
-  branch: 'main',
-  headSha: 'a'.repeat(40),
-  isMain: true,
-  isLocked: false,
-};
-
-const FEATURE_WORKTREE: WorktreeDto = {
-  path: '/repo-feature',
-  branch: 'feature/login',
-  headSha: 'b'.repeat(40),
-  isMain: false,
-  isLocked: false,
-};
-
-const SAMPLE_DIFF = `diff --git a/file.txt b/file.txt
-index 0000000..1111111 100644
---- a/file.txt
-+++ b/file.txt
-@@ -1 +1,2 @@
- hello
-+world
-`;
-
-function stubApi(overrides: Partial<Window['api']> = {}): void {
-  window.api = {
-    pickRepo: vi.fn().mockResolvedValue(okResult<string | null>('/repo')),
-    listWorktrees: vi.fn().mockResolvedValue(okResult([MAIN_WORKTREE, FEATURE_WORKTREE])),
+function stubAppApi(overrides: Partial<Window['api']> = {}): void {
+  stubApi({
     getDiff: vi.fn().mockResolvedValue(okResult({ diffText: SAMPLE_DIFF })),
     ...overrides,
-  };
+  });
 }
 
 function clickOpenRepository(): void {
@@ -60,7 +28,7 @@ describe('App', () => {
   beforeEach(() => {
     installMemoryStorage();
     delete document.documentElement.dataset.theme;
-    stubApi();
+    stubAppApi();
   });
   afterEach(() => {
     cleanup();
@@ -107,8 +75,7 @@ describe('App', () => {
     const collapsedToggle = screen.getByRole('button', { name: 'Show sidebar' });
     expect(collapsedToggle.getAttribute('aria-expanded')).toBe('false');
     expect(
-      JSON.parse(window.localStorage.getItem('gitbench.ui-preferences.v1') ?? '')
-        .sidebarOpen
+      JSON.parse(window.localStorage.getItem('gitbench.ui-preferences.v1') ?? '').sidebarOpen
     ).toBe(false);
   });
 
@@ -122,13 +89,12 @@ describe('App', () => {
 
     expect(treeMode.getAttribute('aria-checked')).toBe('true');
     expect(
-      JSON.parse(window.localStorage.getItem('gitbench.ui-preferences.v1') ?? '')
-        .fileListMode
+      JSON.parse(window.localStorage.getItem('gitbench.ui-preferences.v1') ?? '').fileListMode
     ).toBe('tree');
   });
 
   it('does nothing when the dialog is cancelled (null is not an error)', async () => {
-    stubApi({ pickRepo: vi.fn().mockResolvedValue(okResult<string | null>(null)) });
+    stubAppApi({ pickRepo: vi.fn().mockResolvedValue(okResult<string | null>(null)) });
     render(<App />);
 
     clickOpenRepository();
@@ -143,7 +109,7 @@ describe('App', () => {
     const pickResult = new Promise<Result<string | null>>((resolve) => {
       resolvePick = resolve;
     });
-    stubApi({ pickRepo: vi.fn().mockReturnValue(pickResult) });
+    stubAppApi({ pickRepo: vi.fn().mockReturnValue(pickResult) });
     render(<App />);
 
     clickOpenRepository();
@@ -161,27 +127,23 @@ describe('App', () => {
     clickOpenRepository();
     fireEvent.click(await screen.findByText('feature/login'));
 
-    expect(
-      await screen.findByRole('heading', { name: 'Uncommitted changes' })
-    ).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Uncommitted changes' })).toBeTruthy();
     expect(await screen.findByText('world')).toBeTruthy();
     expect(
-      screen.getByRole('button', { name: 'file.txt, 1 addition, 0 deletions' }).getAttribute(
-        'aria-current'
-      )
+      screen
+        .getByRole('button', { name: 'file.txt, 1 addition, 0 deletions' })
+        .getAttribute('aria-current')
     ).toBe('location');
     expect(window.api.getDiff).toHaveBeenCalledWith('/repo-feature');
   });
 
   it('renders the dedicated clean state for an empty diff', async () => {
-    stubApi({ getDiff: vi.fn().mockResolvedValue(okResult({ diffText: '' })) });
+    stubAppApi({ getDiff: vi.fn().mockResolvedValue(okResult({ diffText: '' })) });
     render(<App />);
 
     fireEvent.click((await openRepository())[0]);
 
-    expect(
-      await screen.findByText('Worktree is clean; no changes in tracked files.')
-    ).toBeTruthy();
+    expect(await screen.findByText('Worktree is clean; no changes in tracked files.')).toBeTruthy();
   });
 
   it('shows a loading state while the selected worktree diff is requested', async () => {
@@ -189,7 +151,7 @@ describe('App', () => {
     const diffResult = new Promise<Result<{ diffText: string }>>((resolve) => {
       resolveDiff = resolve;
     });
-    stubApi({ getDiff: vi.fn().mockReturnValue(diffResult) });
+    stubAppApi({ getDiff: vi.fn().mockReturnValue(diffResult) });
     render(<App />);
 
     clickOpenRepository();
@@ -198,13 +160,11 @@ describe('App', () => {
     expect((await screen.findByRole('status')).textContent).toBe('Loading diff…');
 
     resolveDiff?.(okResult({ diffText: SAMPLE_DIFF }));
-    expect(
-      await screen.findByRole('heading', { name: 'Uncommitted changes' })
-    ).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Uncommitted changes' })).toBeTruthy();
   });
 
   it('surfaces ok:false envelopes as visible error messages', async () => {
-    stubApi({
+    stubAppApi({
       listWorktrees: vi
         .fn()
         .mockResolvedValue(failResult('NOT_A_REPOSITORY', 'Not a git repository: /repo')),
@@ -218,7 +178,7 @@ describe('App', () => {
   });
 
   it('surfaces diff errors (e.g. unborn HEAD) instead of a diff', async () => {
-    stubApi({
+    stubAppApi({
       getDiff: vi
         .fn()
         .mockResolvedValue(failResult('GIT_COMMAND_FAILED', 'Repository has no commits yet.')),

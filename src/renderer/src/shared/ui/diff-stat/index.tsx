@@ -1,4 +1,5 @@
-import type { TProps } from './index.types';
+import { cx } from '../cx';
+import type { DiffStatProps } from './index.types';
 import styles from './index.module.scss';
 
 /** Accessible phrasing for a change count, e.g. "1 addition, 2 deletions". */
@@ -14,17 +15,15 @@ export function DiffStat({
   onSelection = false,
   className,
   ...props
-}: TProps) {
-  const classes = [styles['gb-diff-stat'], onSelection && styles['gb-diff-stat--on-selection'], className]
-    .filter(Boolean)
-    .join(' ');
+}: DiffStatProps) {
+  const classes = cx(
+    styles['gb-diff-stat'],
+    onSelection && styles['gb-diff-stat--on-selection'],
+    className
+  );
 
   return (
-    <span
-      className={classes}
-      aria-label={diffStatLabel(additions, deletions)}
-      {...props}
-    >
+    <span className={classes} aria-label={diffStatLabel(additions, deletions)} {...props}>
       <span className={styles['gb-diff-stat__add']} aria-hidden="true">
         +{additions}
       </span>

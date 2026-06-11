@@ -67,9 +67,7 @@ export function readAppPreferences(
     return {
       theme: isTheme(candidate.theme) ? candidate.theme : defaults.theme,
       sidebarOpen:
-        typeof candidate.sidebarOpen === 'boolean'
-          ? candidate.sidebarOpen
-          : defaults.sidebarOpen,
+        typeof candidate.sidebarOpen === 'boolean' ? candidate.sidebarOpen : defaults.sidebarOpen,
       fileListMode: isFileListMode(candidate.fileListMode)
         ? candidate.fileListMode
         : defaults.fileListMode,

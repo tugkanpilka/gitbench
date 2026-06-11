@@ -53,7 +53,7 @@ describe('runGit', () => {
     stubGitOutcome(
       Object.assign(new Error('Command failed'), { code: 128 }),
       '',
-      "fatal: not a git repository (or any of the parent directories): .git\n"
+      'fatal: not a git repository (or any of the parent directories): .git\n'
     );
 
     await expect(runGit('/tmp/not-a-repo', ['status'])).rejects.toThrowError(

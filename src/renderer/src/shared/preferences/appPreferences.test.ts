@@ -69,10 +69,7 @@ describe('appPreferences', () => {
   it('writes the versioned preference payload', () => {
     const { storage, getValue } = createStorage();
 
-    writeAppPreferences(
-      { theme: 'light', sidebarOpen: false, fileListMode: 'tree' },
-      storage
-    );
+    writeAppPreferences({ theme: 'light', sidebarOpen: false, fileListMode: 'tree' }, storage);
 
     expect(getValue()).toBe(
       JSON.stringify({ theme: 'light', sidebarOpen: false, fileListMode: 'tree' })

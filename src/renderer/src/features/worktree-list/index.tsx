@@ -1,6 +1,7 @@
 import { ChangedFilesSection } from './changed-files-section';
+import { FileListProvider } from './file-list-context';
 import { WorktreeRow } from './worktree-row';
-import type { TProps } from './index.types';
+import type { WorktreeListProps } from './index.types';
 import styles from './index.module.scss';
 
 // CLAUDE.md: "The sidebar should present worktrees as a simple, flat list. We don't
@@ -16,9 +17,11 @@ export function WorktreeList({
   diffStats,
   onSelect,
   onSelectFile,
-}: TProps) {
+}: WorktreeListProps) {
   if (worktrees.length === 0) {
-    return <p className={styles['worktree-list__empty']}>No worktrees to display in this repository.</p>;
+    return (
+      <p className={styles['worktree-list__empty']}>No worktrees to display in this repository.</p>
+    );
   }
 
   return (
@@ -37,13 +40,17 @@ export function WorktreeList({
                 onSelect={onSelect}
               />
               {selected && fileCount !== null && fileCount > 0 && (
-                <ChangedFilesSection
-                  changedFiles={changedFiles}
-                  fileListMode={fileListMode}
+                <FileListProvider
+                  files={changedFiles}
                   activeFileId={activeFileId}
-                  diffStats={diffStats}
                   onSelectFile={onSelectFile}
-                />
+                >
+                  <ChangedFilesSection
+                    changedFiles={changedFiles}
+                    fileListMode={fileListMode}
+                    diffStats={diffStats}
+                  />
+                </FileListProvider>
               )}
             </li>
           );

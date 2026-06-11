@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-export interface TProps {
+export interface AppShellProps {
   sidebar: ReactNode;
   sidebarOpen: boolean;
   children: ReactNode;

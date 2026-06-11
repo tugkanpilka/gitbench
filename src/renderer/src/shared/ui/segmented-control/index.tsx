@@ -1,5 +1,6 @@
 import { type KeyboardEvent, useLayoutEffect, useRef, useState } from 'react';
-import type { TProps, SegmentedControlItem } from './index.types';
+import { cx } from '../cx';
+import type { SegmentedControlProps, SegmentedControlItem } from './index.types';
 import styles from './index.module.scss';
 
 function nextEnabledIndex<T extends string>(
@@ -22,8 +23,8 @@ export function SegmentedControl<T extends string>({
   value,
   onChange,
   className,
-}: TProps<T>) {
-  const classes = [styles['gb-segmented-control'], className].filter(Boolean).join(' ');
+}: SegmentedControlProps<T>) {
+  const classes = cx(styles['gb-segmented-control'], className);
   const containerRef = useRef<HTMLDivElement>(null);
   const [indicatorStyle, setIndicatorStyle] = useState<{
     left: number;
@@ -77,10 +78,7 @@ export function SegmentedControl<T extends string>({
         <span
           className={styles['gb-segmented-control__indicator']}
           aria-hidden="true"
-          style={{
-            left: indicatorStyle.left,
-            width: indicatorStyle.width,
-          }}
+          style={indicatorStyle}
         />
       )}
       {items.map((item, index) => {

@@ -1,6 +1,6 @@
 import type { WorktreeDto } from '../../../../../contracts/ipc';
 
-export type TProps = {
+export type WorktreeRowProps = {
   worktree: WorktreeDto;
   selected: boolean;
   fileCount: number | null;

@@ -1,5 +1,6 @@
 import { DiffView } from '../../features/diff-viewer';
-import type { TProps } from './index.types';
+import { cx } from '../../shared/ui/cx';
+import type { WorkspaceProps } from './index.types';
 import styles from './index.module.scss';
 
 export function Workspace({
@@ -11,10 +12,8 @@ export function Workspace({
   viewType,
   navigationTarget,
   onActiveFileChange,
-}: TProps) {
-  const classes = hasDiff 
-    ? `${styles['workspace']} ${styles['workspace--diff']}` 
-    : styles['workspace'];
+}: WorkspaceProps) {
+  const classes = cx(styles['workspace'], hasDiff && styles['workspace--diff']);
 
   return (
     <div className={classes}>

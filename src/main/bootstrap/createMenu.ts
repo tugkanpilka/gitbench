@@ -1,4 +1,6 @@
-import { Menu, MenuItemConstructorOptions, shell } from 'electron';
+import { Menu, shell, type MenuItemConstructorOptions } from 'electron';
+
+import { isExternalUrlSafe } from './createWindow';
 
 export function createMenu(): void {
   const isMac = process.platform === 'darwin';
@@ -27,7 +29,12 @@ export function createMenu(): void {
       submenu: [
         {
           label: 'Learn More',
-          click: () => shell.openExternal('https://electronjs.org'),
+          click: () => {
+            const url = 'https://electronjs.org';
+            if (isExternalUrlSafe(url)) {
+              shell.openExternal(url);
+            }
+          },
         },
       ],
     },

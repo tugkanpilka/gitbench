@@ -2,17 +2,11 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import type { WorktreeDto } from '../../../../contracts/ipc';
 import { nameFromPath } from '../../shared/path/nameFromPath';
+import { makeWorktree } from '../../test/fixtures';
 import { RepositorySidebar } from '.';
 
-const WORKTREE: WorktreeDto = {
-  path: '/Users/dev/gitbench',
-  branch: 'main',
-  headSha: 'a'.repeat(40),
-  isMain: true,
-  isLocked: false,
-};
+const WORKTREE = makeWorktree({ path: '/Users/dev/gitbench' });
 
 afterEach(() => cleanup());
 
@@ -39,7 +33,7 @@ describe('RepositorySidebar', () => {
 
     expect(screen.getByRole('heading', { name: 'Worktrees' })).toBeTruthy();
     expect(screen.getByTitle('/Users/dev/gitbench')).toBeTruthy();
-    expect(screen.getAllByLabelText("Worktrees").length).toBeGreaterThan(0);
+    expect(screen.getAllByLabelText('Worktrees').length).toBeGreaterThan(0);
     expect(screen.queryByRole('button', { name: 'Refresh' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Open Another Repository…' })).toBeNull();
   });
@@ -60,6 +54,8 @@ describe('RepositorySidebar', () => {
     );
 
     expect(screen.getAllByRole('button')).toHaveLength(1);
-    expect(screen.getByRole('button', { name: 'gitbench, main, aaaaaaa, main worktree' })).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'gitbench, main, aaaaaaa, main worktree' })
+    ).toBeTruthy();
   });
 });

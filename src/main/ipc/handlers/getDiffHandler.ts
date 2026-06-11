@@ -1,8 +1,4 @@
-import {
-  IPC_CHANNELS,
-  type GetDiffRequest,
-  type GetDiffResponse,
-} from '../../../contracts/ipc';
+import { IPC_CHANNELS, type GetDiffRequest, type GetDiffResponse } from '../../../contracts/ipc';
 import type { ApplicationServices } from '../../bootstrap/compositionRoot';
 import { handle } from '../handle';
 
