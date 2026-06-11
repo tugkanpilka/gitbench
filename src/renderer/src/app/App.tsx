@@ -1,8 +1,5 @@
 import { useMemo, useState } from 'react';
 
-import { AppShell } from './app-shell';
-import { useAppPreferences } from './hooks/useAppPreferences';
-import { useDiffNavigation } from './hooks/useDiffNavigation';
 import { ContentToolbar } from '../features/content-toolbar';
 import type { ViewType } from '../features/diff-viewer/index.types';
 import { buildDiffModel, EMPTY_DIFF_MODEL } from '../features/diff-viewer/utils/diffModel';
@@ -10,6 +7,9 @@ import { RepositorySidebar } from '../features/repository-sidebar';
 import { WelcomeScreen } from '../features/welcome';
 import { useWorktreeBrowser } from '../features/worktree-browser';
 import { nameFromPath } from '../shared/path/nameFromPath';
+import { AppShell } from './app-shell';
+import { useAppPreferences } from './hooks/useAppPreferences';
+import { useDiffNavigation } from './hooks/useDiffNavigation';
 import { Workspace } from './workspace';
 
 export default function App() {
@@ -17,19 +17,20 @@ export default function App() {
   const preferences = useAppPreferences();
   const [viewType, setViewType] = useState<ViewType>('unified');
   const isCleanWorktree = browser.diff !== null && browser.diff.diffText === '';
-  
+
   const diffModel = useMemo(() => {
     if (browser.diff === null || isCleanWorktree) {
       return EMPTY_DIFF_MODEL;
     }
     return buildDiffModel(browser.diff.diffText);
   }, [browser.diff, isCleanWorktree]);
-  
+
   const navigation = useDiffNavigation(diffModel);
 
-  const diffStats = diffModel.files.length > 0
-    ? { additions: diffModel.additions, deletions: diffModel.deletions }
-    : null;
+  const diffStats =
+    diffModel.files.length > 0
+      ? { additions: diffModel.additions, deletions: diffModel.deletions }
+      : null;
 
   if (browser.repoPath === null) {
     return (

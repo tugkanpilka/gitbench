@@ -58,9 +58,11 @@
 }
 
 .gb-button--primary {
-  background: linear-gradient(180deg,
+  background: linear-gradient(
+    180deg,
     color-mix(in srgb, var(--gb-accent) 100%, white 8%) 0%,
-    var(--gb-accent) 100%);
+    var(--gb-accent) 100%
+  );
 }
 
 .gb-button--destructive {

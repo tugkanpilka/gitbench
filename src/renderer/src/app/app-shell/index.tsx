@@ -1,11 +1,7 @@
-import type { TProps } from './index.types';
+import type { AppShellProps } from './index.types';
 import styles from './index.module.scss';
 
-export function AppShell({
-  sidebar,
-  sidebarOpen,
-  children,
-}: TProps) {
+export function AppShell({ sidebar, sidebarOpen, children }: AppShellProps) {
   return (
     <div className={styles['app-shell']} data-sidebar-open={sidebarOpen}>
       <aside

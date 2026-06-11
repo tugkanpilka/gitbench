@@ -1,4 +1,5 @@
-import type { TProps } from './index.types';
+import { cx } from '../cx';
+import type { ButtonProps } from './index.types';
 import styles from './index.module.scss';
 
 export function Button({
@@ -8,8 +9,8 @@ export function Button({
   children,
   type = 'button',
   ...props
-}: TProps) {
-  const classes = [styles['gb-button'], styles[`gb-button--${variant}`], className].filter(Boolean).join(' ');
+}: ButtonProps) {
+  const classes = cx(styles['gb-button'], styles[`gb-button--${variant}`], className);
 
   return (
     <button type={type} className={classes} {...props}>

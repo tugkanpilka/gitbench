@@ -90,9 +90,7 @@ describe('DiffView', () => {
   it('renders the clean-worktree state for an empty diff', () => {
     renderDiffView({ model: EMPTY_DIFF_MODEL, clean: true });
 
-    expect(
-      screen.getByText('Worktree is clean; no changes in tracked files.')
-    ).toBeTruthy();
+    expect(screen.getByText('Worktree is clean; no changes in tracked files.')).toBeTruthy();
   });
 
   it('opens a collapsed file and scrolls to a requested sidebar target', () => {

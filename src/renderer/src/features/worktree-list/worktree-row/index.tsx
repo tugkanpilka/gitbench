@@ -1,6 +1,7 @@
 import { nameFromPath } from '../../../shared/path/nameFromPath';
 import { Badge } from '../../../shared/ui/badge';
-import type { TProps } from './index.types';
+import { WorktreeIcon } from '../../../shared/ui/icons';
+import type { WorktreeRowProps } from './index.types';
 import styles from '../index.module.scss';
 
 function worktreeReference(branch: string | null, shortSha: string): string {
@@ -10,7 +11,7 @@ function worktreeReference(branch: string | null, shortSha: string): string {
   return shortSha ? `detached @ ${shortSha}` : 'detached HEAD';
 }
 
-export function WorktreeRow({ worktree, selected, fileCount, onSelect }: TProps) {
+export function WorktreeRow({ worktree, selected, fileCount, onSelect }: WorktreeRowProps) {
   const name = nameFromPath(worktree.path);
   const shortSha = worktree.headSha.slice(0, 7);
   const reference = worktreeReference(worktree.branch, shortSha);
@@ -29,16 +30,7 @@ export function WorktreeRow({ worktree, selected, fileCount, onSelect }: TProps)
       onClick={() => onSelect(worktree.path)}
     >
       <span className={styles['worktree-row__top']}>
-        <svg
-          className={styles['worktree-row__icon']}
-          viewBox="0 0 16 16"
-          width="12"
-          height="12"
-          fill="currentColor"
-          aria-hidden="true"
-        >
-          <path d="M11.75 2.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Zm-2.25.75a2.25 2.25 0 1 1 3 2.122v5.256a2.25 2.25 0 1 1-1.5 0V5.372A2.25 2.25 0 0 1 9.5 3.25ZM4.25 12a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Zm-2.25.75a2.25 2.25 0 1 1 4.5 0 2.25 2.25 0 0 1-4.5 0ZM4.25 2.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Zm-2.25.75a2.25 2.25 0 1 1 4.5 0 2.25 2.25 0 0 1-4.5 0Z" />
-        </svg>
+        <WorktreeIcon className={styles['worktree-row__icon']} />
         <span className={styles['worktree-row__name']}>{name}</span>
         {(fileCount !== null || worktree.isMain || worktree.isLocked) && (
           <span className={styles['worktree-row__badges']}>

@@ -60,6 +60,8 @@ The diff shows **uncommitted changes to tracked files**. Untracked (new, never-a
 
 ## Getting started
 
+**Prerequisites:** [Node.js](https://nodejs.org) 22+ and a system [Git](https://git-scm.com) (2.25+) on your `PATH` — GitBench drives the Git CLI rather than bundling one.
+
 ```bash
 npm install
 npm run dev          # electron-vite dev mode
@@ -87,11 +89,11 @@ renderer → preload (window.api) → main IPC handlers → application → doma
 
 Details live in `agent_docs/`:
 
-| Document | Covers |
-| --- | --- |
-| [`agent_docs/architecture.md`](agent_docs/architecture.md) | Layer rules, import matrix, directory layout, testing strategy |
-| [`agent_docs/ipc-contract.md`](agent_docs/ipc-contract.md) | Channels, DTOs, error codes, how to add a channel |
-| [`agent_docs/git-notes.md`](agent_docs/git-notes.md) | How git is spawned, output parsing, error classification, gotchas |
+| Document                                                   | Covers                                                            |
+| ---------------------------------------------------------- | ----------------------------------------------------------------- |
+| [`agent_docs/architecture.md`](agent_docs/architecture.md) | Layer rules, import matrix, directory layout, testing strategy    |
+| [`agent_docs/ipc-contract.md`](agent_docs/ipc-contract.md) | Channels, DTOs, error codes, how to add a channel                 |
+| [`agent_docs/git-notes.md`](agent_docs/git-notes.md)       | How git is spawned, output parsing, error classification, gotchas |
 
 ## How GitBench talks to Git
 

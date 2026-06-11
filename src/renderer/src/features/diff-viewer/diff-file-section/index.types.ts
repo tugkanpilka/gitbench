@@ -2,7 +2,7 @@ import type { RefCallback } from 'react';
 import type { ViewType } from 'react-diff-view';
 import type { DiffFileModel } from '../utils/diffModel.types';
 
-export type TProps = {
+export type DiffFileSectionProps = {
   model: DiffFileModel;
   viewType: ViewType;
   collapsed: boolean;

@@ -1,6 +1,6 @@
 import { DiffStat } from '../../../shared/ui/diff-stat';
 import { FileNavigationList } from '../file-navigation-list';
-import type { TProps } from './index.types';
+import type { ChangedFilesSectionProps } from './index.types';
 import styles from '../index.module.scss';
 
 /** The "Changes" panel for the selected worktree: header, totals, and file navigation. */
@@ -10,7 +10,7 @@ export function ChangedFilesSection({
   activeFileId,
   diffStats,
   onSelectFile,
-}: TProps) {
+}: ChangedFilesSectionProps) {
   return (
     <div className={styles['worktree-files-section']}>
       <header className={styles['worktree-files-section__header']}>

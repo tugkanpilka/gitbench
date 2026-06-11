@@ -3,7 +3,7 @@ import { VscChevronRight, VscChevronDown } from 'react-icons/vsc';
 import type { FileTreeDirectory } from '../utils/fileTree.types';
 import { FileNavigationRow } from '../file-navigation-row';
 import { IndentGuides, treeRowIndent } from '../indent-guides';
-import type { TProps } from './index.types';
+import type { FileTreeViewProps } from './index.types';
 import styles from '../index.module.scss';
 
 function FolderChevron({ open }: { open: boolean }) {
@@ -67,7 +67,7 @@ export function FileTreeView({
   onToggleDirectory,
   onSelectFile,
   nested = false,
-}: TProps) {
+}: FileTreeViewProps) {
   return (
     <ul
       className={nested ? styles['file-tree__group'] : styles['file-navigation-list']}

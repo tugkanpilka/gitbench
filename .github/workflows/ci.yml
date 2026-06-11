@@ -31,11 +31,17 @@ jobs:
       - name: Show git version
         run: git --version
 
+      - name: Build (smoke)
+        run: npm run build
+
+      - name: Check formatting
+        run: npm run format:check
+
       - name: Typecheck
         run: npm run typecheck
 
       - name: Test
-        run: npm run test
+        run: npm run test:coverage
 
       - name: Lint
         run: npm run lint

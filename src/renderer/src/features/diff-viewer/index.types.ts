@@ -8,7 +8,7 @@ export interface DiffNavigationTarget {
   requestId: number;
 }
 
-export type TProps = {
+export type DiffViewProps = {
   model: DiffModel;
   clean: boolean;
   viewType: ViewType;

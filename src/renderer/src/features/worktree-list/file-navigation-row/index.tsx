@@ -1,10 +1,16 @@
 import { DiffStat, diffStatLabel } from '../../../shared/ui/diff-stat';
 import { FileIcon } from '../file-icon';
 import { IndentGuides, treeRowIndent } from '../indent-guides';
-import type { TProps } from './index.types';
+import type { FileNavigationRowProps } from './index.types';
 import styles from '../index.module.scss';
 
-export function FileNavigationRow({ file, active, depth, showDirectory, onSelect }: TProps) {
+export function FileNavigationRow({
+  file,
+  active,
+  depth,
+  showDirectory,
+  onSelect,
+}: FileNavigationRowProps) {
   const path = `${file.path.directory}${file.path.name}`;
 
   return (

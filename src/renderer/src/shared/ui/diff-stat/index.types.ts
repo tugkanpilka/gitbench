@@ -5,6 +5,6 @@ export interface DiffStats {
   deletions: number;
 }
 
-export interface TProps extends HTMLAttributes<HTMLSpanElement>, DiffStats {
+export interface DiffStatProps extends HTMLAttributes<HTMLSpanElement>, DiffStats {
   onSelection?: boolean;
 }

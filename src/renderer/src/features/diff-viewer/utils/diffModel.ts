@@ -56,9 +56,7 @@ function noTextReason(file: FileData, binary: boolean): string | null {
 // sections solely to sniff those markers ourselves; file.isBinary is kept as
 // a belt-and-braces check should the parser ever start setting it.
 function rawFileSections(diffText: string): string[] {
-  return diffText
-    .split(/(?=^diff --git )/m)
-    .filter((section) => section.startsWith('diff --git '));
+  return diffText.split(/(?=^diff --git )/m).filter((section) => section.startsWith('diff --git '));
 }
 
 function isBinarySection(file: FileData, rawSection: string): boolean {

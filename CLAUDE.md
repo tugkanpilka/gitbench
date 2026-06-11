@@ -33,15 +33,15 @@ Layer rules, import matrix, directory layout: `agent_docs/architecture.md`.
 4. Nothing throws across IPC. Handlers return `Result<T>` envelopes; domain entities never cross IPC — map them under `src/main/ipc/mappers`. The contract lives in `agent_docs/ipc-contract.md` and changes to channels/DTOs/error codes must update that file **in the same commit**.
 5. Git is spawned only through `src/infrastructure/git/runGit.ts`, with argument arrays. Never interpolate a path into a shell string.
 6. `diffText === ""` is a valid success state ("clean worktree"), never an error.
-7. Worktrees render as a **flat list** — `git worktree list` returns sibling checkouts, not a hierarchy. Tree UI is reserved for changed files *within* a worktree, if that view is ever added.
+7. Worktrees render as a **flat list** — `git worktree list` returns sibling checkouts, not a hierarchy. Tree UI is reserved for changed files _within_ a worktree, if that view is ever added.
 
 ## Read this before touching that
 
-| Task touches…                                | Read first                   |
-| -------------------------------------------- | ---------------------------- |
-| IPC channels, DTOs, error codes               | `agent_docs/ipc-contract.md` |
-| Anything that runs git or parses git output   | `agent_docs/git-notes.md`    |
-| Layer boundaries, new modules, imports        | `agent_docs/architecture.md` |
+| Task touches…                               | Read first                   |
+| ------------------------------------------- | ---------------------------- |
+| IPC channels, DTOs, error codes             | `agent_docs/ipc-contract.md` |
+| Anything that runs git or parses git output | `agent_docs/git-notes.md`    |
+| Layer boundaries, new modules, imports      | `agent_docs/architecture.md` |
 
 ## Open decisions — surface them, do not decide silently
 

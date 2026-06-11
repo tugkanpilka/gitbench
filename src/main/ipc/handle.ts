@@ -14,14 +14,11 @@ export function handle<TRequest, TResponse>(
   channel: IpcChannel,
   handler: (request: TRequest) => Promise<TResponse>
 ): void {
-  ipcMain.handle(
-    channel,
-    async (_event, request: TRequest): Promise<Result<TResponse>> => {
-      try {
-        return ok(await handler(request));
-      } catch (error) {
-        return fail(error);
-      }
+  ipcMain.handle(channel, async (_event, request: TRequest): Promise<Result<TResponse>> => {
+    try {
+      return ok(await handler(request));
+    } catch (error) {
+      return fail(error);
     }
-  );
+  });
 }

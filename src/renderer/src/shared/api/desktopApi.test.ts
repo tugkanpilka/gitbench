@@ -1,36 +1,17 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ErrorDto, Result, WorktreeDto } from '../../../../contracts/ipc';
+import { failResult, MAIN_WORKTREE, okResult, stubApi } from '../../test/fixtures';
 import { ApiError } from './ApiError';
 import { desktopApi } from './desktopApi';
 
-const okResult = <T,>(data: T): Result<T> => ({ ok: true, data });
-const failResult = <T,>(code: ErrorDto['code'], message: string): Result<T> => ({
-  ok: false,
-  error: { code, message },
-});
-
-const MAIN_WORKTREE: WorktreeDto = {
-  path: '/repo',
-  branch: 'main',
-  headSha: 'a'.repeat(40),
-  isMain: true,
-  isLocked: false,
-};
-
-function stubApi(overrides: Partial<Window['api']> = {}): void {
-  window.api = {
-    pickRepo: vi.fn().mockResolvedValue(okResult<string | null>('/repo')),
-    listWorktrees: vi.fn().mockResolvedValue(okResult([MAIN_WORKTREE])),
-    getDiff: vi.fn().mockResolvedValue(okResult({ diffText: 'diff' })),
-    ...overrides,
-  };
+function stubDesktopApi(overrides: Partial<Window['api']> = {}): void {
+  stubApi({ listWorktrees: vi.fn().mockResolvedValue(okResult([MAIN_WORKTREE])), ...overrides });
 }
 
 describe('desktopApi', () => {
   beforeEach(() => {
-    stubApi();
+    stubDesktopApi();
   });
 
   it('returns ok:true data verbatim', async () => {
@@ -40,19 +21,19 @@ describe('desktopApi', () => {
   });
 
   it('treats a cancelled picker dialog (null) as success, not an error', async () => {
-    stubApi({ pickRepo: vi.fn().mockResolvedValue(okResult<string | null>(null)) });
+    stubDesktopApi({ pickRepo: vi.fn().mockResolvedValue(okResult<string | null>(null)) });
 
     expect(await desktopApi.pickRepo()).toBeNull();
   });
 
   it("treats an empty diff ('' = clean worktree) as success, not an error", async () => {
-    stubApi({ getDiff: vi.fn().mockResolvedValue(okResult({ diffText: '' })) });
+    stubDesktopApi({ getDiff: vi.fn().mockResolvedValue(okResult({ diffText: '' })) });
 
     expect(await desktopApi.getDiff('/repo')).toEqual({ diffText: '' });
   });
 
   it('throws ApiError preserving the envelope code and message for ok:false', async () => {
-    stubApi({
+    stubDesktopApi({
       listWorktrees: vi
         .fn()
         .mockResolvedValue(failResult('NOT_A_REPOSITORY', 'Not a git repository: /repo')),

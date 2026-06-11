@@ -1,6 +1,6 @@
 import type { FileTree } from '../utils/fileTree.types';
 
-export type TProps = {
+export type FileTreeViewProps = {
   tree: FileTree;
   depth: number;
   activeFileId: string | null;

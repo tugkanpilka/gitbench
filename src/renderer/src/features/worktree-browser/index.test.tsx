@@ -2,55 +2,16 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ErrorDto, Result, WorktreeDto } from '../../../../contracts/ipc';
+import type { Result } from '../../../../contracts/ipc';
+import {
+  deferred,
+  failResult,
+  FEATURE_WORKTREE,
+  MAIN_WORKTREE,
+  okResult,
+  stubApi,
+} from '../../test/fixtures';
 import { useWorktreeBrowser } from '.';
-
-const okResult = <T,>(data: T): Result<T> => ({ ok: true, data });
-const failResult = <T,>(code: ErrorDto['code'], message: string): Result<T> => ({
-  ok: false,
-  error: { code, message },
-});
-
-const MAIN_WORKTREE: WorktreeDto = {
-  path: '/repo',
-  branch: 'main',
-  headSha: 'a'.repeat(40),
-  isMain: true,
-  isLocked: false,
-};
-
-const FEATURE_WORKTREE: WorktreeDto = {
-  path: '/repo-feature',
-  branch: 'feature/login',
-  headSha: 'b'.repeat(40),
-  isMain: false,
-  isLocked: false,
-};
-
-function stubApi(overrides: Partial<Window['api']> = {}): void {
-  window.api = {
-    pickRepo: vi.fn().mockResolvedValue(okResult<string | null>('/repo')),
-    listWorktrees: vi.fn().mockResolvedValue(okResult([MAIN_WORKTREE, FEATURE_WORKTREE])),
-    getDiff: vi.fn().mockResolvedValue(okResult({ diffText: 'diff' })),
-    ...overrides,
-  };
-}
-
-interface Deferred<T> {
-  promise: Promise<T>;
-  resolve: (value: T) => void;
-  reject: (reason: unknown) => void;
-}
-
-function deferred<T>(): Deferred<T> {
-  let resolve!: (value: T) => void;
-  let reject!: (reason: unknown) => void;
-  const promise = new Promise<T>((res, rej) => {
-    resolve = res;
-    reject = rej;
-  });
-  return { promise, resolve, reject };
-}
 
 function BrowserHarness() {
   const browser = useWorktreeBrowser();

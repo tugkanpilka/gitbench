@@ -34,9 +34,9 @@ describe('fileTree', () => {
     expect(tree.directories.map((directory) => directory.name)).toEqual(['src']);
     expect(tree.directories[0].files.map((file) => file.path.name)).toEqual(['App.tsx']);
     expect(tree.directories[0].directories[0].name).toBe('components');
-    expect(
-      tree.directories[0].directories[0].files.map((file) => file.path.name)
-    ).toEqual(['Button.tsx']);
+    expect(tree.directories[0].directories[0].files.map((file) => file.path.name)).toEqual([
+      'Button.tsx',
+    ]);
   });
 
   it('returns every ancestor path for an active file', () => {

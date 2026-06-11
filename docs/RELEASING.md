@@ -63,13 +63,13 @@ Repo → Settings → Secrets and variables → Actions → New repository secre
 These match the Docbook desktop pipeline's secret names, so the **same values
 can be reused verbatim**:
 
-| Secret | Value |
-| --- | --- |
-| `CSC_LINK` | base64 of the Developer ID Application `.p12` |
-| `CSC_KEY_PASSWORD` | the `.p12` password |
-| `APPLE_ID` | your Apple ID email |
-| `APPLE_ID_PASS` | app-specific password (notarization) |
-| `APPLE_TEAM_ID` | your 10-char Team ID |
+| Secret                    | Value                                                    |
+| ------------------------- | -------------------------------------------------------- |
+| `CSC_LINK`                | base64 of the Developer ID Application `.p12`            |
+| `CSC_KEY_PASSWORD`        | the `.p12` password                                      |
+| `APPLE_ID`                | your Apple ID email                                      |
+| `APPLE_ID_PASS`           | app-specific password (notarization)                     |
+| `APPLE_TEAM_ID`           | your 10-char Team ID                                     |
 | `HOMEBREW_TAP_DEPLOY_KEY` | **already set** — SSH deploy key for the tap (see below) |
 
 `HOMEBREW_TAP_DEPLOY_KEY` and the `homebrew-tap` repo were provisioned ahead of

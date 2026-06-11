@@ -4,13 +4,16 @@ import { toggledSet } from '../../../shared/collections/toggledSet';
 import { buildFileTree, directoryPathsForFile } from '../utils/fileTree';
 import { FileNavigationRow } from '../file-navigation-row';
 import { FileTreeView } from '../file-tree-view';
-import type { TProps } from './index.types';
+import type { FileNavigationListProps } from './index.types';
 import styles from '../index.module.scss';
 
-export function FileNavigationList({ files, mode, activeFileId, onSelectFile }: TProps) {
-  const [collapsedDirectories, setCollapsedDirectories] = useState<Set<string>>(
-    () => new Set()
-  );
+export function FileNavigationList({
+  files,
+  mode,
+  activeFileId,
+  onSelectFile,
+}: FileNavigationListProps) {
+  const [collapsedDirectories, setCollapsedDirectories] = useState<Set<string>>(() => new Set());
   const tree = useMemo(() => buildFileTree(files), [files]);
 
   useEffect(() => {

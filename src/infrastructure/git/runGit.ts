@@ -9,6 +9,11 @@ import { GitNotInstalledError } from './errors/GitNotInstalledError';
 // If real-world diffs ever exceed this, switch to streaming spawn — do not keep raising it.
 const MAX_BUFFER_BYTES = 64 * 1024 * 1024;
 
+// stderr substrings sniffed for error classification. Stable because LC_ALL='C'
+// forces untranslated English output (see agent_docs/git-notes.md).
+const GIT_NOT_REPO_PATTERN = 'not a git repository';
+const GIT_CANNOT_CHANGE_DIR_PATTERN = 'cannot change to';
+
 /**
  * The single choke point for spawning git. All quirks and rules: agent_docs/git-notes.md.
  * Argument arrays only — never interpolate a path into a shell string.
@@ -43,12 +48,12 @@ function classify(error: ExecFileException, stderr: string, targetPath: string):
   if (error.code === 'ENOENT') {
     return new GitNotInstalledError();
   }
-  if (stderr.includes('not a git repository')) {
+  if (stderr.includes(GIT_NOT_REPO_PATTERN)) {
     return new NotARepositoryError(targetPath);
   }
   // `git -C <path>` against a removed directory: "fatal: cannot change to '<path>': ..."
   // — the stale/removed-worktree case.
-  if (stderr.includes('cannot change to')) {
+  if (stderr.includes(GIT_CANNOT_CHANGE_DIR_PATTERN)) {
     return new WorktreeNotFoundError(targetPath);
   }
   return new GitCommandFailedError(stderr.trim() || error.message);

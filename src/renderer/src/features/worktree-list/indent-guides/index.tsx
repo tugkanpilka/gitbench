@@ -1,4 +1,4 @@
-import type { TProps } from './index.types';
+import type { IndentGuidesProps } from './index.types';
 import styles from '../index.module.scss';
 
 const INDENT_STEP_PX = 12;
@@ -9,7 +9,7 @@ export function treeRowIndent(depth: number): string {
   return `${ROW_BASE_PADDING_PX + depth * INDENT_STEP_PX}px`;
 }
 
-export function IndentGuides({ depth }: TProps) {
+export function IndentGuides({ depth }: IndentGuidesProps) {
   if (depth === 0) return null;
   const guides = [];
   for (let i = 0; i < depth; i++) {

@@ -4,7 +4,7 @@ export interface SegmentedControlItem<T extends string> {
   disabled?: boolean;
 }
 
-export interface TProps<T extends string> {
+export interface SegmentedControlProps<T extends string> {
   ariaLabel: string;
   items: readonly SegmentedControlItem<T>[];
   value: T;

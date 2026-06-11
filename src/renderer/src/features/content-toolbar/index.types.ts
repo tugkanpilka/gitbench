@@ -2,7 +2,7 @@ import type { ViewType } from '../diff-viewer/index.types';
 import type { FileListMode, Theme } from '../../shared/preferences/appPreferences';
 import type { DiffStats } from '../../shared/ui/diff-stat/index.types';
 
-export type TProps = {
+export type ContentToolbarProps = {
   worktreeName: string | null;
   repoName: string;
   fileCount: number;

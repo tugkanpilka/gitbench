@@ -1,14 +1,24 @@
 import gitbenchIcon from '../../assets/gitbench-icon.svg';
 import { Button } from '../../shared/ui/button';
-import type { TProps } from './index.types';
+import type { WelcomeScreenProps } from './index.types';
 import styles from './index.module.scss';
 
-export function WelcomeScreen({ loading, error, onOpenRepository }: TProps) {
+export function WelcomeScreen({ loading, error, onOpenRepository }: WelcomeScreenProps) {
   return (
     <main className={styles['welcome-screen']}>
       <div className={styles['welcome-screen__drag-region']} aria-hidden="true" />
-      <section className={styles['welcome-card']} aria-labelledby="welcome-title" aria-busy={loading}>
-        <img className={styles['welcome-card__icon']} src={gitbenchIcon} width="96" height="96" alt="" />
+      <section
+        className={styles['welcome-card']}
+        aria-labelledby="welcome-title"
+        aria-busy={loading}
+      >
+        <img
+          className={styles['welcome-card__icon']}
+          src={gitbenchIcon}
+          width="96"
+          height="96"
+          alt=""
+        />
         <div className={styles['welcome-card__heading']}>
           <h1 id="welcome-title">GitBench</h1>
           <p>Worktree diff viewer</p>
@@ -34,7 +44,9 @@ export function WelcomeScreen({ loading, error, onOpenRepository }: TProps) {
           </div>
         )}
 
-        <p className={styles['welcome-card__hint']}>Select a local Git repository to get started.</p>
+        <p className={styles['welcome-card__hint']}>
+          Select a local Git repository to get started.
+        </p>
       </section>
     </main>
   );

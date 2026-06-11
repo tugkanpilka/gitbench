@@ -44,18 +44,28 @@ interface GetDiffResponse {
 }
 
 interface ErrorDto {
-  code:
-    | 'GIT_NOT_INSTALLED'
-    | 'NOT_A_REPOSITORY'
-    | 'WORKTREE_NOT_FOUND'
-    | 'GIT_COMMAND_FAILED';
+  code: ErrorCode; // see ERROR_CODES below
   message: string;
 }
 ```
 
+Error codes have a single source of truth in `src/contracts/ipc/errors.ts`:
+
+```ts
+const ERROR_CODES = {
+  GIT_NOT_INSTALLED: 'GIT_NOT_INSTALLED',
+  NOT_A_REPOSITORY: 'NOT_A_REPOSITORY',
+  WORKTREE_NOT_FOUND: 'WORKTREE_NOT_FOUND',
+  GIT_COMMAND_FAILED: 'GIT_COMMAND_FAILED',
+} as const;
+type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
+```
+
+`ErrorDto.code` derives its union from `ERROR_CODES`; the string values themselves are unchanged. Add or rename a code only here, and update this document in the same commit.
+
 Domain entities never cross IPC. `src/main/ipc/mappers/worktreeMapper.ts` maps `Worktree` into `WorktreeDto`.
 
-Error mapping lives in `src/main/ipc/mappers/errorMapper.ts`:
+Error mapping lives in `src/main/ipc/mappers/errorMapper.ts` (it imports `ERROR_CODES` rather than inlining literals):
 
 - `GitNotInstalledError` -> `GIT_NOT_INSTALLED`
 - `NotARepositoryError` -> `NOT_A_REPOSITORY`

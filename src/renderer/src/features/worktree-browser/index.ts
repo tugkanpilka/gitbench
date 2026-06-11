@@ -34,18 +34,21 @@ export function useWorktreeBrowser() {
     }
   }, []);
 
-  const refreshWorktrees = useCallback(async (path: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const nextWorktrees = await loadWorktrees(path);
-      if (nextWorktrees !== null) {
-        setWorktrees(nextWorktrees);
+  const refreshWorktrees = useCallback(
+    async (path: string) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const nextWorktrees = await loadWorktrees(path);
+        if (nextWorktrees !== null) {
+          setWorktrees(nextWorktrees);
+        }
+      } finally {
+        setLoading(false);
       }
-    } finally {
-      setLoading(false);
-    }
-  }, [loadWorktrees]);
+    },
+    [loadWorktrees]
+  );
 
   const pickRepository = async () => {
     setLoading(true);
