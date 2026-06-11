@@ -1,0 +1,39 @@
+appId: com.gitbench.app
+productName: GitBench
+
+# electron-vite emits the bundled main/preload/renderer into out/.
+# Package exactly that plus the manifest electron reads `main` from.
+files:
+  - out/**/*
+  - package.json
+
+directories:
+  output: dist
+  buildResources: build
+
+# macOS, signed + notarized.
+# Signing identity comes from a "Developer ID Application" certificate
+# (CSC_LINK / CSC_KEY_PASSWORD env). Notarization reads APPLE_ID /
+# APPLE_APP_SPECIFIC_PASSWORD / APPLE_TEAM_ID. Hardened runtime is mandatory
+# for notarization; the entitlements below are what Electron/Chromium needs
+# to run under it. For a quick local unsigned build use `npm run dist:unsigned`.
+mac:
+  category: public.app-category.developer-tools
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  notarize: true
+  target:
+    - target: dmg
+      arch:
+        - arm64
+        - x64
+    - target: zip
+      arch:
+        - arm64
+        - x64
+
+# arch in the filename keeps Apple Silicon and Intel downloads distinct
+# (the Homebrew cask points at these exact names).
+artifactName: ${productName}-${version}-${arch}.${ext}
