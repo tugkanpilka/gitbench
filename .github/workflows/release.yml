@@ -1,8 +1,8 @@
 name: Release
 
-# Build a signed + notarized macOS app and attach it to a GitHub Release
+# Build a signed + notarized macOS app and publish it — together with the
+# electron-updater feed (latest-mac.yml + blockmaps) — to a draft GitHub Release
 # whenever a version tag is pushed, e.g. `git tag v0.1.0 && git push --tags`.
-# Then bump the Homebrew cask in the tap repo so `brew upgrade` sees it.
 on:
   push:
     tags:
@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   release:
-    name: Build macOS (.dmg + .zip)
+    name: Build & publish macOS (.dmg + .zip)
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,11 +27,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build, sign, notarize and package
-        run: npm run dist
+      - name: Build, sign, notarize and publish
+        # electron-builder publishes to GitHub itself (provider/releaseType in
+        # electron-builder.yml), so the release carries latest-mac.yml for
+        # auto-update. releaseType is draft — review the assets, then publish.
+        run: npm run build && npx electron-builder --mac --publish always
         env:
-          # Same secret scheme as the Docbook desktop pipeline, so the very same
-          # Developer ID cert + Apple credentials can be reused verbatim.
+          # built-in Actions token; has contents:write on this repo.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Same secret scheme as the Docbook desktop pipeline.
           # CSC_LINK = base64 .p12 (Developer ID Application), CSC_KEY_PASSWORD = its password.
           CSC_LINK: ${{ secrets.CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
@@ -41,89 +45,3 @@ jobs:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_ID_PASS }}
           APPLE_ID_PASS: ${{ secrets.APPLE_ID_PASS }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-
-      - name: Publish GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          draft: true # review the assets, then publish manually
-          files: |
-            dist/*.dmg
-            dist/*.zip
-
-  update-cask:
-    name: Bump Homebrew cask
-    needs: release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Load tap deploy key
-        # Private half of the write-enabled deploy key on homebrew-tap. If the
-        # secret is absent the job no-ops, so the workflow still goes green
-        # before the tap is wired up.
-        env:
-          DEPLOY_KEY: ${{ secrets.HOMEBREW_TAP_DEPLOY_KEY }}
-        run: |
-          if [ -z "$DEPLOY_KEY" ]; then
-            echo "HOMEBREW_TAP_DEPLOY_KEY not set — skipping cask bump." >> "$GITHUB_STEP_SUMMARY"
-            echo "SKIP=1" >> "$GITHUB_ENV"
-            exit 0
-          fi
-          mkdir -p ~/.ssh
-          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/tap_deploy
-          chmod 600 ~/.ssh/tap_deploy
-          ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
-          echo "GIT_SSH_COMMAND=ssh -i ~/.ssh/tap_deploy -o IdentitiesOnly=yes" >> "$GITHUB_ENV"
-
-      - name: Update cask in tugkanpilka/homebrew-tap
-        if: ${{ env.SKIP != '1' }}
-        env:
-          # gh reads the release from this same repo with the run's token.
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
-        run: |
-          set -euo pipefail
-          VERSION="${TAG#v}"
-          REPO="tugkanpilka/gitbench"
-          BASE="https://github.com/${REPO}/releases/download/${TAG}"
-
-          # Hash the published artifacts directly from the release.
-          gh release download "$TAG" --repo "$REPO" \
-            --pattern "GitBench-${VERSION}-arm64.dmg" \
-            --pattern "GitBench-${VERSION}-x64.dmg" --dir ./_dl
-          ARM_SHA=$(shasum -a 256 "./_dl/GitBench-${VERSION}-arm64.dmg" | awk '{print $1}')
-          X64_SHA=$(shasum -a 256 "./_dl/GitBench-${VERSION}-x64.dmg" | awk '{print $1}')
-
-          git clone "git@github.com:tugkanpilka/homebrew-tap.git" tap
-          mkdir -p tap/Casks
-          cat > tap/Casks/gitbench.rb <<EOF
-          cask "gitbench" do
-            version "${VERSION}"
-
-            on_arm do
-              sha256 "${ARM_SHA}"
-              url "${BASE}/GitBench-#{version}-arm64.dmg"
-            end
-            on_intel do
-              sha256 "${X64_SHA}"
-              url "${BASE}/GitBench-#{version}-x64.dmg"
-            end
-
-            name "GitBench"
-            desc "Worktree diff viewer — browse a repo's git worktrees and view uncommitted diffs"
-            homepage "https://github.com/${REPO}"
-
-            app "GitBench.app"
-
-            zap trash: [
-              "~/Library/Application Support/GitBench",
-              "~/Library/Preferences/com.gitbench.app.plist",
-              "~/Library/Saved Application State/com.gitbench.app.savedState",
-            ]
-          end
-          EOF
-
-          cd tap
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add Casks/gitbench.rb
-          git commit -m "gitbench ${VERSION}"
-          git push

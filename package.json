@@ -20,6 +20,7 @@
     "dist:unsigned": "electron-vite build && electron-builder --mac --publish never -c.mac.identity=null -c.mac.notarize=false -c.mac.hardenedRuntime=false"
   },
   "dependencies": {
+    "electron-updater": "^6.8.9",
     "react": "^19.2.7",
     "react-diff-view": "^3.3.3",
     "react-dom": "^19.2.7",
