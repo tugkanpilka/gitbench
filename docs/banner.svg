@@ -50,7 +50,7 @@
   <text class="ui" x="66" y="186" font-size="26" font-weight="600" fill="#e8e8ed">Watch every worktree your</text>
   <text class="ui" x="66" y="220" font-size="26" font-weight="600" fill="#e8e8ed">agents touch.</text>
 
-  <text class="ui" x="66" y="262" font-size="15.5" fill="#9a9aa2">A native diff viewer for parallel, agent-driven</text>
+  <text class="ui" x="66" y="262" font-size="15.5" fill="#9a9aa2">A desktop diff viewer for parallel, agent-driven</text>
   <text class="ui" x="66" y="284" font-size="15.5" fill="#9a9aa2">Git worktree workflows.</text>
 
   <!-- flow chips -->

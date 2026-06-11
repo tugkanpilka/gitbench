@@ -4,7 +4,7 @@
 
 <h1>GitBench</h1>
 
-<p><strong>A native desktop diff viewer for parallel, agent-driven Git worktree workflows.</strong></p>
+<p><strong>A desktop diff viewer for parallel, agent-driven Git worktree workflows.</strong></p>
 
 <p>
 Pick a repository, browse its worktrees in a sidebar, and read the uncommitted diff of any of them — without <code>cd</code>-ing around and running <code>git diff</code> by hand.
@@ -47,7 +47,7 @@ Open source, MIT-licensed, and TypeScript everywhere.
 
 ## Features
 
-- **Repository picker** — choose any local Git repository via a native folder dialog.
+- **Repository picker** — choose any local Git repository via the system folder dialog.
 - **Worktree sidebar** — every worktree of the repository as a flat list (they're sibling checkouts, not a hierarchy), with branch name, HEAD SHA, and main/locked/detached status. Works whether you open the main worktree or a linked one.
 - **Diff viewer** — the uncommitted diff of the selected worktree, rendered from `git diff HEAD` so staged and unstaged changes appear together: everything that would change if you committed right now. A clean worktree shows a dedicated empty state, not an error. Binary changes and renames are tolerated.
 - **Manual refresh** — refresh on demand to pick up new agent output. (No file watching yet — see [open decisions](#open-decisions).)
@@ -56,7 +56,7 @@ Open source, MIT-licensed, and TypeScript everywhere.
 
 The diff shows **uncommitted changes to tracked files**. Untracked (new, never-added) files are invisible to `git diff HEAD` and are out of scope for the MVP. See [`agent_docs/git-notes.md`](agent_docs/git-notes.md) for the planned approach (`git ls-files --others --exclude-standard`).
 
-> GitBench requires `git` on your `PATH` — it drives the system Git CLI rather than bundling a Git implementation ([why](#why-shell-out-to-git)).
+> GitBench requires `git` on your `PATH` — it drives the system Git CLI rather than bundling a Git implementation ([how](#how-gitbench-talks-to-git)).
 
 ## Getting started
 
@@ -93,14 +93,11 @@ Details live in `agent_docs/`:
 | [`agent_docs/ipc-contract.md`](agent_docs/ipc-contract.md) | Channels, DTOs, error codes, how to add a channel |
 | [`agent_docs/git-notes.md`](agent_docs/git-notes.md) | How git is spawned, output parsing, error classification, gotchas |
 
-## Why shell out to git?
+## How GitBench talks to Git
 
-GitBench spawns the system `git` CLI instead of using a Git library:
+GitBench drives the system `git` CLI directly rather than bundling a Git implementation. The CLI resolves linked worktrees correctly — a worktree's `.git` is a file (`gitdir: <path>`), not a directory — and needs no native modules to rebuild against Electron.
 
-- **[isomorphic-git](https://github.com/isomorphic-git/isomorphic-git)** cannot resolve refs when `.git` is a *file* rather than a directory — and a `.git` file containing `gitdir: <path>` is exactly what a linked worktree is. That rules it out for a worktree-centric app.
-- **[nodegit](https://github.com/nodegit/nodegit)** requires native rebuilds against Electron's ABI, which break recurringly across Electron upgrades.
-
-The CLI handles linked worktrees correctly and needs no native modules. All invocations go through a single wrapper ([`src/infrastructure/git/runGit.ts`](src/infrastructure/git/runGit.ts)) that uses argument arrays — paths are never interpolated into shell strings — and pins the environment (`LC_ALL=C`, no terminal prompts, no optional locks) for stable, parseable output. The quirks are documented in [`agent_docs/git-notes.md`](agent_docs/git-notes.md).
+All invocations go through a single wrapper ([`src/infrastructure/git/runGit.ts`](src/infrastructure/git/runGit.ts)) that uses argument arrays — paths are never interpolated into shell strings — and pins the environment (`LC_ALL=C`, no terminal prompts, no optional locks) for stable, parseable output. The quirks are documented in [`agent_docs/git-notes.md`](agent_docs/git-notes.md).
 
 ## Open decisions
 
