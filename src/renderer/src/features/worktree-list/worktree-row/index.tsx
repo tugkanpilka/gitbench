@@ -47,37 +47,34 @@ export function WorktreeRow({ worktree, selected, summary, onSelect }: WorktreeR
       title={accessibleLabel}
       onClick={() => onSelect(worktree.path)}
     >
-      <span className={styles['worktree-row__top']}>
-        <WorktreeIcon className={styles['worktree-row__icon']} />
+      <WorktreeIcon className={styles['worktree-row__icon']} />
+      <span className={styles['worktree-row__content']}>
         <span className={styles['worktree-row__name']}>{name}</span>
+        {name !== reference && (
+          <span className={styles['worktree-row__reference']}>{reference}</span>
+        )}
+      </span>
+      <span className={styles['worktree-row__stats']}>
+        {worktree.isLocked && <span className={styles['worktree-row__state']}>Locked</span>}
+        {summary !== null && summary.conflictCount > 0 && (
+          <span className={styles['worktree-row__conflicts']}>!{summary.conflictCount}</span>
+        )}
+        {summary !== null && summary.fileCount > 0 && (
+          <DiffStat
+            additions={summary.additions}
+            deletions={summary.deletions}
+            onSelection={selected}
+          />
+        )}
+        {summary !== null && summary.behindCount !== null && summary.behindCount > 0 && (
+          <span className={styles['worktree-row__sync']}>↓{summary.behindCount}</span>
+        )}
+        {summary !== null && summary.unpushedCount > 0 && (
+          <span className={styles['worktree-row__sync']}>↑{summary.unpushedCount}</span>
+        )}
         {summary !== null && summary.fileCount > 0 && (
           <Badge onSelection={selected}>{summary.fileCount}</Badge>
         )}
-      </span>
-      <span className={styles['worktree-row__meta']} aria-hidden="true">
-        <span className={styles['worktree-row__reference']}>{reference}</span>
-        <span className={styles['worktree-row__stats']}>
-          {worktree.isLocked && <span className={styles['worktree-row__state']}>Locked</span>}
-          {summary !== null && summary.conflictCount > 0 && (
-            <span className={styles['worktree-row__conflicts']}>!{summary.conflictCount}</span>
-          )}
-          {summary !== null && summary.fileCount === 0 && (
-            <span className={styles['worktree-row__clean']}>Clean</span>
-          )}
-          {summary !== null && summary.fileCount > 0 && (
-            <DiffStat
-              additions={summary.additions}
-              deletions={summary.deletions}
-              onSelection={selected}
-            />
-          )}
-          {summary !== null && summary.behindCount !== null && summary.behindCount > 0 && (
-            <span className={styles['worktree-row__sync']}>↓{summary.behindCount}</span>
-          )}
-          {summary !== null && summary.unpushedCount > 0 && (
-            <span className={styles['worktree-row__sync']}>↑{summary.unpushedCount}</span>
-          )}
-        </span>
       </span>
     </button>
   );

@@ -6,7 +6,7 @@ const WINDOW_WIDTH = 1280;
 const WINDOW_HEIGHT = 800;
 const WINDOW_MIN_WIDTH = 760;
 const WINDOW_MIN_HEIGHT = 520;
-const TRAFFIC_LIGHT_POSITION = { x: 16, y: 12 };
+const TRAFFIC_LIGHT_POSITION = { x: 16, y: 16 };
 
 /**
  * Only http(s) URLs are safe to hand to the OS shell. Anything else

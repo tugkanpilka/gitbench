@@ -8,18 +8,35 @@
 
 .worktree-detail-sidebar__header {
   display: flex;
-  min-height: 42px;
+  min-height: 44px;
   flex: none;
+  border-bottom: 1px solid var(--gb-sidebar-edge);
   -webkit-app-region: drag;
 }
 
 .worktree-detail-sidebar__toolbar {
   display: flex;
   width: 100%;
-  height: 42px;
+  min-width: 0;
+  height: 44px;
   padding: 0 14px;
   align-items: center;
   flex: none;
+}
+
+.worktree-detail-sidebar__toolbar-content {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  width: 100%;
+  padding-left: 0;
+  transition: padding-left var(--gb-dur-sidebar) var(--gb-ease-sidebar);
+  will-change: padding-left;
+}
+
+.worktree-detail-sidebar__header[data-repository-sidebar-open='false']
+  .worktree-detail-sidebar__toolbar-content {
+  padding-left: calc(var(--gb-traffic-clearance) - 28px);
 }
 
 .worktree-detail-sidebar__back {
@@ -34,18 +51,10 @@
   color: var(--gb-faint);
   background: transparent;
   cursor: pointer;
-  transform: translateX(0);
   transition:
     color var(--gb-dur-quick) var(--gb-ease),
-    background var(--gb-dur-quick) var(--gb-ease),
-    transform var(--gb-dur-sidebar) var(--gb-ease-sidebar);
-  will-change: transform;
+    background var(--gb-dur-quick) var(--gb-ease);
   -webkit-app-region: no-drag;
-}
-
-.worktree-detail-sidebar__header[data-repository-sidebar-open='false']
-  .worktree-detail-sidebar__back {
-  transform: translateX(calc(var(--gb-traffic-clearance) - 28px));
 }
 
 .worktree-detail-sidebar__back:hover {
@@ -61,19 +70,26 @@
 
 .worktree-detail-sidebar__identity {
   display: flex;
-  width: 100%;
+  flex: 1;
   min-width: 0;
-  padding: 17px 9px 16px;
+  padding-left: 6px;
   flex-direction: column;
-  gap: 1px;
+  justify-content: center;
+  gap: 0;
+}
+
+.worktree-detail-sidebar__title {
+  display: flex;
+  align-items: center;
+  gap: var(--gb-space-2);
+  min-width: 0;
 }
 
 .worktree-detail-sidebar__name {
   overflow: hidden;
-  font-size: 16px;
-  font-weight: var(--gb-weight-bold);
-  line-height: var(--gb-leading-ui);
-  letter-spacing: var(--gb-tracking-tight);
+  font-size: 11px;
+  font-weight: var(--gb-weight-medium);
+  line-height: 1.2;
   color: var(--gb-text);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -82,18 +98,17 @@
 .worktree-detail-sidebar__reference {
   overflow: hidden;
   min-width: 0;
-  font-family: var(--gb-font-mono);
-  font-size: var(--gb-text-2xs);
+  font-size: 11px;
   color: var(--gb-faint);
-  line-height: var(--gb-leading-sidebar);
+  line-height: 1.2;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .worktree-detail-sidebar__diff-stat {
-  margin-top: var(--gb-space-2);
-  font-size: var(--gb-text-2xs);
+  font-size: 10px;
   line-height: 1;
+  flex: none;
 }
 
 .worktree-detail-sidebar__content {
@@ -126,20 +141,17 @@
 
 .worktree-detail-sidebar__footer {
   display: flex;
-  min-height: 34px;
-  padding: 4px 8px;
+  min-height: 48px;
+  padding: 8px 16px;
   border-top: 1px solid var(--gb-sidebar-edge);
   align-items: center;
+  justify-content: center;
   gap: var(--gb-space-3);
   flex: none;
   background: transparent;
 }
 
-.worktree-detail-sidebar__view-toggle {
-  margin-left: auto;
-}
-
 .worktree-detail-sidebar__view-toggle :global(.gb-segmented-control__item) {
-  padding: 2px 8px;
+  padding: 2px 5px;
   font-size: var(--gb-text-2xs);
 }

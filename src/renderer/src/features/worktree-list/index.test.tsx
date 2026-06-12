@@ -43,7 +43,6 @@ describe('WorktreeList', () => {
     expect(screen.getByText('+12')).toBeTruthy();
     expect(screen.getByText('−4')).toBeTruthy();
     expect(screen.getByText('3')).toBeTruthy();
-    expect(screen.getByText('Clean')).toBeTruthy();
 
     const selected = screen.getByRole('button', { name: /repo-detached/ });
     expect(selected.getAttribute('aria-pressed')).toBe('true');

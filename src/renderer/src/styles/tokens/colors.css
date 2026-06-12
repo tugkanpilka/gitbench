@@ -17,12 +17,12 @@
 
   --gb-accent: #2e8bff;
   --gb-accent-bg: rgba(46, 139, 255, 0.16);
-  --gb-sel-bg: #2466d1;
-  --gb-sel-text: #ffffff;
-  --gb-sel-muted-text: rgba(255, 255, 255, 0.75);
-  --gb-sel-badge-bg: rgba(255, 255, 255, 0.22);
-  --gb-sel-add-text: #b8f0c5;
-  --gb-sel-del-text: #ffd1cc;
+  --gb-sel-bg: var(--gb-row-sel);
+  --gb-sel-text: var(--gb-text);
+  --gb-sel-muted-text: var(--gb-faint);
+  --gb-sel-badge-bg: var(--gb-badge-bg);
+  --gb-sel-add-text: var(--gb-add-text);
+  --gb-sel-del-text: var(--gb-del-text);
   --gb-row-sel: rgba(255, 255, 255, 0.09);
   --gb-hover: rgba(255, 255, 255, 0.05);
   --gb-badge-bg: rgba(255, 255, 255, 0.08);
@@ -81,12 +81,12 @@
 
   --gb-accent: #0a6ce8;
   --gb-accent-bg: rgba(10, 108, 232, 0.1);
-  --gb-sel-bg: #0a6ce8;
-  --gb-sel-text: #ffffff;
-  --gb-sel-muted-text: rgba(255, 255, 255, 0.75);
-  --gb-sel-badge-bg: rgba(255, 255, 255, 0.22);
-  --gb-sel-add-text: #b8f0c5;
-  --gb-sel-del-text: #ffd1cc;
+  --gb-sel-bg: var(--gb-row-sel);
+  --gb-sel-text: var(--gb-text);
+  --gb-sel-muted-text: var(--gb-faint);
+  --gb-sel-badge-bg: var(--gb-badge-bg);
+  --gb-sel-add-text: var(--gb-add-text);
+  --gb-sel-del-text: var(--gb-del-text);
   --gb-row-sel: rgba(0, 0, 0, 0.07);
   --gb-hover: rgba(0, 0, 0, 0.04);
   --gb-badge-bg: rgba(0, 0, 0, 0.06);

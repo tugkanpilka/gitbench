@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { startTransition, useMemo, useState } from 'react';
 
 import { buildDiffModel, EMPTY_DIFF_MODEL } from '../features/diff-viewer/utils/diffModel';
 import { RepositorySidebar } from '../features/repository-sidebar';
@@ -34,7 +34,9 @@ export default function App() {
 
   const selectWorktree = (worktreePath: string): void => {
     setRepositorySidebarOpen(false);
-    void browser.selectWorktree(worktreePath);
+    startTransition(() => {
+      void browser.selectWorktree(worktreePath);
+    });
   };
 
   if (browser.repoPath === null) {
@@ -67,11 +69,18 @@ export default function App() {
           commitsTruncated={browser.commits?.truncated ?? false}
           diffLoading={browser.diffLoading}
           fileListMode={preferences.fileListMode}
+          flatGroupMode={preferences.flatGroupMode}
           activeFileId={navigation.activeFileId}
           diffStats={diffStats}
           repositorySidebarOpen={repositorySidebarOpen}
-          onSelectFile={navigation.selectFile}
+          onSelectFile={(fileId) => {
+            setRepositorySidebarOpen(false);
+            startTransition(() => {
+              navigation.selectFile(fileId);
+            });
+          }}
           onFileListModeChange={preferences.setFileListMode}
+          onFlatGroupModeChange={preferences.setFlatGroupMode}
           onToggleRepositorySidebar={() => setRepositorySidebarOpen((open) => !open)}
         />
       }

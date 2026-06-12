@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   applyTheme,
   type FileListMode,
+  type FlatGroupMode,
   readAppPreferences,
   type Theme,
   writeAppPreferences,
@@ -11,25 +12,43 @@ import {
 interface AppPreferenceController {
   theme: Theme;
   fileListMode: FileListMode;
+  flatGroupMode: FlatGroupMode;
   toggleTheme: () => void;
   setFileListMode: (mode: FileListMode) => void;
+  setFlatGroupMode: (mode: FlatGroupMode) => void;
 }
 
 export function useAppPreferences(): AppPreferenceController {
   const [preferences, setPreferences] = useState(readAppPreferences);
 
-  // Also runs on mount: re-applying the theme main.tsx already set is a no-op,
-  // and the initial write normalizes any partial/legacy payload in storage.
   useEffect(() => {
     applyTheme(preferences.theme);
     writeAppPreferences(preferences);
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: light)');
+    const handleChange = () => {
+      // Re-apply the theme when the system preference changes
+      applyTheme(preferences.theme);
+    };
+
+    mediaQuery.addEventListener('change', handleChange);
+    return () => {
+      mediaQuery.removeEventListener('change', handleChange);
+    };
   }, [preferences]);
 
   const toggleTheme = useCallback(() => {
-    setPreferences((current) => ({
-      ...current,
-      theme: current.theme === 'dark' ? 'light' : 'dark',
-    }));
+    setPreferences((current) => {
+      let nextTheme: Theme = 'system';
+      if (current.theme === 'system') nextTheme = 'light';
+      else if (current.theme === 'light') nextTheme = 'dark';
+      else nextTheme = 'system';
+      
+      return {
+        ...current,
+        theme: nextTheme,
+      };
+    });
   }, []);
 
   const setFileListMode = useCallback((fileListMode: FileListMode) => {
@@ -39,10 +58,19 @@ export function useAppPreferences(): AppPreferenceController {
     }));
   }, []);
 
+  const setFlatGroupMode = useCallback((flatGroupMode: FlatGroupMode) => {
+    setPreferences((current) => ({
+      ...current,
+      flatGroupMode,
+    }));
+  }, []);
+
   return {
     theme: preferences.theme,
     fileListMode: preferences.fileListMode,
+    flatGroupMode: preferences.flatGroupMode,
     toggleTheme,
     setFileListMode,
+    setFlatGroupMode,
   };
 }

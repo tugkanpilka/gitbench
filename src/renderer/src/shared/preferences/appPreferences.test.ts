@@ -31,10 +31,12 @@ describe('appPreferences', () => {
     expect(readAppPreferences(storage, true)).toEqual({
       theme: 'light',
       fileListMode: 'flat',
+      flatGroupMode: 'status',
     });
     expect(readAppPreferences(storage, false)).toEqual({
       theme: 'dark',
       fileListMode: 'flat',
+      flatGroupMode: 'status',
     });
   });
 
@@ -50,6 +52,7 @@ describe('appPreferences', () => {
     expect(readAppPreferences(storage, false)).toEqual({
       theme: 'light',
       fileListMode: 'flat',
+      flatGroupMode: 'status',
     });
   });
 
@@ -59,15 +62,18 @@ describe('appPreferences', () => {
     expect(readAppPreferences(storage, false)).toEqual({
       theme: 'dark',
       fileListMode: 'flat',
+      flatGroupMode: 'status',
     });
   });
 
   it('writes the versioned preference payload', () => {
     const { storage, getValue } = createStorage();
 
-    writeAppPreferences({ theme: 'light', fileListMode: 'tree' }, storage);
+    writeAppPreferences({ theme: 'light', fileListMode: 'tree', flatGroupMode: 'none' }, storage);
 
-    expect(getValue()).toBe(JSON.stringify({ theme: 'light', fileListMode: 'tree' }));
+    expect(getValue()).toBe(
+      JSON.stringify({ theme: 'light', fileListMode: 'tree', flatGroupMode: 'none' })
+    );
   });
 
   it('exposes the versioned storage key', () => {

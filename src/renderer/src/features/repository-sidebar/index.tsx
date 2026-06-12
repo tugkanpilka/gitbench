@@ -18,9 +18,6 @@ export function RepositorySidebar({
         <span className={styles['repository-sidebar__repo-name']} title={repoPath}>
           {repositoryName}
         </span>
-        <span className={styles['repository-sidebar__repo-meta']}>
-          {worktrees.length} {worktrees.length === 1 ? 'worktree' : 'worktrees'}
-        </span>
       </header>
 
       <nav className={styles['repository-sidebar__navigation']} aria-label="Worktrees">

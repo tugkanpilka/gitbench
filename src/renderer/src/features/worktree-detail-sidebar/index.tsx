@@ -1,6 +1,6 @@
 import { nameFromPath } from '../../shared/path/nameFromPath';
 import { DiffStat } from '../../shared/ui/diff-stat';
-import { Chevron } from '../../shared/ui/icons';
+import { Chevron, TreeListIcon, FlatListIcon } from '../../shared/ui/icons';
 import { SegmentedControl } from '../../shared/ui/segmented-control';
 import { ChangedFilesSection } from '../worktree-list/changed-files-section';
 import { UnpushedCommitsSection } from '../worktree-list/unpushed-commits-section';
@@ -8,8 +8,8 @@ import type { WorktreeDetailSidebarProps } from './index.types';
 import styles from './index.module.scss';
 
 const FILE_LIST_MODE_ITEMS = [
-  { value: 'tree', label: 'Tree' },
-  { value: 'flat', label: 'Flat' },
+  { value: 'tree', label: <TreeListIcon />, ariaLabel: 'Tree view' },
+  { value: 'flat', label: <FlatListIcon />, ariaLabel: 'Flat view' },
 ] as const;
 
 export function WorktreeDetailSidebar({
@@ -19,11 +19,13 @@ export function WorktreeDetailSidebar({
   commitsTruncated,
   diffLoading,
   fileListMode,
+  flatGroupMode,
   activeFileId,
   diffStats,
   repositorySidebarOpen,
   onSelectFile,
   onFileListModeChange,
+  onFlatGroupModeChange,
   onToggleRepositorySidebar,
 }: WorktreeDetailSidebarProps) {
   if (worktree === null) {
@@ -32,7 +34,12 @@ export function WorktreeDetailSidebar({
         <p className={styles['worktree-detail-sidebar__placeholder']}>
           Select a worktree to inspect its changes.
         </p>
-        <DetailFooter fileListMode={fileListMode} onFileListModeChange={onFileListModeChange} />
+        <DetailFooter
+          fileListMode={fileListMode}
+          flatGroupMode={flatGroupMode}
+          onFileListModeChange={onFileListModeChange}
+          onFlatGroupModeChange={onFlatGroupModeChange}
+        />
       </div>
     );
   }
@@ -46,60 +53,90 @@ export function WorktreeDetailSidebar({
         data-repository-sidebar-open={repositorySidebarOpen}
       >
         <div className={styles['worktree-detail-sidebar__toolbar']}>
-          <button
-            type="button"
-            className={styles['worktree-detail-sidebar__back']}
-            aria-label={`${repositorySidebarOpen ? 'Hide' : 'Show'} worktree sidebar`}
-            aria-expanded={repositorySidebarOpen}
-            onClick={onToggleRepositorySidebar}
-          >
-            <Chevron collapsed={false} className={styles['worktree-detail-sidebar__back-icon']} />
-          </button>
+          <div className={styles['worktree-detail-sidebar__toolbar-content']}>
+            <button
+              type="button"
+              className={styles['worktree-detail-sidebar__back']}
+              aria-label={`${repositorySidebarOpen ? 'Hide' : 'Show'} worktree sidebar`}
+              aria-expanded={repositorySidebarOpen}
+              onClick={onToggleRepositorySidebar}
+            >
+              <Chevron collapsed={false} className={styles['worktree-detail-sidebar__back-icon']} />
+            </button>
+            <div className={styles['worktree-detail-sidebar__identity']}>
+              <div className={styles['worktree-detail-sidebar__title']}>
+                <span className={styles['worktree-detail-sidebar__name']} title={worktree.path}>
+                  {nameFromPath(worktree.path)}
+                </span>
+                {diffStats !== null && (
+                  <DiffStat
+                    className={styles['worktree-detail-sidebar__diff-stat']}
+                    additions={diffStats.additions}
+                    deletions={diffStats.deletions}
+                  />
+                )}
+              </div>
+              <span className={styles['worktree-detail-sidebar__reference']} title={reference}>
+                {reference}
+              </span>
+            </div>
+          </div>
         </div>
       </header>
 
       <div className={styles['worktree-detail-sidebar__content']}>
-        <div className={styles['worktree-detail-sidebar__identity']}>
-          <strong className={styles['worktree-detail-sidebar__name']} title={worktree.path}>
-            {nameFromPath(worktree.path)}
-          </strong>
-          <span className={styles['worktree-detail-sidebar__reference']} title={reference}>
-            {reference}
-          </span>
-          {diffStats !== null && (
-            <DiffStat
-              className={styles['worktree-detail-sidebar__diff-stat']}
-              additions={diffStats.additions}
-              deletions={diffStats.deletions}
-            />
-          )}
-        </div>
         {diffLoading ? (
           <p className={styles['worktree-detail-sidebar__loading']}>Loading changes…</p>
         ) : (
           <ChangedFilesSection
             changedFiles={changedFiles}
             fileListMode={fileListMode}
+            flatGroupMode={flatGroupMode}
             activeFileId={activeFileId}
             onSelectFile={onSelectFile}
           />
         )}
-        {unpushedCommits.length > 0 && (
-          <UnpushedCommitsSection commits={unpushedCommits} truncated={commitsTruncated} />
-        )}
       </div>
 
-      <DetailFooter fileListMode={fileListMode} onFileListModeChange={onFileListModeChange} />
+      {unpushedCommits.length > 0 && (
+        <UnpushedCommitsSection commits={unpushedCommits} truncated={commitsTruncated} />
+      )}
+
+      <DetailFooter
+        fileListMode={fileListMode}
+        flatGroupMode={flatGroupMode}
+        onFileListModeChange={onFileListModeChange}
+        onFlatGroupModeChange={onFlatGroupModeChange}
+      />
     </div>
   );
 }
 
+const FLAT_GROUP_MODE_ITEMS = [
+  { value: 'none', label: 'No Group' },
+  { value: 'status', label: 'By Status' },
+] as const;
+
 function DetailFooter({
   fileListMode,
+  flatGroupMode,
   onFileListModeChange,
-}: Pick<WorktreeDetailSidebarProps, 'fileListMode' | 'onFileListModeChange'>) {
+  onFlatGroupModeChange,
+}: Pick<
+  WorktreeDetailSidebarProps,
+  'fileListMode' | 'flatGroupMode' | 'onFileListModeChange' | 'onFlatGroupModeChange'
+>) {
   return (
     <footer className={styles['worktree-detail-sidebar__footer']}>
+      {fileListMode === 'flat' && (
+        <SegmentedControl
+          className={styles['worktree-detail-sidebar__view-toggle']}
+          ariaLabel="Flat group view"
+          items={FLAT_GROUP_MODE_ITEMS}
+          value={flatGroupMode}
+          onChange={onFlatGroupModeChange}
+        />
+      )}
       <SegmentedControl
         className={styles['worktree-detail-sidebar__view-toggle']}
         ariaLabel="File list view"

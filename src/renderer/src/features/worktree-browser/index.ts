@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
+import { startTransition, useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
 
 import type { WorktreeDto, WorktreeSummaryDto } from '../../../../contracts/ipc';
 import { ApiError } from '../../shared/api/ApiError';
@@ -37,6 +37,7 @@ export function useWorktreeBrowser() {
   const diffRequest = useRef<AbortController | null>(null);
   const commitsRequest = useRef<AbortController | null>(null);
   const summariesRequest = useRef<AbortController | null>(null);
+  const selectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Latest repo/selection, read by the stable repo:changed subscription without
   // re-subscribing on every change. Mirrored synchronously each render.
@@ -128,11 +129,13 @@ export function useWorktreeBrowser() {
         if (signal.aborted) {
           return;
         }
-        setDiff((prev) =>
-          prev && prev.worktreePath === worktreePath && prev.diffText === response.diffText
-            ? prev
-            : { worktreePath, diffText: response.diffText }
-        );
+        startTransition(() => {
+          setDiff((prev) =>
+            prev && prev.worktreePath === worktreePath && prev.diffText === response.diffText
+              ? prev
+              : { worktreePath, diffText: response.diffText }
+          );
+        });
       } catch (caught) {
         if (!signal.aborted) {
           if (showLoading) {
@@ -165,14 +168,16 @@ export function useWorktreeBrowser() {
       }
       // Keep the previous reference when nothing changed (a sha pins its content),
       // so watcher ticks don't re-render the whole sidebar subtree.
-      setCommits((prev) =>
-        prev &&
-        prev.truncated === response.truncated &&
-        prev.commits.length === response.commits.length &&
-        prev.commits.every((commit, index) => commit.sha === response.commits[index].sha)
-          ? prev
-          : { commits: response.commits, truncated: response.truncated }
-      );
+      startTransition(() => {
+        setCommits((prev) =>
+          prev &&
+          prev.truncated === response.truncated &&
+          prev.commits.length === response.commits.length &&
+          prev.commits.every((commit, index) => commit.sha === response.commits[index].sha)
+            ? prev
+            : { commits: response.commits, truncated: response.truncated }
+        );
+      });
     } catch {
       if (!signal.aborted && clear) {
         setCommits(null);
@@ -222,7 +227,21 @@ export function useWorktreeBrowser() {
     async (worktreePath: string) => {
       selectedPathRef.current = worktreePath;
       setSelectedPath(worktreePath);
-      await Promise.all([loadDiff(worktreePath, true), loadCommits(worktreePath, true)]);
+
+      // Immediately clear the old state so the UI reflects the loading state instantly
+      setDiff(null);
+      setDiffLoading(true);
+      setCommits(null);
+
+      if (selectTimeoutRef.current) {
+        clearTimeout(selectTimeoutRef.current);
+      }
+
+      // Defer the heavy API calls and parsing by 150ms. This gives the sidebar
+      // opening/closing animation time to start smoothly without dropping frames.
+      selectTimeoutRef.current = setTimeout(() => {
+        void Promise.all([loadDiff(worktreePath, false), loadCommits(worktreePath, false)]);
+      }, 150);
     },
     [loadDiff, loadCommits]
   );

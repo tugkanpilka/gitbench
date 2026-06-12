@@ -1,6 +1,9 @@
+import type { ReactNode } from 'react';
+
 export interface SegmentedControlItem<T extends string> {
   value: T;
-  label: string;
+  label: ReactNode;
+  ariaLabel?: string;
   disabled?: boolean;
 }
 

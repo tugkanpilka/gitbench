@@ -1,9 +1,11 @@
-export type Theme = 'dark' | 'light';
+export type Theme = 'system' | 'dark' | 'light';
 export type FileListMode = 'flat' | 'tree';
+export type FlatGroupMode = 'status' | 'none';
 
 export interface AppPreferences {
   theme: Theme;
   fileListMode: FileListMode;
+  flatGroupMode: FlatGroupMode;
 }
 
 export interface PreferenceStorage {
@@ -14,11 +16,15 @@ export interface PreferenceStorage {
 export const APP_PREFERENCES_STORAGE_KEY = 'gitbench.ui-preferences.v1';
 
 function isTheme(value: unknown): value is Theme {
-  return value === 'dark' || value === 'light';
+  return value === 'system' || value === 'dark' || value === 'light';
 }
 
 function isFileListMode(value: unknown): value is FileListMode {
   return value === 'flat' || value === 'tree';
+}
+
+function isFlatGroupMode(value: unknown): value is FlatGroupMode {
+  return value === 'status' || value === 'none';
 }
 
 export function prefersLightTheme(): boolean {
@@ -42,8 +48,9 @@ export function readAppPreferences(
   systemPrefersLight = prefersLightTheme()
 ): AppPreferences {
   const defaults: AppPreferences = {
-    theme: systemPrefersLight ? 'light' : 'dark',
+    theme: 'system',
     fileListMode: 'flat',
+    flatGroupMode: 'status',
   };
 
   if (storage === null) {
@@ -67,6 +74,9 @@ export function readAppPreferences(
       fileListMode: isFileListMode(candidate.fileListMode)
         ? candidate.fileListMode
         : defaults.fileListMode,
+      flatGroupMode: isFlatGroupMode(candidate.flatGroupMode)
+        ? candidate.flatGroupMode
+        : defaults.flatGroupMode,
     };
   } catch {
     return defaults;
@@ -93,7 +103,9 @@ export function applyTheme(theme: Theme): void {
     return;
   }
 
-  if (theme === 'light') {
+  const effectiveTheme = theme === 'system' ? (prefersLightTheme() ? 'light' : 'dark') : theme;
+
+  if (effectiveTheme === 'light') {
     document.documentElement.dataset.theme = 'light';
   } else {
     delete document.documentElement.dataset.theme;

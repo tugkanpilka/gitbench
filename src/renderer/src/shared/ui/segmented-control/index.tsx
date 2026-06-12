@@ -83,6 +83,8 @@ export function SegmentedControl<T extends string>({
       )}
       {items.map((item, index) => {
         const selected = item.value === value;
+        const buttonAriaLabel =
+          item.ariaLabel ?? (typeof item.label === 'string' ? item.label : undefined);
 
         return (
           <button
@@ -90,6 +92,7 @@ export function SegmentedControl<T extends string>({
             type="button"
             className={styles['gb-segmented-control__item']}
             role="radio"
+            aria-label={buttonAriaLabel}
             aria-checked={selected}
             disabled={item.disabled}
             tabIndex={selected ? 0 : -1}

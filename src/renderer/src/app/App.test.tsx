@@ -96,10 +96,12 @@ describe('App', () => {
 
     await openRepository();
 
-    const treeMode = screen.getByRole('radio', { name: 'Tree' });
+    const treeMode = screen.getByRole('radio', { name: 'Tree view' });
     fireEvent.click(treeMode);
 
-    expect(treeMode.getAttribute('aria-checked')).toBe('true');
+    expect(screen.getByRole('radio', { name: 'Tree view' }).getAttribute('aria-checked')).toBe(
+      'true'
+    );
     expect(
       JSON.parse(window.localStorage.getItem('gitbench.ui-preferences.v1') ?? '').fileListMode
     ).toBe('tree');

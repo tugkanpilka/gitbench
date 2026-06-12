@@ -8,7 +8,6 @@ import { toggledSet } from '../../../shared/collections/toggledSet';
 import { cx } from '../../../shared/ui/cx';
 import { Chevron } from '../../../shared/ui/icons';
 import { splitPath } from '../../diff-viewer/utils/diffModel';
-import { FileIcon } from '../file-icon';
 import type { UnpushedCommitsSectionProps } from './index.types';
 import sharedStyles from '../index.module.scss';
 import styles from './index.module.scss';
@@ -58,35 +57,45 @@ function groupFilesByStatus(files: CommitFileChange[]): FileGroup[] {
   }));
 }
 
-/** Read-only list of unpushed commits for the selected worktree, each with its files. */
 export function UnpushedCommitsSection({ commits, truncated }: UnpushedCommitsSectionProps) {
+  const [expanded, setExpanded] = useState(false);
   const [expandedCommits, setExpandedCommits] = useState<Set<string>>(() => new Set());
 
   return (
     <section className={styles['unpushed-commits']} aria-label="Unpushed commits">
-      <header className={sharedStyles['worktree-files-section__header']}>
-        <h2 className={sharedStyles['worktree-files-section__label']}>Unpushed</h2>
+      <button
+        type="button"
+        className={styles['unpushed-commits__header']}
+        onClick={() => setExpanded(!expanded)}
+        aria-expanded={expanded}
+      >
+        <h2 className={styles['unpushed-commits__label']}>Unpushed</h2>
         <span className={styles['unpushed-commits__count']}>
           {commits.length}
           {truncated ? '+' : ''}
         </span>
-      </header>
+        <Chevron collapsed={!expanded} className={styles['unpushed-commits__chevron']} />
+      </button>
 
-      <ul className={styles['unpushed-commits__list']}>
-        {commits.map((commit) => (
-          <CommitItem
-            key={commit.sha}
-            commit={commit}
-            expanded={expandedCommits.has(commit.sha)}
-            onToggle={() => setExpandedCommits((current) => toggledSet(current, commit.sha))}
-          />
-        ))}
-      </ul>
+      {expanded && (
+        <div className={styles['unpushed-commits__content']}>
+          <ul className={styles['unpushed-commits__list']}>
+            {commits.map((commit) => (
+              <CommitItem
+                key={commit.sha}
+                commit={commit}
+                expanded={expandedCommits.has(commit.sha)}
+                onToggle={() => setExpandedCommits((current) => toggledSet(current, commit.sha))}
+              />
+            ))}
+          </ul>
 
-      {truncated && (
-        <p className={styles['unpushed-commits__truncated']}>
-          Showing the latest {commits.length} commits.
-        </p>
+          {truncated && (
+            <p className={styles['unpushed-commits__truncated']}>
+              Showing the latest {commits.length} commits.
+            </p>
+          )}
+        </div>
       )}
     </section>
   );
@@ -142,17 +151,59 @@ function FileGroupView({ group }: { group: FileGroup }) {
   );
 }
 
+function getStatusChar(status: CommitFileChangeStatus) {
+  switch (status) {
+    case 'added': return 'A';
+    case 'modified': return 'M';
+    case 'deleted': return 'D';
+    case 'renamed': return 'R';
+    case 'copied': return 'C';
+    case 'unmerged': return 'U';
+    case 'typeChanged': return 'T';
+    default: return '?';
+  }
+}
+
+function getStatusClass(status: CommitFileChangeStatus) {
+  switch (status) {
+    case 'added': return 'add';
+    case 'modified': return 'modify';
+    case 'deleted': return 'delete';
+    case 'renamed': return 'rename';
+    case 'copied': return 'copy';
+    default: return 'modify';
+  }
+}
+
 function CommitFileRow({ file }: { file: CommitFileChange }) {
   const { directory, name } = splitPath(file.path);
   const title = file.previousPath !== null ? `${file.previousPath} → ${file.path}` : file.path;
+  const directoryLabel = directory === '' ? '/' : directory.replace(/\/$/, '');
 
   return (
-    <li className={styles['commit-file']}>
-      <span className={styles['commit-file__path']} title={title}>
-        {directory && <span className={styles['commit-file__dir']}>{directory}</span>}
-        <FileIcon name={name} />
-        <span className={styles['commit-file__name']}>{name}</span>
-      </span>
+    <li>
+      <div
+        className={`${sharedStyles['file-navigation-row']} ${sharedStyles['file-navigation-row--flat']}`}
+        style={{ cursor: 'default' }}
+      >
+        <div
+          className={`${sharedStyles['file-navigation-row__status-box']} ${
+            sharedStyles[`file-navigation-row__status-box--${getStatusClass(file.status)}`]
+          }`}
+        >
+          {getStatusChar(file.status)}
+        </div>
+        <div className={sharedStyles['file-navigation-row__flat-content']}>
+          <span className={sharedStyles['file-navigation-row__flat-main']}>
+            <span className={sharedStyles['file-navigation-row__name']} title={title}>
+              {name}
+            </span>
+          </span>
+          <span className={sharedStyles['file-navigation-row__directory']} title={directoryLabel}>
+            {directoryLabel}
+          </span>
+        </div>
+      </div>
     </li>
   );
 }

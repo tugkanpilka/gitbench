@@ -60,11 +60,13 @@ function renderSidebar({
       commitsTruncated={false}
       diffLoading={false}
       fileListMode={mode}
+      flatGroupMode="status"
       activeFileId={FILES[0].id}
       diffStats={{ additions: 2, deletions: 1 }}
       repositorySidebarOpen={repositorySidebarOpen}
       onSelectFile={onSelectFile}
       onFileListModeChange={() => undefined}
+      onFlatGroupModeChange={() => undefined}
       onToggleRepositorySidebar={onToggleRepositorySidebar}
     />
   );
@@ -82,6 +84,9 @@ describe('WorktreeDetailSidebar', () => {
     expect(screen.getAllByText('Modified').length).toBeGreaterThan(0);
     expect(screen.getByText('Deleted')).toBeTruthy();
     expect(screen.getByLabelText('Unpushed commits')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /Unpushed/ }));
+
     expect(screen.getByText('feat: add detail sidebar')).toBeTruthy();
     expect(screen.queryByText('commit-only.ts')).toBeNull();
 
@@ -98,10 +103,10 @@ describe('WorktreeDetailSidebar', () => {
       name: 'src/a.ts, 1 addition, 0 deletions',
     });
 
-    expect(fileRow.textContent).toBe('a.ts+1src');
+    expect(fileRow.textContent).toBe('Aa.ts+1src');
     expect(
       screen.getByRole('button', { name: 'old.ts, 0 additions, 1 deletion' }).textContent
-    ).toBe('old.ts−1/');
+    ).toBe('Dold.ts−1/');
     fireEvent.click(fileRow);
 
     expect(onSelectFile).toHaveBeenCalledWith(FILES[0].id);
@@ -128,11 +133,13 @@ describe('WorktreeDetailSidebar', () => {
         commitsTruncated={false}
         diffLoading={false}
         fileListMode="flat"
+        flatGroupMode="status"
         activeFileId={FILES[0].id}
         diffStats={{ additions: 2, deletions: 1 }}
         repositorySidebarOpen={true}
         onSelectFile={() => undefined}
         onFileListModeChange={() => undefined}
+        onFlatGroupModeChange={() => undefined}
         onToggleRepositorySidebar={onToggleRepositorySidebar}
       />
     );
@@ -147,11 +154,13 @@ describe('WorktreeDetailSidebar', () => {
         commitsTruncated={false}
         diffLoading={false}
         fileListMode="flat"
+        flatGroupMode="status"
         activeFileId={FILES[0].id}
         diffStats={{ additions: 2, deletions: 1 }}
         repositorySidebarOpen={false}
         onSelectFile={() => undefined}
         onFileListModeChange={() => undefined}
+        onFlatGroupModeChange={() => undefined}
         onToggleRepositorySidebar={onToggleRepositorySidebar}
       />
     );
@@ -169,11 +178,13 @@ describe('WorktreeDetailSidebar', () => {
         commitsTruncated={false}
         diffLoading={false}
         fileListMode="flat"
+        flatGroupMode="status"
         activeFileId={null}
         diffStats={null}
         repositorySidebarOpen={true}
         onSelectFile={() => undefined}
         onFileListModeChange={() => undefined}
+        onFlatGroupModeChange={() => undefined}
         onToggleRepositorySidebar={() => undefined}
       />
     );

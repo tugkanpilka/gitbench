@@ -25,15 +25,28 @@ export function FileNavigationRow({ file, depth, showDirectory }: FileNavigation
       >
         {showDirectory ? (
           <>
-            <span className={styles['file-navigation-row__flat-main']}>
-              <span className={styles['file-navigation-row__name']} title={path}>
-                {file.path.name}
+            <div
+              className={`${styles['file-navigation-row__status-box']} ${
+                styles[`file-navigation-row__status-box--${file.file.type}`]
+              }`}
+            >
+              {file.file.type === 'add' && 'A'}
+              {file.file.type === 'modify' && 'M'}
+              {file.file.type === 'delete' && 'D'}
+              {file.file.type === 'rename' && 'R'}
+              {file.file.type === 'copy' && 'C'}
+            </div>
+            <div className={styles['file-navigation-row__flat-content']}>
+              <span className={styles['file-navigation-row__flat-main']}>
+                <span className={styles['file-navigation-row__name']} title={path}>
+                  {file.path.name}
+                </span>
+                <DiffStat additions={file.additions} deletions={file.deletions} />
               </span>
-              <DiffStat additions={file.additions} deletions={file.deletions} />
-            </span>
-            <span className={styles['file-navigation-row__directory']} title={directory}>
-              {directory}
-            </span>
+              <span className={styles['file-navigation-row__directory']} title={directory}>
+                {directory}
+              </span>
+            </div>
           </>
         ) : (
           <>

@@ -36,10 +36,14 @@ function groupChangedFiles(files: ChangedFilesSectionProps['changedFiles']): Fil
 export function ChangedFilesSection({
   changedFiles,
   fileListMode,
+  flatGroupMode,
   activeFileId,
   onSelectFile,
 }: ChangedFilesSectionProps) {
-  const groups = groupChangedFiles(changedFiles);
+  const isGrouped = fileListMode === 'tree' || flatGroupMode === 'status';
+  const groups = isGrouped
+    ? groupChangedFiles(changedFiles)
+    : [{ key: 'all' as const, label: 'All Files', files: changedFiles }];
 
   return (
     <section className={styles['worktree-files-section']} aria-label="Changes">
@@ -47,17 +51,19 @@ export function ChangedFilesSection({
         <h2 className={styles['worktree-files-section__label']}>Changes</h2>
         <span className={styles['worktree-file-group__count']}>{changedFiles.length}</span>
       </header>
-      {groups.length === 0 ? (
+      {changedFiles.length === 0 ? (
         <p className={styles['worktree-files-section__empty']}>No uncommitted changes.</p>
       ) : (
         groups.map((group) => (
           <div key={group.key} className={styles['worktree-file-group']}>
-            <div
-              className={`${styles['worktree-file-group__header']} ${styles[`worktree-file-group__header--${group.key}`]}`}
-            >
-              <span>{group.label}</span>
-              <span className={styles['worktree-file-group__count']}>{group.files.length}</span>
-            </div>
+            {isGrouped && (
+              <div
+                className={`${styles['worktree-file-group__header']} ${styles[`worktree-file-group__header--${group.key}`]}`}
+              >
+                <span>{group.label}</span>
+                <span className={styles['worktree-file-group__count']}>{group.files.length}</span>
+              </div>
+            )}
             <FileListProvider
               files={group.files}
               activeFileId={activeFileId}

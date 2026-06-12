@@ -107,3 +107,37 @@ export const WorktreeIcon = memo(function WorktreeIcon({ className }: TIconProps
     </svg>
   );
 });
+
+export const TreeListIcon = memo(function TreeListIcon({ className }: TIconProps) {
+  return (
+    <svg
+      className={className}
+      width="14"
+      height="14"
+      viewBox="0 0 14 14"
+      aria-hidden="true"
+      fill="currentColor"
+    >
+      <rect x="2" y="2.75" width="10" height="1.5" rx="0.5" />
+      <rect x="4" y="6.25" width="8" height="1.5" rx="0.5" />
+      <rect x="6" y="9.75" width="6" height="1.5" rx="0.5" />
+    </svg>
+  );
+});
+
+export const FlatListIcon = memo(function FlatListIcon({ className }: TIconProps) {
+  return (
+    <svg
+      className={className}
+      width="14"
+      height="14"
+      viewBox="0 0 14 14"
+      aria-hidden="true"
+      fill="currentColor"
+    >
+      <rect x="2" y="2.75" width="10" height="1.5" rx="0.5" />
+      <rect x="2" y="6.25" width="10" height="1.5" rx="0.5" />
+      <rect x="2" y="9.75" width="10" height="1.5" rx="0.5" />
+    </svg>
+  );
+});

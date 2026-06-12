@@ -10,13 +10,13 @@
 .worktree-row {
   display: flex;
   width: 100%;
-  min-height: 46px;
+  min-height: 32px;
   padding: 4px 9px;
   border: 0;
   border-radius: var(--gb-radius-item);
-  flex-direction: column;
-  justify-content: center;
-  gap: 1px;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
   font-family: var(--gb-font-ui);
   color: var(--gb-text);
   background: transparent;
@@ -39,26 +39,24 @@
   background: var(--gb-sel-bg);
 }
 
-.worktree-row__top {
-  display: flex;
-  width: 100%;
-  min-width: 0;
-  align-items: center;
-  gap: var(--gb-space-3);
-}
-
 .worktree-row__icon {
   flex: none;
   opacity: 0.5;
 }
 
-.worktree-row__name {
-  min-width: 0;
+.worktree-row__content {
+  display: flex;
   flex: 1;
+  min-width: 0;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.worktree-row__name {
+  flex: 0 1 auto;
   overflow: hidden;
   font-size: var(--gb-text-sm);
   font-weight: var(--gb-weight-regular);
-  line-height: var(--gb-leading-sidebar);
   letter-spacing: var(--gb-tracking-tight);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -68,20 +66,11 @@
   font-weight: var(--gb-weight-semibold);
 }
 
-.worktree-row__meta {
-  display: flex;
-  min-width: 0;
-  padding-left: 18px;
-  align-items: center;
-  gap: var(--gb-space-3);
-}
-
 .worktree-row__reference {
+  flex: 1 1 auto;
   min-width: 0;
-  flex: 1;
   overflow: hidden;
-  font-family: var(--gb-font-mono);
-  font-size: var(--gb-text-2xs);
+  font-size: var(--gb-text-xs);
   color: var(--gb-faint);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -91,16 +80,11 @@
   display: inline-flex;
   flex: none;
   align-items: center;
-  gap: var(--gb-space-3);
-  font-family: var(--gb-font-mono);
+  gap: 6px;
   font-size: var(--gb-text-2xs);
   color: var(--gb-faint);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
-}
-
-.worktree-row__clean {
-  color: var(--gb-add-text);
 }
 
 .worktree-row__conflicts {
@@ -113,7 +97,6 @@
 
 .worktree-row[aria-pressed='true'] .worktree-row__reference,
 .worktree-row[aria-pressed='true'] .worktree-row__stats,
-.worktree-row[aria-pressed='true'] .worktree-row__clean,
 .worktree-row[aria-pressed='true'] .worktree-row__conflicts,
 .worktree-row[aria-pressed='true'] .worktree-row__state {
   color: var(--gb-sel-muted-text);
@@ -171,7 +154,6 @@
 }
 
 .worktree-file-group__count {
-  font-family: var(--gb-font-mono);
   font-weight: var(--gb-weight-regular);
   color: var(--gb-faint);
   font-variant-numeric: tabular-nums;
@@ -274,13 +256,55 @@
 
 .file-navigation-row--flat {
   height: 42px;
-  padding-top: 4px;
-  padding-right: 4px;
-  padding-bottom: 4px;
+  padding: 4px 4px 4px 6px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--gb-space-3);
+}
+
+.file-navigation-row__flat-content {
+  display: flex;
+  flex: 1;
+  min-width: 0;
   flex-direction: column;
-  align-items: stretch;
   justify-content: center;
   gap: 1px;
+}
+
+.file-navigation-row__status-box {
+  display: flex;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--gb-text);
+  background: var(--gb-surface-2);
+}
+
+.file-navigation-row__status-box--add {
+  color: var(--gb-add-text);
+  background: color-mix(in srgb, var(--gb-add-text) 15%, transparent);
+}
+
+.file-navigation-row__status-box--modify {
+  color: var(--gb-mod-text);
+  background: color-mix(in srgb, var(--gb-mod-text) 15%, transparent);
+}
+
+.file-navigation-row__status-box--delete {
+  color: var(--gb-del-text);
+  background: color-mix(in srgb, var(--gb-del-text) 15%, transparent);
+}
+
+.file-navigation-row__status-box--rename,
+.file-navigation-row__status-box--copy {
+  color: var(--gb-dim);
+  background: color-mix(in srgb, var(--gb-dim) 15%, transparent);
 }
 
 .file-navigation-row__flat-main {
@@ -303,7 +327,6 @@
 .file-navigation-row__directory {
   display: block;
   overflow: hidden;
-  font-family: var(--gb-font-mono);
   font-size: var(--gb-text-2xs);
   line-height: var(--gb-leading-ui);
   color: var(--gb-faint);
@@ -325,7 +348,6 @@
   min-width: 0;
   flex: 1;
   overflow: hidden;
-  font-family: var(--gb-font-mono);
   font-size: var(--gb-text-sm);
   line-height: var(--gb-leading-ui);
   text-overflow: ellipsis;

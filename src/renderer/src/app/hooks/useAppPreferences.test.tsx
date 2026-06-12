@@ -73,6 +73,7 @@ describe('useAppPreferences', () => {
     expect(storedPreferences()).toEqual({
       theme: 'dark',
       fileListMode: 'tree',
+      flatGroupMode: 'status',
     });
   });
 
@@ -83,6 +84,7 @@ describe('useAppPreferences', () => {
     expect(storedPreferences()).toEqual({
       theme: 'light',
       fileListMode: 'tree',
+      flatGroupMode: 'status',
     });
   });
 
@@ -96,6 +98,7 @@ describe('useAppPreferences', () => {
     expect(storedPreferences()).toEqual({
       theme: 'light',
       fileListMode: 'flat',
+      flatGroupMode: 'status',
     });
   });
 });
