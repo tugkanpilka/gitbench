@@ -1,0 +1,137 @@
+.unpushed-commits {
+  margin-top: var(--gb-space-6);
+  padding-top: var(--gb-space-4);
+}
+
+.unpushed-commits__count {
+  font-family: var(--gb-font-mono);
+  font-size: var(--gb-text-2xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--gb-faint);
+}
+
+.unpushed-commits__list {
+  display: flex;
+  margin: 0 0 var(--gb-space-4) 0;
+  padding: 0;
+  flex-direction: column;
+  gap: var(--gb-space-3);
+  list-style: none;
+}
+
+.unpushed-commits__truncated {
+  margin: 0;
+  padding: 0 9px;
+  font-size: var(--gb-text-2xs);
+  color: var(--gb-faint);
+}
+
+.commit {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.commit__header {
+  display: flex;
+  min-width: 0;
+  padding: 2px 9px;
+  align-items: baseline;
+  gap: var(--gb-space-3);
+}
+
+.commit__sha {
+  flex: none;
+  font-family: var(--gb-font-mono);
+  font-size: var(--gb-text-2xs);
+  color: var(--gb-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.commit__subject {
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--gb-text-sm);
+  color: var(--gb-text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.commit-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.commit-group__label {
+  display: flex;
+  margin-top: var(--gb-space-1);
+  padding: 0 9px;
+  align-items: baseline;
+  gap: var(--gb-space-2);
+  font-size: var(--gb-text-2xs);
+  font-weight: var(--gb-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--gb-tracking-caps);
+  color: var(--gb-dim);
+}
+
+.commit-group__label--added {
+  color: var(--gb-add-text);
+}
+
+.commit-group__label--deleted {
+  color: var(--gb-del-text);
+}
+
+.commit-group__label--modified {
+  color: var(--gb-text);
+}
+
+.commit-group__label--neutral {
+  color: var(--gb-dim);
+}
+
+.commit-group__count {
+  font-family: var(--gb-font-mono);
+  font-weight: var(--gb-weight-regular);
+  font-variant-numeric: tabular-nums;
+  color: var(--gb-faint);
+}
+
+.commit-group__files {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  flex-direction: column;
+  list-style: none;
+}
+
+.commit-file {
+  display: flex;
+  height: 22px;
+  padding: 0 4px 0 16px;
+  align-items: center;
+  gap: var(--gb-space-2);
+}
+
+.commit-file__path {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  align-items: center;
+  font-size: var(--gb-text-sm);
+  white-space: nowrap;
+}
+
+.commit-file__dir {
+  overflow: hidden;
+  color: var(--gb-dim);
+  opacity: 0.7;
+  text-overflow: ellipsis;
+}
+
+.commit-file__name {
+  flex: none;
+  color: var(--gb-text);
+}

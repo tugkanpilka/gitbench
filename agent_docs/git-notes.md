@@ -74,6 +74,32 @@ Gotchas, in order of how much they will bite:
 4. **Binary changes** appear as `Binary files a/… and b/… differ` lines; the diff renderer must tolerate them.
 5. **Renames** appear as `rename from` / `rename to` headers (rename detection is on by default in modern git). The diff renderer must tolerate these too.
 
+## Unpushed commits (the `commits:unpushed` channel)
+
+`GitCliCommitReader` lists commits on a worktree's HEAD that haven't been pushed, with each commit's changed files. The two ref probes run in parallel, then one `git log`.
+
+Ref probes go through the shared `refResolves` helper (`src/infrastructure/git/refResolves.ts`): `rev-parse --verify --quiet <ref>` with `acceptedExitCodes: [1]`. A missing ref exits 1 with **empty** stderr (accepted, returns false); a real failure (corrupt ref, bad object) writes stderr and still rejects — so breakage is never mistaken for "ref absent". The diff reader's unborn-HEAD guard is built on the same helper.
+
+Resolving the "unpushed" range, in priority order:
+
+1. **`@{upstream}..HEAD`** when the branch has an upstream — this is exactly git status's "ahead by N". Detect with `refResolves(path, '@{upstream}')` (a failed resolution = no upstream, **not** an error here — treated as "fall through").
+2. **`HEAD --not --remotes`** when there's no upstream but at least one remote exists (`git remote` non-empty) — commits reachable from HEAD but not from any remote-tracking ref. Covers a never-pushed feature branch.
+3. **empty** when there's no remote at all — "unpushed" is undefined, so the list is empty (not an error).
+
+Unborn HEAD (zero commits) short-circuits to an empty list, same `refResolves` guard as the diff reader.
+
+The log call:
+
+```text
+git -C <worktreePath> -c core.quotePath=false --no-pager log <range> \
+  --no-color --max-count=101 --name-status --format=%x1e%H%x1f%h%x1f%an%x1f%cI%x1f%s
+```
+
+- `--format=%x1e…` prefixes each commit with a Record-Separator byte (0x1e) and joins metadata fields with Unit-Separator bytes (0x1f). Git does **not** strip these bytes from metadata (a crafted subject can contain them), so `parseCommitLog` (a pure, fixture-tested function) additionally validates each record's 40-hex sha header and drops phantom records. `%cI` is the committer date (matches `git log` ordering; the author date would go stale on rebase/cherry-pick). `--name-status` appends `STATUS\tpath` lines (renames/copies carry `Rxxx`/`Cxxx` and two tab-separated paths).
+- `-c core.quotePath=false` keeps non-ASCII paths literal instead of `\xNN`-escaped. Paths containing literal tabs or newlines remain out of scope (document, don't crash) — consistent with the rest of the git layer.
+- **Cap:** `--max-count=101` requests one more than the 100-commit display cap so truncation is detected honestly and surfaced as `truncated: true` rather than silently dropped.
+- Merge commits show no files under default `--name-status` (no diff); they parse to an empty `files` array, which the UI tolerates.
+
 ## File watching (the `watch:start` channel)
 
 `src/infrastructure/watch/ChokidarRepoWatcher.ts` turns filesystem changes into a debounced "re-query" signal. It never reads diffs — git stays the source of truth; the renderer re-runs `worktrees:list` / `diff:get` on each signal.

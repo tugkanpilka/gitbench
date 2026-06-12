@@ -5,6 +5,7 @@ import {
   IPC_CHANNELS,
   type DesktopApi,
   type GetDiffResponse,
+  type ListUnpushedCommitsResponse,
   type ListWorktreesResponse,
   type PickRepositoryResponse,
   type Result,
@@ -17,6 +18,10 @@ const api: DesktopApi = {
     ipcRenderer.invoke(IPC_CHANNELS.listWorktrees, { repoPath }),
   getDiff: (worktreePath: string): Promise<Result<GetDiffResponse>> =>
     ipcRenderer.invoke(IPC_CHANNELS.getDiff, { worktreePath }),
+  listUnpushedCommits: (
+    worktreePath: string
+  ): Promise<Result<ListUnpushedCommitsResponse>> =>
+    ipcRenderer.invoke(IPC_CHANNELS.listUnpushedCommits, { worktreePath }),
   startWatch: (repoPath: string, selectedWorktreePath: string | null): Promise<Result<null>> =>
     ipcRenderer.invoke(IPC_CHANNELS.startWatch, { repoPath, selectedWorktreePath }),
   stopWatch: (): Promise<Result<null>> => ipcRenderer.invoke(IPC_CHANNELS.stopWatch),

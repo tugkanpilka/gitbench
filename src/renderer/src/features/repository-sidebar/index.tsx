@@ -8,6 +8,8 @@ export function RepositorySidebar({
   worktrees,
   selectedPath,
   changedFiles,
+  unpushedCommits,
+  commitsTruncated,
   fileListMode,
   activeFileId,
   diffStats,
@@ -32,6 +34,8 @@ export function RepositorySidebar({
           worktrees={worktrees}
           selectedPath={selectedPath}
           changedFiles={changedFiles}
+          unpushedCommits={unpushedCommits}
+          commitsTruncated={commitsTruncated}
           fileListMode={fileListMode}
           activeFileId={activeFileId}
           diffStats={diffStats}

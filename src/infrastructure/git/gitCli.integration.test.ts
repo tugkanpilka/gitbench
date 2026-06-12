@@ -8,6 +8,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { NotARepositoryError } from '../../application/worktrees/errors/NotARepositoryError';
 import { WorktreeNotFoundError } from '../../application/worktrees/errors/WorktreeNotFoundError';
 import { GitCommandFailedError } from './errors/GitCommandFailedError';
+import { GitCliCommitReader } from './readers/GitCliCommitReader';
 import { GitCliDiffReader } from './readers/GitCliDiffReader';
 import { GitCliWorktreeReader } from './readers/GitCliWorktreeReader';
 
@@ -159,5 +160,102 @@ describe.skipIf(!gitAvailable())('git CLI readers (integration)', () => {
 
     await rejection.toBeInstanceOf(GitCommandFailedError);
     await rejection.toThrow('Repository has no commits yet.');
+  });
+});
+
+describe.skipIf(!gitAvailable())('GitCliCommitReader (integration)', () => {
+  const reader = new GitCliCommitReader();
+
+  let root: string;
+
+  beforeAll(() => {
+    root = realpathSync(mkdtempSync(join(tmpdir(), 'gitbench-commits-')));
+  });
+
+  afterAll(() => {
+    rmSync(root, { recursive: true, force: true });
+  });
+
+  // A repo with one pushed commit on `main` and a bare remote wired as `origin`.
+  function repoWithRemote(name: string, options: { setUpstream: boolean }): string {
+    const repo = join(root, name);
+    const remote = join(root, `${name}-remote.git`);
+    mkdirSync(repo);
+    execFileSync('git', ['init', '--bare', remote], { stdio: 'pipe' });
+
+    git(repo, 'init', '-b', 'main');
+    writeFileSync(join(repo, 'file.txt'), 'hello\n');
+    git(repo, 'add', '.');
+    git(repo, 'commit', '-m', 'initial');
+    git(repo, 'remote', 'add', 'origin', remote);
+    git(repo, 'push', ...(options.setUpstream ? ['-u'] : []), 'origin', 'main');
+    return repo;
+  }
+
+  it('returns no commits when there is no remote to push to', async () => {
+    const repo = join(root, 'local-only');
+    mkdirSync(repo);
+    git(repo, 'init', '-b', 'main');
+    writeFileSync(join(repo, 'file.txt'), 'hello\n');
+    git(repo, 'add', '.');
+    git(repo, 'commit', '-m', 'initial');
+
+    await expect(reader.listUnpushedCommits(repo)).resolves.toEqual({
+      commits: [],
+      truncated: false,
+    });
+  });
+
+  it('returns no commits when HEAD is level with its upstream', async () => {
+    const repo = repoWithRemote('level', { setUpstream: true });
+
+    await expect(reader.listUnpushedCommits(repo)).resolves.toEqual({
+      commits: [],
+      truncated: false,
+    });
+  });
+
+  it('lists commits ahead of upstream, newest first, with file statuses', async () => {
+    const repo = repoWithRemote('ahead', { setUpstream: true });
+
+    writeFileSync(join(repo, 'file.txt'), 'hello\nworld\n');
+    writeFileSync(join(repo, 'added.txt'), 'new\n');
+    git(repo, 'add', '.');
+    git(repo, 'commit', '-m', 'second');
+    rmSync(join(repo, 'added.txt'));
+    git(repo, 'add', '.');
+    git(repo, 'commit', '-m', 'third');
+
+    const result = await reader.listUnpushedCommits(repo);
+
+    expect(result.truncated).toBe(false);
+    expect(result.commits.map((commit) => commit.subject)).toEqual(['third', 'second']);
+    expect(result.commits[0].files).toEqual([
+      { status: 'deleted', path: 'added.txt', previousPath: null },
+    ]);
+    expect(result.commits[1].files).toContainEqual({
+      status: 'modified',
+      path: 'file.txt',
+      previousPath: null,
+    });
+    expect(result.commits[1].files).toContainEqual({
+      status: 'added',
+      path: 'added.txt',
+      previousPath: null,
+    });
+    expect(result.commits[0].sha).toMatch(/^[0-9a-f]{40}$/);
+    expect(result.commits[0].shortSha).toMatch(/^[0-9a-f]{7,}$/);
+  });
+
+  it('falls back to commits absent from any remote when no upstream is set', async () => {
+    const repo = repoWithRemote('no-upstream', { setUpstream: false });
+    git(repo, 'checkout', '-b', 'feature');
+    writeFileSync(join(repo, 'feature.txt'), 'x\n');
+    git(repo, 'add', '.');
+    git(repo, 'commit', '-m', 'feature work');
+
+    const result = await reader.listUnpushedCommits(repo);
+
+    expect(result.commits.map((commit) => commit.subject)).toEqual(['feature work']);
   });
 });

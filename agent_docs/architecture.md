@@ -48,18 +48,22 @@ src/
     worktrees/
       errors/
       ports/
+        CommitReader.ts
         DiffReader.ts
         WorktreeReader.ts
       use-cases/
         getUncommittedDiff.ts
+        listUnpushedCommits.ts
         listWorktrees.ts
 
   infrastructure/
     git/
       errors/
       parsers/
+        commitLogParser.ts
         porcelainParser.ts
       readers/
+        GitCliCommitReader.ts
         GitCliDiffReader.ts
         GitCliWorktreeReader.ts
       runGit.ts
@@ -68,6 +72,7 @@ src/
     ipc/
       api.ts
       channels.ts
+      commits.ts
       diff.ts
       errors.ts
       repository.ts
@@ -85,8 +90,10 @@ src/
         pickRepositoryHandler.ts
         listWorktreesHandler.ts
         getDiffHandler.ts
+        listUnpushedCommitsHandler.ts
       mappers/             # domain entities -> contract DTOs, application errors -> error codes
         worktreeMapper.ts
+        commitMapper.ts
         errorMapper.ts
       registerHandlers.ts  # binds each channel to its handler on app startup
       result.ts            # ok()/err() helpers for building Result<T> envelopes

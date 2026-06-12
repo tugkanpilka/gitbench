@@ -1,5 +1,6 @@
 import { ChangedFilesSection } from './changed-files-section';
 import { FileListProvider } from './file-list-context';
+import { UnpushedCommitsSection } from './unpushed-commits-section';
 import { WorktreeRow } from './worktree-row';
 import type { WorktreeListProps } from './index.types';
 import styles from './index.module.scss';
@@ -12,6 +13,8 @@ export function WorktreeList({
   worktrees,
   selectedPath,
   changedFiles,
+  unpushedCommits,
+  commitsTruncated,
   fileListMode,
   activeFileId,
   diffStats,
@@ -51,6 +54,12 @@ export function WorktreeList({
                     diffStats={diffStats}
                   />
                 </FileListProvider>
+              )}
+              {selected && unpushedCommits.length > 0 && (
+                <UnpushedCommitsSection
+                  commits={unpushedCommits}
+                  truncated={commitsTruncated}
+                />
               )}
             </li>
           );

@@ -2,9 +2,22 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import type { CommitDto } from '../../../../contracts/ipc';
 import { buildDiffModel } from '../diff-viewer/utils/diffModel';
 import { MAIN_WORKTREE, makeWorktree } from '../../test/fixtures';
 import { WorktreeList } from '.';
+
+const UNPUSHED_COMMIT: CommitDto = {
+  sha: 'a'.repeat(40),
+  shortSha: 'aaaaaaa',
+  author: 'Ada Lovelace',
+  committedAt: '2026-06-12T10:30:00+03:00',
+  subject: 'feat: add commits panel',
+  files: [
+    { status: 'modified', path: 'src/index.ts', previousPath: null },
+    { status: 'added', path: 'src/new.ts', previousPath: null },
+  ],
+};
 
 const DETACHED_WORKTREE = makeWorktree({
   path: '/repo-detached',
@@ -32,6 +45,8 @@ describe('WorktreeList', () => {
         worktrees={[MAIN_WORKTREE, DETACHED_WORKTREE]}
         selectedPath="/repo-detached"
         changedFiles={FILES}
+        unpushedCommits={[]}
+        commitsTruncated={false}
         fileListMode="flat"
         activeFileId={FILES[0].id}
         diffStats={null}
@@ -57,6 +72,8 @@ describe('WorktreeList', () => {
         worktrees={[MAIN_WORKTREE]}
         selectedPath={null}
         changedFiles={[]}
+        unpushedCommits={[]}
+        commitsTruncated={false}
         fileListMode="flat"
         activeFileId={null}
         diffStats={null}
@@ -76,6 +93,8 @@ describe('WorktreeList', () => {
         worktrees={[]}
         selectedPath={null}
         changedFiles={[]}
+        unpushedCommits={[]}
+        commitsTruncated={false}
         fileListMode="flat"
         activeFileId={null}
         diffStats={null}
@@ -93,6 +112,8 @@ describe('WorktreeList', () => {
         worktrees={[MAIN_WORKTREE, DETACHED_WORKTREE]}
         selectedPath="/repo"
         changedFiles={FILES}
+        unpushedCommits={[]}
+        commitsTruncated={false}
         fileListMode="flat"
         activeFileId={FILES[0].id}
         diffStats={null}
@@ -116,6 +137,8 @@ describe('WorktreeList', () => {
         worktrees={[MAIN_WORKTREE, DETACHED_WORKTREE]}
         selectedPath="/repo"
         changedFiles={FILES}
+        unpushedCommits={[]}
+        commitsTruncated={false}
         fileListMode="flat"
         activeFileId={FILES[0].id}
         diffStats={null}
@@ -129,12 +152,58 @@ describe('WorktreeList', () => {
     expect(onSelectFile).toHaveBeenCalledWith(FILES[0].id);
   });
 
+  it('renders unpushed commits and their files for the selected worktree', () => {
+    render(
+      <WorktreeList
+        worktrees={[MAIN_WORKTREE]}
+        selectedPath="/repo"
+        changedFiles={[]}
+        unpushedCommits={[UNPUSHED_COMMIT]}
+        commitsTruncated={false}
+        fileListMode="flat"
+        activeFileId={null}
+        diffStats={null}
+        onSelect={() => undefined}
+        onSelectFile={() => undefined}
+      />
+    );
+
+    expect(screen.getByLabelText('Unpushed commits')).toBeTruthy();
+    expect(screen.getByText('feat: add commits panel')).toBeTruthy();
+    expect(screen.getByText('new.ts')).toBeTruthy();
+    expect(screen.getByText('index.ts')).toBeTruthy();
+    // Files are grouped by status with section labels.
+    expect(screen.getByText('Added')).toBeTruthy();
+    expect(screen.getByText('Modified')).toBeTruthy();
+  });
+
+  it('hides the unpushed-commits section when there are none', () => {
+    render(
+      <WorktreeList
+        worktrees={[MAIN_WORKTREE]}
+        selectedPath="/repo"
+        changedFiles={[]}
+        unpushedCommits={[]}
+        commitsTruncated={false}
+        fileListMode="flat"
+        activeFileId={null}
+        diffStats={null}
+        onSelect={() => undefined}
+        onSelectFile={() => undefined}
+      />
+    );
+
+    expect(screen.queryByLabelText('Unpushed commits')).toBeNull();
+  });
+
   function renderTreeMode(onSelectFile: (fileId: string) => void = () => undefined) {
     render(
       <WorktreeList
         worktrees={[MAIN_WORKTREE]}
         selectedPath="/repo"
         changedFiles={FILES}
+        unpushedCommits={[]}
+        commitsTruncated={false}
         fileListMode="tree"
         activeFileId={FILES[0].id}
         diffStats={null}

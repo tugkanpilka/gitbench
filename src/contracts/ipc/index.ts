@@ -1,5 +1,12 @@
 export { IPC_CHANNELS } from './channels';
 export type { DesktopApi } from './api';
+export type {
+  CommitDto,
+  CommitFileChange,
+  CommitFileChangeStatus,
+  ListUnpushedCommitsRequest,
+  ListUnpushedCommitsResponse,
+} from './commits';
 export type { GetDiffRequest, GetDiffResponse } from './diff';
 export type { ErrorDto } from './errors';
 export type { PickRepositoryResponse } from './repository';

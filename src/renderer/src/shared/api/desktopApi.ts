@@ -1,6 +1,7 @@
 // The ONLY renderer code that sees Result envelopes — unwraps them into data or ApiError.
 import type {
   GetDiffResponse,
+  ListUnpushedCommitsResponse,
   ListWorktreesResponse,
   PickRepositoryResponse,
   Result,
@@ -23,6 +24,9 @@ export const desktopApi = {
   },
   async getDiff(worktreePath: string): Promise<GetDiffResponse> {
     return unwrap(await window.api.getDiff(worktreePath));
+  },
+  async listUnpushedCommits(worktreePath: string): Promise<ListUnpushedCommitsResponse> {
+    return unwrap(await window.api.listUnpushedCommits(worktreePath));
   },
   async startWatch(repoPath: string, selectedWorktreePath: string | null): Promise<null> {
     return unwrap(await window.api.startWatch(repoPath, selectedWorktreePath));

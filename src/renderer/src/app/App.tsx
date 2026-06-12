@@ -51,6 +51,8 @@ export default function App() {
           worktrees={browser.worktrees}
           selectedPath={browser.selectedPath}
           changedFiles={diffModel.files}
+          unpushedCommits={browser.commits?.commits ?? []}
+          commitsTruncated={browser.commits?.truncated ?? false}
           fileListMode={preferences.fileListMode}
           activeFileId={navigation.activeFileId}
           diffStats={diffStats}
