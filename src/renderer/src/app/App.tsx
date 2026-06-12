@@ -6,7 +6,7 @@ import { buildDiffModel, EMPTY_DIFF_MODEL } from '../features/diff-viewer/utils/
 import { RepositorySidebar } from '../features/repository-sidebar';
 import { WelcomeScreen } from '../features/welcome';
 import { useWorktreeBrowser } from '../features/worktree-browser';
-import { nameFromPath } from '../shared/path/nameFromPath';
+import { WorktreeDetailSidebar } from '../features/worktree-detail-sidebar';
 import { AppShell } from './app-shell';
 import { useAppPreferences } from './hooks/useAppPreferences';
 import { useDiffNavigation } from './hooks/useDiffNavigation';
@@ -26,6 +26,8 @@ export default function App() {
   }, [browser.diff, isCleanWorktree]);
 
   const navigation = useDiffNavigation(diffModel);
+  const selectedWorktree =
+    browser.worktrees.find((worktree) => worktree.path === browser.selectedPath) ?? null;
 
   const diffStats =
     diffModel.files.length > 0
@@ -45,35 +47,40 @@ export default function App() {
   return (
     <AppShell
       sidebarOpen={preferences.sidebarOpen}
-      sidebar={
+      repositorySidebar={
         <RepositorySidebar
           repoPath={browser.repoPath}
           worktrees={browser.worktrees}
           selectedPath={browser.selectedPath}
+          selectedFileCount={diffModel.files.length}
+          selectedUnpushedCount={browser.commits?.commits.length ?? 0}
+          onSelectWorktree={browser.selectWorktree}
+        />
+      }
+      detailSidebar={
+        <WorktreeDetailSidebar
+          worktree={selectedWorktree}
           changedFiles={diffModel.files}
           unpushedCommits={browser.commits?.commits ?? []}
           commitsTruncated={browser.commits?.truncated ?? false}
+          diffLoading={browser.diffLoading}
           fileListMode={preferences.fileListMode}
           activeFileId={navigation.activeFileId}
           diffStats={diffStats}
-          onSelectWorktree={browser.selectWorktree}
           onSelectFile={navigation.selectFile}
+          onFileListModeChange={preferences.setFileListMode}
+          onToggleSidebar={preferences.toggleSidebar}
         />
       }
     >
       <ContentToolbar
-        worktreeName={browser.diff ? nameFromPath(browser.diff.worktreePath) : null}
-        repoName={nameFromPath(browser.repoPath)}
-        fileCount={diffModel.files.length}
         diffStats={diffStats}
         viewType={viewType}
         theme={preferences.theme}
         sidebarOpen={preferences.sidebarOpen}
-        fileListMode={preferences.fileListMode}
         onViewTypeChange={setViewType}
         onToggleTheme={preferences.toggleTheme}
         onToggleSidebar={preferences.toggleSidebar}
-        onFileListModeChange={preferences.setFileListMode}
       />
       <Workspace
         error={browser.error}

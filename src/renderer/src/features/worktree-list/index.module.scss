@@ -10,13 +10,11 @@
 .worktree-row {
   display: flex;
   width: 100%;
-  min-height: 28px;
-  padding: 4px 9px;
+  height: 28px;
+  padding: 0 9px;
   border: 0;
   border-radius: var(--gb-radius-item);
-  flex-direction: column;
   justify-content: center;
-  gap: var(--gb-space-1);
   font-family: var(--gb-font-ui);
   color: var(--gb-text);
   background: transparent;
@@ -48,7 +46,6 @@
 
 .worktree-row__icon {
   flex: none;
-  margin-top: 1px;
   opacity: 0.5;
 }
 
@@ -71,37 +68,28 @@
 .worktree-row__badges {
   display: inline-flex;
   flex: none;
+  align-items: center;
   gap: var(--gb-space-2);
 }
 
-.worktree-row__reference {
-  overflow: hidden;
-  font-size: var(--gb-text-xs);
-  color: var(--gb-dim);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.worktree-row[aria-pressed='true'] .worktree-row__reference {
-  color: var(--gb-sel-muted-text);
-}
-
-.worktree-row__sha {
-  margin-left: 6px;
-  opacity: 0.4;
+.worktree-row__unpushed {
+  font-family: var(--gb-font-mono);
+  font-size: var(--gb-text-2xs);
+  color: var(--gb-faint);
   font-variant-numeric: tabular-nums;
 }
 
+.worktree-row[aria-pressed='true'] .worktree-row__unpushed {
+  color: var(--gb-sel-muted-text);
+}
+
 .worktree-files-section {
-  margin-top: var(--gb-space-6);
-  padding-top: var(--gb-space-4);
+  padding: var(--gb-space-5) 9px var(--gb-space-4);
 }
 
 .worktree-files-section__header {
   display: flex;
   margin-bottom: 8px;
-  padding-left: 9px;
-  padding-right: 9px;
   align-items: center;
   justify-content: space-between;
 }
@@ -115,6 +103,51 @@
   letter-spacing: var(--gb-tracking-caps);
 }
 
+.worktree-file-group + .worktree-file-group {
+  margin-top: var(--gb-space-5);
+}
+
+.worktree-file-group__header {
+  display: flex;
+  min-height: 18px;
+  align-items: center;
+  gap: var(--gb-space-2);
+  font-size: var(--gb-text-2xs);
+  font-weight: var(--gb-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--gb-tracking-caps);
+}
+
+.worktree-file-group__header--added {
+  color: var(--gb-add-text);
+}
+
+.worktree-file-group__header--modified {
+  color: var(--gb-mod-text);
+}
+
+.worktree-file-group__header--deleted {
+  color: var(--gb-del-text);
+}
+
+.worktree-file-group__header--other {
+  color: var(--gb-dim);
+}
+
+.worktree-file-group__count {
+  font-family: var(--gb-font-mono);
+  font-weight: var(--gb-weight-regular);
+  color: var(--gb-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.worktree-files-section__empty {
+  margin: var(--gb-space-6) 0;
+  font-size: var(--gb-text-sm);
+  color: var(--gb-faint);
+  text-align: center;
+}
+
 .worktree-list__empty {
   margin: 0;
   padding: var(--gb-space-7) var(--gb-space-5);
@@ -126,7 +159,7 @@
 
 .file-navigation-list {
   display: flex;
-  margin: 0 0 var(--gb-space-4) 0;
+  margin: 0;
   padding: 0;
   flex-direction: column;
   gap: 0;

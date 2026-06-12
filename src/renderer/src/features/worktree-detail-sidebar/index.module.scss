@@ -1,0 +1,120 @@
+.worktree-detail-sidebar {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+  background: color-mix(in srgb, var(--gb-sidebar) 34%, var(--gb-bg));
+}
+
+.worktree-detail-sidebar__header {
+  display: flex;
+  min-height: 64px;
+  padding: 12px 12px 10px;
+  border-bottom: 1px solid var(--gb-sidebar-edge);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gb-space-5);
+  flex: none;
+  -webkit-app-region: drag;
+}
+
+.worktree-detail-sidebar__identity,
+.worktree-detail-sidebar__summary {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.worktree-detail-sidebar__identity {
+  flex: 1;
+}
+
+.worktree-detail-sidebar__summary {
+  flex: none;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.worktree-detail-sidebar__name {
+  overflow: hidden;
+  font-size: var(--gb-text-base);
+  color: var(--gb-text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.worktree-detail-sidebar__reference,
+.worktree-detail-sidebar__sha {
+  overflow: hidden;
+  font-family: var(--gb-font-mono);
+  font-size: var(--gb-text-2xs);
+  color: var(--gb-faint);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.worktree-detail-sidebar__content {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.worktree-detail-sidebar__content::-webkit-scrollbar {
+  display: none;
+}
+
+.worktree-detail-sidebar__placeholder,
+.worktree-detail-sidebar__loading {
+  display: grid;
+  min-height: 160px;
+  margin: 0;
+  padding: var(--gb-space-7);
+  place-items: center;
+  font-size: var(--gb-text-sm);
+  line-height: var(--gb-leading-ui);
+  color: var(--gb-faint);
+  text-align: center;
+}
+
+.worktree-detail-sidebar__placeholder {
+  flex: 1;
+}
+
+.worktree-detail-sidebar__footer {
+  display: flex;
+  min-height: 34px;
+  padding: 4px 8px;
+  border-top: 1px solid var(--gb-sidebar-edge);
+  align-items: center;
+  gap: var(--gb-space-3);
+  flex: none;
+  background: color-mix(in srgb, var(--gb-sidebar) 44%, transparent);
+}
+
+.worktree-detail-sidebar__toggle {
+  display: grid;
+  width: 28px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--gb-radius-item);
+  place-items: center;
+  color: var(--gb-dim);
+  background: transparent;
+  cursor: pointer;
+}
+
+.worktree-detail-sidebar__toggle:hover {
+  color: var(--gb-text);
+  background: var(--gb-hover);
+}
+
+.worktree-detail-sidebar__view-toggle {
+  margin-left: auto;
+}
+
+.worktree-detail-sidebar__view-toggle :global(.gb-segmented-control__item) {
+  padding: 2px 8px;
+  font-size: var(--gb-text-2xs);
+}

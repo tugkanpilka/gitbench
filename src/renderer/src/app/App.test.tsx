@@ -18,10 +18,10 @@ function clickOpenRepository(): void {
   fireEvent.click(screen.getByRole('button', { name: 'Open Repository…' }));
 }
 
-/** Picks the stubbed repository and waits for its worktrees to render. */
-async function openRepository(): Promise<HTMLElement[]> {
+/** Picks the stubbed repository and waits for its main worktree to render. */
+async function openRepository(): Promise<HTMLElement> {
   clickOpenRepository();
-  return screen.findAllByText('main');
+  return screen.findByRole('button', { name: 'repo, main, aaaaaaa, main worktree' });
 }
 
 describe('App', () => {
@@ -45,10 +45,10 @@ describe('App', () => {
   it('lists worktrees as a flat list after picking a repository', async () => {
     render(<App />);
 
-    const mainLabels = await openRepository();
+    const mainWorktree = await openRepository();
 
-    expect(mainLabels[0]).toBeTruthy();
-    expect(screen.getByText('feature/login')).toBeTruthy();
+    expect(mainWorktree).toBeTruthy();
+    expect(screen.getByRole('button', { name: /feature\/login/ })).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Worktrees' })).toBeTruthy();
     expect(window.api.listWorktrees).toHaveBeenCalledWith('/repo');
   });
@@ -67,15 +67,19 @@ describe('App', () => {
 
     await openRepository();
 
-    const toggle = screen.getByRole('button', { name: 'Hide sidebar' });
+    const toggle = screen.getByRole('button', { name: 'Hide sidebars' });
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
-    expect(toggle.parentElement?.dataset.sidebarOpen).toBe('true');
+    expect(document.getElementById('workspace-sidebar-panels')?.getAttribute('aria-hidden')).toBe(
+      'false'
+    );
 
     fireEvent.click(toggle);
 
-    const collapsedToggle = screen.getByRole('button', { name: 'Show sidebar' });
+    const collapsedToggle = screen.getByRole('button', { name: 'Show sidebars' });
     expect(collapsedToggle.getAttribute('aria-expanded')).toBe('false');
-    expect(collapsedToggle.parentElement?.dataset.sidebarOpen).toBe('false');
+    expect(document.getElementById('workspace-sidebar-panels')?.getAttribute('aria-hidden')).toBe(
+      'true'
+    );
     expect(
       JSON.parse(window.localStorage.getItem('gitbench.ui-preferences.v1') ?? '').sidebarOpen
     ).toBe(false);
@@ -127,7 +131,7 @@ describe('App', () => {
     render(<App />);
 
     clickOpenRepository();
-    fireEvent.click(await screen.findByText('feature/login'));
+    fireEvent.click(await screen.findByRole('button', { name: /feature\/login/ }));
 
     expect(await screen.findByRole('heading', { name: 'Uncommitted changes' })).toBeTruthy();
     expect(await screen.findByText('world')).toBeTruthy();
@@ -143,7 +147,7 @@ describe('App', () => {
     stubAppApi({ getDiff: vi.fn().mockResolvedValue(okResult({ diffText: '' })) });
     render(<App />);
 
-    fireEvent.click((await openRepository())[0]);
+    fireEvent.click(await openRepository());
 
     expect(await screen.findByText('Worktree is clean; no uncommitted changes.')).toBeTruthy();
   });
@@ -157,7 +161,7 @@ describe('App', () => {
     render(<App />);
 
     clickOpenRepository();
-    fireEvent.click(await screen.findByText('feature/login'));
+    fireEvent.click(await screen.findByRole('button', { name: /feature\/login/ }));
 
     expect((await screen.findByRole('status')).textContent).toBe('Loading diff…');
 
@@ -187,7 +191,7 @@ describe('App', () => {
     });
     render(<App />);
 
-    fireEvent.click((await openRepository())[0]);
+    fireEvent.click(await openRepository());
 
     expect(await screen.findByText('Repository has no commits yet.')).toBeTruthy();
   });

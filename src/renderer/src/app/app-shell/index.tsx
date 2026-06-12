@@ -4,28 +4,36 @@ import { SidebarResizeHandle } from './sidebar-resize-handle';
 import type { AppShellProps } from './index.types';
 import styles from './index.module.scss';
 
-export function AppShell({ sidebar, sidebarOpen, children }: AppShellProps) {
-  const [sidebarWidth, setSidebarWidth] = useState<number | null>(null);
+export function AppShell({
+  repositorySidebar,
+  detailSidebar,
+  sidebarOpen,
+  children,
+}: AppShellProps) {
+  const [detailSidebarWidth, setDetailSidebarWidth] = useState<number | null>(null);
 
   const handleResize = useCallback((width: number) => {
-    setSidebarWidth(width);
+    setDetailSidebarWidth(width);
   }, []);
 
-  const sidebarStyle =
-    sidebarWidth !== null
-      ? ({ '--gb-sidebar-w-runtime': `${sidebarWidth}px` } as React.CSSProperties)
+  const shellStyle =
+    detailSidebarWidth !== null
+      ? ({
+          '--gb-detail-sidebar-w-runtime': `${detailSidebarWidth}px`,
+        } as React.CSSProperties)
       : undefined;
 
   return (
-    <div className={styles['app-shell']} data-sidebar-open={sidebarOpen} style={sidebarStyle}>
-      <aside
-        id="repository-sidebar-panel"
-        className={styles['app-shell__sidebar']}
+    <div className={styles['app-shell']} data-sidebar-open={sidebarOpen} style={shellStyle}>
+      <div
+        id="workspace-sidebar-panels"
+        className={styles['app-shell__sidebars']}
         aria-hidden={!sidebarOpen}
         inert={!sidebarOpen}
       >
-        {sidebar}
-      </aside>
+        <aside className={styles['app-shell__repository-sidebar']}>{repositorySidebar}</aside>
+        <aside className={styles['app-shell__detail-sidebar']}>{detailSidebar}</aside>
+      </div>
       {sidebarOpen && <SidebarResizeHandle onResize={handleResize} />}
       <main className={styles['app-shell__content']}>{children}</main>
     </div>

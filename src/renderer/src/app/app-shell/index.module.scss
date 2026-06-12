@@ -1,7 +1,6 @@
 .app-shell {
-  /* Runtime width override set by the resize handle via inline style.
-     Falls back to the design-token default when not dragged. */
-  --gb-active-sidebar-w: var(--gb-sidebar-w-runtime, var(--gb-sidebar-w));
+  --gb-active-source-sidebar-w: var(--gb-source-sidebar-w);
+  --gb-active-detail-sidebar-w: var(--gb-detail-sidebar-w-runtime, var(--gb-detail-sidebar-w));
 
   position: relative;
   display: flex;
@@ -12,28 +11,46 @@
 }
 
 .app-shell[data-sidebar-open='false'] {
-  --gb-active-sidebar-w: 0px;
+  --gb-active-source-sidebar-w: 0px;
+  --gb-active-detail-sidebar-w: 0px;
 }
 
-.app-shell__sidebar {
-  width: var(--gb-active-sidebar-w);
+.app-shell__sidebars {
+  display: flex;
+  width: calc(var(--gb-active-source-sidebar-w) + var(--gb-active-detail-sidebar-w));
   min-height: 0;
   flex: none;
   overflow: hidden;
-  border-right: 1px solid var(--gb-sidebar-edge);
+  transition: width var(--gb-dur-slow) var(--gb-ease);
+}
+
+.app-shell__repository-sidebar,
+.app-shell__detail-sidebar {
+  min-height: 0;
+  flex: none;
+  overflow: hidden;
   background: color-mix(in srgb, var(--gb-sidebar) 72%, transparent);
   backdrop-filter: var(--gb-vibrancy);
   -webkit-backdrop-filter: var(--gb-vibrancy);
-  transition: border-color var(--gb-dur-slow) var(--gb-ease);
 }
 
-.app-shell[data-sidebar-open='false'] .app-shell__sidebar {
-  border-right-color: transparent;
+.app-shell__repository-sidebar {
+  width: var(--gb-active-source-sidebar-w);
+  border-right: 1px solid var(--gb-sidebar-edge);
 }
 
-.app-shell__sidebar > * {
-  width: var(--gb-active-sidebar-w);
-  min-width: var(--gb-sidebar-min);
+.app-shell__detail-sidebar {
+  width: var(--gb-active-detail-sidebar-w);
+  border-right: 1px solid var(--gb-sidebar-edge);
+}
+
+.app-shell__repository-sidebar > * {
+  width: var(--gb-source-sidebar-w);
+}
+
+.app-shell__detail-sidebar > * {
+  width: var(--gb-active-detail-sidebar-w);
+  min-width: var(--gb-detail-sidebar-min);
 }
 
 .app-shell__content {

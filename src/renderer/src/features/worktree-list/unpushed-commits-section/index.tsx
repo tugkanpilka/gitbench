@@ -1,9 +1,12 @@
+import { useState } from 'react';
 import type {
   CommitDto,
   CommitFileChange,
   CommitFileChangeStatus,
 } from '../../../../../contracts/ipc';
+import { toggledSet } from '../../../shared/collections/toggledSet';
 import { cx } from '../../../shared/ui/cx';
+import { Chevron } from '../../../shared/ui/icons';
 import { splitPath } from '../../diff-viewer/utils/diffModel';
 import { FileIcon } from '../file-icon';
 import type { UnpushedCommitsSectionProps } from './index.types';
@@ -57,10 +60,12 @@ function groupFilesByStatus(files: CommitFileChange[]): FileGroup[] {
 
 /** Read-only list of unpushed commits for the selected worktree, each with its files. */
 export function UnpushedCommitsSection({ commits, truncated }: UnpushedCommitsSectionProps) {
+  const [expandedCommits, setExpandedCommits] = useState<Set<string>>(() => new Set());
+
   return (
     <section className={styles['unpushed-commits']} aria-label="Unpushed commits">
       <header className={sharedStyles['worktree-files-section__header']}>
-        <h2 className={sharedStyles['worktree-files-section__label']}>Unpushed commits</h2>
+        <h2 className={sharedStyles['worktree-files-section__label']}>Unpushed</h2>
         <span className={styles['unpushed-commits__count']}>
           {commits.length}
           {truncated ? '+' : ''}
@@ -69,7 +74,12 @@ export function UnpushedCommitsSection({ commits, truncated }: UnpushedCommitsSe
 
       <ul className={styles['unpushed-commits__list']}>
         {commits.map((commit) => (
-          <CommitItem key={commit.sha} commit={commit} />
+          <CommitItem
+            key={commit.sha}
+            commit={commit}
+            expanded={expandedCommits.has(commit.sha)}
+            onToggle={() => setExpandedCommits((current) => toggledSet(current, commit.sha))}
+          />
         ))}
       </ul>
 
@@ -82,17 +92,31 @@ export function UnpushedCommitsSection({ commits, truncated }: UnpushedCommitsSe
   );
 }
 
-function CommitItem({ commit }: { commit: CommitDto }) {
+function CommitItem({
+  commit,
+  expanded,
+  onToggle,
+}: {
+  commit: CommitDto;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
   const groups = groupFilesByStatus(commit.files);
   return (
     <li className={styles['commit']}>
-      <div className={styles['commit__header']} title={`${commit.shortSha} · ${commit.author}`}>
+      <button
+        type="button"
+        className={styles['commit__header']}
+        title={`${commit.shortSha} · ${commit.author}`}
+        aria-expanded={expanded}
+        onClick={onToggle}
+      >
+        <Chevron collapsed={!expanded} className={styles['commit__chevron']} />
         <span className={styles['commit__sha']}>{commit.shortSha}</span>
         <span className={styles['commit__subject']}>{commit.subject}</span>
-      </div>
-      {groups.map((group) => (
-        <FileGroupView key={group.status} group={group} />
-      ))}
+        <span className={styles['commit__file-count']}>{commit.files.length}</span>
+      </button>
+      {expanded && groups.map((group) => <FileGroupView key={group.status} group={group} />)}
     </li>
   );
 }
@@ -120,8 +144,7 @@ function FileGroupView({ group }: { group: FileGroup }) {
 
 function CommitFileRow({ file }: { file: CommitFileChange }) {
   const { directory, name } = splitPath(file.path);
-  const title =
-    file.previousPath !== null ? `${file.previousPath} → ${file.path}` : file.path;
+  const title = file.previousPath !== null ? `${file.previousPath} → ${file.path}` : file.path;
 
   return (
     <li className={styles['commit-file']}>

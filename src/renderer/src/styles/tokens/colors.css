@@ -32,6 +32,7 @@
   --gb-add-bg: rgba(82, 196, 118, 0.13);
   --gb-add-gutter: rgba(82, 196, 118, 0.22);
   --gb-add-text: #5fcb82;
+  --gb-mod-text: #d7b84a;
 
   --gb-del-bg: rgba(255, 105, 97, 0.12);
   --gb-del-gutter: rgba(255, 105, 97, 0.2);
@@ -95,6 +96,7 @@
   --gb-add-bg: #e9f6ec;
   --gb-add-gutter: #d3ebd8;
   --gb-add-text: #1e8a3c;
+  --gb-mod-text: #8a6a00;
 
   --gb-del-bg: #fdedec;
   --gb-del-gutter: #f6d6d3;

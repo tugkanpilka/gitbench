@@ -9,59 +9,31 @@ const VIEW_ITEMS = [
   { value: 'split', label: 'Split' },
 ] as const;
 
-const FILE_LIST_MODE_ITEMS = [
-  { value: 'flat', label: 'Flat' },
-  { value: 'tree', label: 'Tree' },
-] as const;
-
 export function ContentToolbar({
-  worktreeName,
-  repoName,
-  fileCount,
   diffStats,
   viewType,
   theme,
   sidebarOpen,
-  fileListMode,
   onViewTypeChange,
   onToggleTheme,
   onToggleSidebar,
-  onFileListModeChange,
 }: ContentToolbarProps) {
   return (
     <div className={styles['content-toolbar']} data-sidebar-open={sidebarOpen}>
-      <button
-        type="button"
-        className={styles['content-toolbar__sidebar-toggle']}
-        aria-controls="repository-sidebar-panel"
-        aria-expanded={sidebarOpen}
-        aria-label={sidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
-        onClick={onToggleSidebar}
-      >
-        <SidebarIcon />
-      </button>
-
-      {worktreeName !== null && (
-        <div className={styles['content-toolbar__info']}>
-          <span className={styles['content-toolbar__worktree-name']}>{worktreeName}</span>
-          <span className={styles['content-toolbar__meta']}>
-            {repoName}
-            {fileCount > 0 && ` — ${fileCount} changed files`}
-          </span>
-        </div>
+      {!sidebarOpen && (
+        <button
+          type="button"
+          className={styles['content-toolbar__sidebar-toggle']}
+          aria-controls="workspace-sidebar-panels"
+          aria-expanded="false"
+          aria-label="Show sidebars"
+          onClick={onToggleSidebar}
+        >
+          <SidebarIcon />
+        </button>
       )}
 
       <span className={styles['content-toolbar__spacer']} />
-
-      {sidebarOpen && (
-        <SegmentedControl
-          className={styles['content-toolbar__file-list-toggle']}
-          ariaLabel="File list view"
-          items={FILE_LIST_MODE_ITEMS}
-          value={fileListMode}
-          onChange={onFileListModeChange}
-        />
-      )}
 
       {diffStats !== null && (
         <>

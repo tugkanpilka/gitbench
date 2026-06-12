@@ -1,18 +1,9 @@
-import type { CommitDto, WorktreeDto } from '../../../../contracts/ipc';
-import type { FileListMode } from '../../shared/preferences/appPreferences';
-import type { DiffStats } from '../../shared/ui/diff-stat/index.types';
-import type { DiffFileModel } from '../diff-viewer/utils/diffModel.types';
+import type { WorktreeDto } from '../../../../contracts/ipc';
 
 export type WorktreeListProps = {
   worktrees: WorktreeDto[];
   selectedPath: string | null;
-  changedFiles: DiffFileModel[];
-  /** Unpushed commits for the selected worktree (empty unless one is selected). */
-  unpushedCommits: CommitDto[];
-  commitsTruncated: boolean;
-  fileListMode: FileListMode;
-  activeFileId: string | null;
-  diffStats: DiffStats | null;
+  selectedFileCount: number;
+  selectedUnpushedCount: number;
   onSelect: (worktreePath: string) => void;
-  onSelectFile: (fileId: string) => void;
 };

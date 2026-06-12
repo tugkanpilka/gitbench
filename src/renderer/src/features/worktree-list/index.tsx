@@ -1,6 +1,3 @@
-import { ChangedFilesSection } from './changed-files-section';
-import { FileListProvider } from './file-list-context';
-import { UnpushedCommitsSection } from './unpushed-commits-section';
 import { WorktreeRow } from './worktree-row';
 import type { WorktreeListProps } from './index.types';
 import styles from './index.module.scss';
@@ -12,14 +9,9 @@ import styles from './index.module.scss';
 export function WorktreeList({
   worktrees,
   selectedPath,
-  changedFiles,
-  unpushedCommits,
-  commitsTruncated,
-  fileListMode,
-  activeFileId,
-  diffStats,
+  selectedFileCount,
+  selectedUnpushedCount,
   onSelect,
-  onSelectFile,
 }: WorktreeListProps) {
   if (worktrees.length === 0) {
     return (
@@ -32,35 +24,16 @@ export function WorktreeList({
       <ul className={styles['worktree-list']} aria-label="Worktrees">
         {worktrees.map((worktree) => {
           const selected = worktree.path === selectedPath;
-          const fileCount = selected ? changedFiles.length : null;
 
           return (
             <li key={worktree.path}>
               <WorktreeRow
                 worktree={worktree}
                 selected={selected}
-                fileCount={fileCount}
+                fileCount={selected ? selectedFileCount : null}
+                unpushedCount={selected ? selectedUnpushedCount : null}
                 onSelect={onSelect}
               />
-              {selected && fileCount !== null && fileCount > 0 && (
-                <FileListProvider
-                  files={changedFiles}
-                  activeFileId={activeFileId}
-                  onSelectFile={onSelectFile}
-                >
-                  <ChangedFilesSection
-                    changedFiles={changedFiles}
-                    fileListMode={fileListMode}
-                    diffStats={diffStats}
-                  />
-                </FileListProvider>
-              )}
-              {selected && unpushedCommits.length > 0 && (
-                <UnpushedCommitsSection
-                  commits={unpushedCommits}
-                  truncated={commitsTruncated}
-                />
-              )}
             </li>
           );
         })}

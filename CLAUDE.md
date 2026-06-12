@@ -1,6 +1,6 @@
 # Worktree Diff Viewer
 
-Electron desktop app: pick a repository, browse its Git worktrees in a sidebar, view the uncommitted diff of any worktree and its unpushed commits. Open source. TypeScript everywhere.
+Electron desktop app: pick a repository, browse Git worktrees in a source sidebar, inspect the selected worktree in a detail sidebar, and view its uncommitted diff and unpushed commits. Open source. TypeScript everywhere.
 
 Capabilities map one-to-one onto IPC channels: `repo:pick` → `worktrees:list` → `diff:get` → `commits:unpushed`. Any new capability starts as a new IPC channel designed in `agent_docs/ipc-contract.md` first, code second.
 

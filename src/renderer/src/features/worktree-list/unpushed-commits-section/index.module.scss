@@ -1,6 +1,6 @@
 .unpushed-commits {
-  margin-top: var(--gb-space-6);
-  padding-top: var(--gb-space-4);
+  padding: var(--gb-space-5) 9px var(--gb-space-6);
+  border-top: 1px solid var(--gb-sidebar-edge);
 }
 
 .unpushed-commits__count {
@@ -15,7 +15,7 @@
   margin: 0 0 var(--gb-space-4) 0;
   padding: 0;
   flex-direction: column;
-  gap: var(--gb-space-3);
+  gap: 1px;
   list-style: none;
 }
 
@@ -34,10 +34,33 @@
 
 .commit__header {
   display: flex;
+  width: 100%;
+  min-height: 26px;
   min-width: 0;
-  padding: 2px 9px;
-  align-items: baseline;
-  gap: var(--gb-space-3);
+  padding: 0 5px;
+  border: 0;
+  border-radius: var(--gb-radius-row);
+  align-items: center;
+  gap: var(--gb-space-2);
+  font-family: var(--gb-font-ui);
+  color: var(--gb-text);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.commit__header:hover {
+  background: var(--gb-hover);
+}
+
+.commit__chevron {
+  flex: none;
+  color: var(--gb-faint);
+  transition: transform var(--gb-dur-quick) var(--gb-ease);
+}
+
+.commit__chevron[data-collapsed='false'] {
+  transform: rotate(90deg);
 }
 
 .commit__sha {
@@ -57,6 +80,21 @@
   white-space: nowrap;
 }
 
+.commit__file-count {
+  display: grid;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--gb-radius-full);
+  place-items: center;
+  flex: none;
+  font-family: var(--gb-font-mono);
+  font-size: var(--gb-text-2xs);
+  color: var(--gb-faint);
+  background: var(--gb-badge-bg);
+  font-variant-numeric: tabular-nums;
+}
+
 .commit-group {
   display: flex;
   flex-direction: column;
@@ -65,7 +103,7 @@
 .commit-group__label {
   display: flex;
   margin-top: var(--gb-space-1);
-  padding: 0 9px;
+  padding: 0 9px 0 27px;
   align-items: baseline;
   gap: var(--gb-space-2);
   font-size: var(--gb-text-2xs);
@@ -109,7 +147,7 @@
 .commit-file {
   display: flex;
   height: 22px;
-  padding: 0 4px 0 16px;
+  padding: 0 4px 0 27px;
   align-items: center;
   gap: var(--gb-space-2);
 }

@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 
 export interface AppShellProps {
-  sidebar: ReactNode;
+  repositorySidebar: ReactNode;
+  detailSidebar: ReactNode;
   sidebarOpen: boolean;
   children: ReactNode;
 }

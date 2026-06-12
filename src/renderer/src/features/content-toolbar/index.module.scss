@@ -71,48 +71,11 @@
   pointer-events: none;
 }
 
-.content-toolbar__info {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  gap: 0;
-  user-select: none;
-  app-region: drag;
-  -webkit-app-region: drag;
-}
-
-.content-toolbar__worktree-name {
-  font-size: var(--gb-text-base);
-  font-weight: var(--gb-weight-semibold);
-  letter-spacing: var(--gb-tracking-tight);
-  color: var(--gb-text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.content-toolbar__meta {
-  font-size: var(--gb-text-2xs);
-  color: var(--gb-faint);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .content-toolbar__spacer {
   flex: 1;
   align-self: stretch;
   app-region: drag;
   -webkit-app-region: drag;
-}
-
-.content-toolbar__file-list-toggle :global(.gb-segmented-control__item) {
-  padding: 2px 7px;
-  border-radius: 4px;
-  font-size: var(--gb-text-2xs);
-  font-weight: var(--gb-weight-semibold);
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
 }
 
 .content-toolbar__divider {

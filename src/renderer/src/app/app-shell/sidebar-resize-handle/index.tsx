@@ -18,9 +18,9 @@ export function SidebarResizeHandle({ onResize, onResizeEnd }: SidebarResizeHand
     const root = document.documentElement;
     const style = getComputedStyle(root);
     return {
-      min: parseInt(style.getPropertyValue('--gb-sidebar-min'), 10) || 220,
-      max: parseInt(style.getPropertyValue('--gb-sidebar-max'), 10) || 480,
-      defaultWidth: parseInt(style.getPropertyValue('--gb-sidebar-w'), 10) || 280,
+      min: parseInt(style.getPropertyValue('--gb-detail-sidebar-min'), 10) || 240,
+      max: parseInt(style.getPropertyValue('--gb-detail-sidebar-max'), 10) || 480,
+      defaultWidth: parseInt(style.getPropertyValue('--gb-detail-sidebar-w'), 10) || 300,
     };
   }, []);
 
@@ -31,9 +31,19 @@ export function SidebarResizeHandle({ onResize, onResizeEnd }: SidebarResizeHand
       handleRef.current?.setAttribute('data-dragging', 'true');
 
       const { min, max } = getConstraints();
+      const startX = e.clientX;
+      const startWidth =
+        handleRef.current?.previousElementSibling?.getBoundingClientRect().width ?? 0;
+      const sourceWidth =
+        parseInt(
+          getComputedStyle(document.documentElement).getPropertyValue('--gb-source-sidebar-w'),
+          10
+        ) || 220;
+      const initialDetailWidth = Math.max(0, startWidth - sourceWidth);
 
       const onMouseMove = (ev: MouseEvent) => {
-        const clamped = Math.min(max, Math.max(min, ev.clientX));
+        const nextWidth = initialDetailWidth + ev.clientX - startX;
+        const clamped = Math.min(max, Math.max(min, nextWidth));
         onResize(clamped);
       };
 

@@ -7,14 +7,9 @@ export function RepositorySidebar({
   repoPath,
   worktrees,
   selectedPath,
-  changedFiles,
-  unpushedCommits,
-  commitsTruncated,
-  fileListMode,
-  activeFileId,
-  diffStats,
+  selectedFileCount,
+  selectedUnpushedCount,
   onSelectWorktree,
-  onSelectFile,
 }: RepositorySidebarProps) {
   const repositoryName = nameFromPath(repoPath);
 
@@ -23,6 +18,9 @@ export function RepositorySidebar({
       <header className={styles['repository-sidebar__header']}>
         <span className={styles['repository-sidebar__repo-name']} title={repoPath}>
           {repositoryName}
+        </span>
+        <span className={styles['repository-sidebar__repo-meta']}>
+          {worktrees.length} {worktrees.length === 1 ? 'worktree' : 'worktrees'}
         </span>
       </header>
 
@@ -33,14 +31,9 @@ export function RepositorySidebar({
         <WorktreeList
           worktrees={worktrees}
           selectedPath={selectedPath}
-          changedFiles={changedFiles}
-          unpushedCommits={unpushedCommits}
-          commitsTruncated={commitsTruncated}
-          fileListMode={fileListMode}
-          activeFileId={activeFileId}
-          diffStats={diffStats}
+          selectedFileCount={selectedFileCount}
+          selectedUnpushedCount={selectedUnpushedCount}
           onSelect={onSelectWorktree}
-          onSelectFile={onSelectFile}
         />
       </nav>
     </div>

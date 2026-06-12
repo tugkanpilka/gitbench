@@ -108,6 +108,8 @@ src/
       features/
         diff-viewer/
         repository-picker/
+        repository-sidebar/
+        worktree-detail-sidebar/
         worktree-browser/
         worktree-list/
       shared/

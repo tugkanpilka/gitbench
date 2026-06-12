@@ -8,11 +8,12 @@
 
 .repository-sidebar__header {
   display: flex;
-  height: var(--gb-toolbar-h);
-  /* Left padding clears the macOS traffic lights (content-toolbar.css
-     applies the same clearance when the sidebar is hidden). */
-  padding: 0 16px 0 var(--gb-traffic-clearance);
-  align-items: center;
+  min-height: 88px;
+  padding: 42px 14px 12px;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+  gap: 1px;
   flex: none;
   -webkit-app-region: drag;
 }
@@ -36,8 +37,8 @@
 
 .repository-sidebar__repo-name {
   margin: 0;
-  font-size: var(--gb-text-sm);
-  font-weight: var(--gb-weight-semibold);
+  font-size: 18px;
+  font-weight: var(--gb-weight-bold);
   line-height: var(--gb-leading-sidebar);
   color: var(--gb-text);
   overflow: hidden;
@@ -45,13 +46,16 @@
   white-space: nowrap;
 }
 
+.repository-sidebar__repo-meta {
+  font-size: var(--gb-text-xs);
+  color: var(--gb-faint);
+}
+
 .repository-sidebar__navigation {
   min-height: 0;
-  padding: 12px 9px 64px;
+  padding: 0 9px 64px;
   overflow-y: auto;
   scrollbar-width: none;
-  mask-image: linear-gradient(to bottom, transparent, black 12px);
-  -webkit-mask-image: linear-gradient(to bottom, transparent, black 12px);
 }
 
 .repository-sidebar__navigation::-webkit-scrollbar {

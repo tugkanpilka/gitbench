@@ -26,9 +26,10 @@
   --gb-diff-line-h-compact: 18px;
   --gb-hunk-h: 22px;
   --gb-file-header-h: 34px;
-  --gb-sidebar-w: 280px;
-  --gb-sidebar-min: 220px;
-  --gb-sidebar-max: 480px;
+  --gb-source-sidebar-w: 220px;
+  --gb-detail-sidebar-w: 300px;
+  --gb-detail-sidebar-min: 240px;
+  --gb-detail-sidebar-max: 480px;
 
   --gb-gutter-w: 42px;
   --gb-sign-w: 18px;

@@ -11,7 +11,13 @@ function worktreeReference(branch: string | null, shortSha: string): string {
   return shortSha ? `detached @ ${shortSha}` : 'detached HEAD';
 }
 
-export function WorktreeRow({ worktree, selected, fileCount, onSelect }: WorktreeRowProps) {
+export function WorktreeRow({
+  worktree,
+  selected,
+  fileCount,
+  unpushedCount,
+  onSelect,
+}: WorktreeRowProps) {
   const name = nameFromPath(worktree.path);
   const shortSha = worktree.headSha.slice(0, 7);
   const reference = worktreeReference(worktree.branch, shortSha);
@@ -32,21 +38,19 @@ export function WorktreeRow({ worktree, selected, fileCount, onSelect }: Worktre
       <span className={styles['worktree-row__top']}>
         <WorktreeIcon className={styles['worktree-row__icon']} />
         <span className={styles['worktree-row__name']}>{name}</span>
-        {(fileCount !== null || worktree.isMain || worktree.isLocked) && (
+        {(fileCount !== null || unpushedCount !== null) && (
           <span className={styles['worktree-row__badges']}>
-            {fileCount !== null && (
-              <Badge onSelection={selected}>
-                <span aria-hidden="true">{fileCount}</span>
-              </Badge>
+            {unpushedCount !== null && unpushedCount > 0 && (
+              <span
+                className={styles['worktree-row__unpushed']}
+                aria-label={`${unpushedCount} unpushed`}
+              >
+                ↑{unpushedCount}
+              </span>
             )}
-            {worktree.isMain && <Badge onSelection={selected}>main</Badge>}
-            {worktree.isLocked && <Badge onSelection={selected}>locked</Badge>}
+            {fileCount !== null && <Badge onSelection={selected}>{fileCount}</Badge>}
           </span>
         )}
-      </span>
-      <span className={styles['worktree-row__reference']} title={reference}>
-        {reference}
-        <span className={styles['worktree-row__sha']}>{shortSha}</span>
       </span>
     </button>
   );
