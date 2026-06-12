@@ -115,36 +115,39 @@ export function useWorktreeBrowser() {
   // Loads the diff for a worktree. `showLoading` is true for a user selection (clear
   // the view, show the spinner) and false for an auto-refresh (keep the current view;
   // only swap it in when the text actually changed, preserving the scroll position).
-  const loadDiff = useCallback(async (worktreePath: string, showLoading: boolean) => {
-    const signal = beginRequest(diffRequest);
-    if (showLoading) {
-      setDiff(null);
-      setDiffLoading(true);
-    }
-    setError(null);
-    try {
-      const response = await desktopApi.getDiff(worktreePath);
-      if (signal.aborted) {
-        return;
+  const loadDiff = useCallback(
+    async (worktreePath: string, showLoading: boolean) => {
+      const signal = beginRequest(diffRequest);
+      if (showLoading) {
+        setDiff(null);
+        setDiffLoading(true);
       }
-      setDiff((prev) =>
-        prev && prev.worktreePath === worktreePath && prev.diffText === response.diffText
-          ? prev
-          : { worktreePath, diffText: response.diffText }
-      );
-    } catch (caught) {
-      if (!signal.aborted) {
-        if (showLoading) {
-          setDiff(null);
+      setError(null);
+      try {
+        const response = await desktopApi.getDiff(worktreePath);
+        if (signal.aborted) {
+          return;
         }
-        setError(describeError(caught));
+        setDiff((prev) =>
+          prev && prev.worktreePath === worktreePath && prev.diffText === response.diffText
+            ? prev
+            : { worktreePath, diffText: response.diffText }
+        );
+      } catch (caught) {
+        if (!signal.aborted) {
+          if (showLoading) {
+            setDiff(null);
+          }
+          setError(describeError(caught));
+        }
+      } finally {
+        if (!signal.aborted) {
+          setDiffLoading(false);
+        }
       }
-    } finally {
-      if (!signal.aborted) {
-        setDiffLoading(false);
-      }
-    }
-  }, []);
+    },
+    []
+  );
 
   // Loads the unpushed commits for a worktree. Secondary to the diff: failures are
   // swallowed (the section just hides) so they never block the diff view or steal the
@@ -224,6 +227,10 @@ export function useWorktreeBrowser() {
     [loadDiff, loadCommits]
   );
 
+  // Filesystem paths cannot contain NUL, so this is a stable dependency key for
+  // restarting the watcher only when the set/order of worktree roots changes.
+  const watchedWorktreePaths = worktrees.map((worktree) => worktree.path).join('\0');
+
   // Watch every worktree so non-selected row summaries stay current as agents edit.
   // startWatch replaces any prior watch on the main side.
   useEffect(() => {
@@ -233,12 +240,12 @@ export function useWorktreeBrowser() {
     void desktopApi
       .startWatch(
         repoPath,
-        worktrees.map((worktree) => worktree.path)
+        watchedWorktreePaths.length === 0 ? [] : watchedWorktreePaths.split('\0')
       )
       .catch(() => {
         // A watch failure is non-fatal — manual refresh still works.
       });
-  }, [repoPath, worktrees]);
+  }, [repoPath, watchedWorktreePaths]);
 
   // Stop watching when the browser unmounts.
   useEffect(
