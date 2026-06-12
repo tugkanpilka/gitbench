@@ -1,6 +1,7 @@
 export const IPC_CHANNELS = {
   pickRepository: 'repo:pick',
   listWorktrees: 'worktrees:list',
+  listWorktreeSummaries: 'worktrees:summaries',
   getDiff: 'diff:get',
   listUnpushedCommits: 'commits:unpushed',
   // Watch lifecycle: renderer -> main, request/response.

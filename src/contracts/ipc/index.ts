@@ -12,4 +12,9 @@ export type { ErrorDto } from './errors';
 export type { PickRepositoryResponse } from './repository';
 export type { Result } from './result';
 export type { StartWatchRequest } from './watch';
+export type {
+  ListWorktreeSummariesRequest,
+  ListWorktreeSummariesResponse,
+  WorktreeSummaryDto,
+} from './worktreeSummaries';
 export type { ListWorktreesRequest, ListWorktreesResponse, WorktreeDto } from './worktrees';

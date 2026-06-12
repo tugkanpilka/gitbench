@@ -6,6 +6,7 @@ import {
   type DesktopApi,
   type GetDiffResponse,
   type ListUnpushedCommitsResponse,
+  type ListWorktreeSummariesResponse,
   type ListWorktreesResponse,
   type PickRepositoryResponse,
   type Result,
@@ -16,14 +17,16 @@ const api: DesktopApi = {
     ipcRenderer.invoke(IPC_CHANNELS.pickRepository),
   listWorktrees: (repoPath: string): Promise<Result<ListWorktreesResponse>> =>
     ipcRenderer.invoke(IPC_CHANNELS.listWorktrees, { repoPath }),
+  listWorktreeSummaries: (
+    worktreePaths: string[]
+  ): Promise<Result<ListWorktreeSummariesResponse>> =>
+    ipcRenderer.invoke(IPC_CHANNELS.listWorktreeSummaries, { worktreePaths }),
   getDiff: (worktreePath: string): Promise<Result<GetDiffResponse>> =>
     ipcRenderer.invoke(IPC_CHANNELS.getDiff, { worktreePath }),
-  listUnpushedCommits: (
-    worktreePath: string
-  ): Promise<Result<ListUnpushedCommitsResponse>> =>
+  listUnpushedCommits: (worktreePath: string): Promise<Result<ListUnpushedCommitsResponse>> =>
     ipcRenderer.invoke(IPC_CHANNELS.listUnpushedCommits, { worktreePath }),
-  startWatch: (repoPath: string, selectedWorktreePath: string | null): Promise<Result<null>> =>
-    ipcRenderer.invoke(IPC_CHANNELS.startWatch, { repoPath, selectedWorktreePath }),
+  startWatch: (repoPath: string, worktreePaths: string[]): Promise<Result<null>> =>
+    ipcRenderer.invoke(IPC_CHANNELS.startWatch, { repoPath, worktreePaths }),
   stopWatch: (): Promise<Result<null>> => ipcRenderer.invoke(IPC_CHANNELS.stopWatch),
   onRepoChanged: (listener: () => void): (() => void) => {
     // Strip Electron's IpcRendererEvent — the renderer gets a bare "re-query" signal,

@@ -9,7 +9,6 @@ export function Workspace({
   hasDiff,
   isCleanWorktree,
   diffModel,
-  viewType,
   navigationTarget,
   onActiveFileChange,
 }: WorkspaceProps) {
@@ -36,7 +35,7 @@ export function Workspace({
         <DiffView
           model={diffModel}
           clean={isCleanWorktree}
-          viewType={viewType}
+          viewType="unified"
           navigationTarget={navigationTarget}
           onActiveFileChange={onActiveFileChange}
         />

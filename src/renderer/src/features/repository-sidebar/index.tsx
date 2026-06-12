@@ -6,9 +6,8 @@ import styles from './index.module.scss';
 export function RepositorySidebar({
   repoPath,
   worktrees,
+  summaries,
   selectedPath,
-  selectedFileCount,
-  selectedUnpushedCount,
   onSelectWorktree,
 }: RepositorySidebarProps) {
   const repositoryName = nameFromPath(repoPath);
@@ -30,9 +29,8 @@ export function RepositorySidebar({
         </header>
         <WorktreeList
           worktrees={worktrees}
+          summaries={summaries}
           selectedPath={selectedPath}
-          selectedFileCount={selectedFileCount}
-          selectedUnpushedCount={selectedUnpushedCount}
           onSelect={onSelectWorktree}
         />
       </nav>

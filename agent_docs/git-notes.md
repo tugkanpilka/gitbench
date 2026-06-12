@@ -100,15 +100,26 @@ git -C <worktreePath> -c core.quotePath=false --no-pager log <range> \
 - **Cap:** `--max-count=101` requests one more than the 100-commit display cap so truncation is detected honestly and surfaced as `truncated: true` rather than silently dropped.
 - Merge commits show no files under default `--name-status` (no diff); they parse to an empty `files` array, which the UI tolerates.
 
+## Worktree summaries (the `worktrees:summaries` channel)
+
+`GitCliWorktreeSummaryReader` populates every repository-sidebar row without generating full diffs or commit payloads. Worktrees are processed with bounded concurrency.
+
+- `git status --porcelain=v1 -z --untracked-files=all` supplies changed-file, conflict, and untracked-path data.
+- `git diff --numstat HEAD` supplies staged + unstaged tracked line counts.
+- Untracked line counts use `git diff --no-index --numstat /dev/null <path>` with bounded concurrency. Binary `-` columns count as zero lines while the file still contributes to `fileCount`.
+- Upstream branches use `git rev-list --left-right --count @{upstream}...HEAD` for behind/ahead counts.
+- Branches without upstreams reuse the unpushed fallback: `git rev-list --count HEAD --not --remotes`; `behindCount` is `null`.
+- Unborn repositories retain porcelain file/conflict counts but report zero line and push counts because there is no `HEAD` baseline.
+
 ## File watching (the `watch:start` channel)
 
-`src/infrastructure/watch/ChokidarRepoWatcher.ts` turns filesystem changes into a debounced "re-query" signal. It never reads diffs — git stays the source of truth; the renderer re-runs `worktrees:list` / `diff:get` on each signal.
+`src/infrastructure/watch/ChokidarRepoWatcher.ts` turns filesystem changes into a debounced "re-query" signal. It never reads Git data itself — git stays the source of truth; the renderer refreshes the worktree list, all row summaries, and the selected diff/commit data on each signal.
 
 On macOS, recursive paths use the native `fsevents` API directly. Chokidar v4 performs an initial directory crawl and opens one watcher per directory there; large repositories can exhaust the default file-descriptor limit and stall Electron's main process even when `git diff` is empty. FSEvents observes a whole tree through one native stream without that crawl. Other platforms keep the Chokidar fallback.
 
-Two watch targets, one debounced `onChange`:
+Watch targets share one debounced `onChange`:
 
-1. **Selected worktree's working tree** — file edits/adds/deletes. Ignores `node_modules` and `.git` (the object store under `.git` would storm).
+1. **Every current worktree's working tree** — file edits/adds/deletes update sidebar summaries even before selection. Ignores `node_modules` and `.git` (the object store under `.git` would storm).
 2. **Shared git dir** — resolved with `git -C <repoPath> rev-parse --path-format=absolute --git-common-dir` (absolute output; `--git-common-dir` alone can be relative). This one dir holds `refs`, `logs`, `index`, and `worktrees/` — so it catches commits/resets/checkouts **and** add/remove/lock for _every_ worktree, including linked ones (their per-worktree `HEAD`/`index`/`logs` live under `worktrees/<name>/`). Only the `objects` and `lfs` stores are ignored.
 
 Why not watch each worktree's `.git/HEAD` file directly: a commit on a branch leaves the symbolic `HEAD` file unchanged — what moves is `refs/heads/<branch>` and `logs/HEAD`. Watching the whole git dir (minus `objects`) covers all of these without per-worktree path resolution.

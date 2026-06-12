@@ -2,7 +2,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { MAIN_WORKTREE, makeWorktree } from '../../test/fixtures';
+import { MAIN_WORKTREE, MAIN_WORKTREE_SUMMARY, makeWorktree } from '../../test/fixtures';
 import { WorktreeList } from '.';
 
 const DETACHED_WORKTREE = makeWorktree({
@@ -12,6 +12,15 @@ const DETACHED_WORKTREE = makeWorktree({
   isMain: false,
   isLocked: true,
 });
+const DETACHED_SUMMARY = {
+  worktreePath: DETACHED_WORKTREE.path,
+  fileCount: 3,
+  additions: 12,
+  deletions: 4,
+  conflictCount: 1,
+  unpushedCount: 2,
+  behindCount: 1,
+};
 
 afterEach(() => cleanup());
 
@@ -20,9 +29,8 @@ describe('WorktreeList', () => {
     render(
       <WorktreeList
         worktrees={[MAIN_WORKTREE, DETACHED_WORKTREE]}
+        summaries={[MAIN_WORKTREE_SUMMARY, DETACHED_SUMMARY]}
         selectedPath="/repo-detached"
-        selectedFileCount={3}
-        selectedUnpushedCount={2}
         onSelect={() => undefined}
       />
     );
@@ -30,7 +38,12 @@ describe('WorktreeList', () => {
     expect(screen.getByText('repo')).toBeTruthy();
     expect(screen.getByText('repo-detached')).toBeTruthy();
     expect(screen.getByText('↑2')).toBeTruthy();
+    expect(screen.getByText('↓1')).toBeTruthy();
+    expect(screen.getByText('!1')).toBeTruthy();
+    expect(screen.getByText('+12')).toBeTruthy();
+    expect(screen.getByText('−4')).toBeTruthy();
     expect(screen.getByText('3')).toBeTruthy();
+    expect(screen.getByText('Clean')).toBeTruthy();
 
     const selected = screen.getByRole('button', { name: /repo-detached/ });
     expect(selected.getAttribute('aria-pressed')).toBe('true');
@@ -42,9 +55,8 @@ describe('WorktreeList', () => {
     render(
       <WorktreeList
         worktrees={[MAIN_WORKTREE]}
+        summaries={[]}
         selectedPath={null}
-        selectedFileCount={0}
-        selectedUnpushedCount={0}
         onSelect={onSelect}
       />
     );
@@ -56,13 +68,7 @@ describe('WorktreeList', () => {
 
   it('renders an explicit empty state', () => {
     render(
-      <WorktreeList
-        worktrees={[]}
-        selectedPath={null}
-        selectedFileCount={0}
-        selectedUnpushedCount={0}
-        onSelect={() => undefined}
-      />
+      <WorktreeList worktrees={[]} summaries={[]} selectedPath={null} onSelect={() => undefined} />
     );
 
     expect(screen.getByText('No worktrees to display in this repository.')).toBeTruthy();

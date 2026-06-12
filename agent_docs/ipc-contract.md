@@ -24,6 +24,7 @@ src/contracts/ipc/
   repository.ts   # repository picker response
   result.ts       # Result<T>
   watch.ts        # watch lifecycle request
+  worktreeSummaries.ts # per-worktree status/stat/push summaries
   worktrees.ts    # worktree request/response and WorktreeDto
   index.ts        # public exports
 ```
@@ -43,6 +44,16 @@ interface WorktreeDto {
 
 interface GetDiffResponse {
   diffText: string; // "" is a valid clean-worktree result
+}
+
+interface WorktreeSummaryDto {
+  worktreePath: string;
+  fileCount: number;
+  additions: number;
+  deletions: number;
+  conflictCount: number;
+  unpushedCount: number;
+  behindCount: number | null; // null when the worktree has no upstream
 }
 
 type CommitFileChangeStatus =
@@ -125,6 +136,14 @@ Error mapping lives in `src/main/ipc/mappers/errorMapper.ts` (it imports `ERROR_
 - Response: `Result<GetDiffResponse>`
 - Flow: IPC handler -> `getUncommittedDiff` -> `DiffReader` -> Git CLI reader -> raw unified diff.
 
+### `worktrees:summaries`
+
+- Request: `ListWorktreeSummariesRequest` with `{ worktreePaths: string[] }`
+- Response: `Result<ListWorktreeSummariesResponse>`
+- Returns lightweight status data for every worktree row without loading full diffs or commit details.
+- Flow: IPC handler -> `listWorktreeSummaries` -> `WorktreeSummaryReader` -> bounded-concurrency Git CLI queries -> DTO mapper.
+- `fileCount` and `conflictCount` come from porcelain status; additions/deletions include tracked and untracked files; push counts use upstream ahead/behind when available and the existing remote fallback for branches without upstreams.
+
 ### `commits:unpushed`
 
 - Request: `ListUnpushedCommitsRequest` with `{ worktreePath: string }`
@@ -134,9 +153,9 @@ Error mapping lives in `src/main/ipc/mappers/errorMapper.ts` (it imports `ERROR_
 
 ### `watch:start`
 
-- Request: `StartWatchRequest` with `{ repoPath: string; selectedWorktreePath: string | null }`
+- Request: `StartWatchRequest` with `{ repoPath: string; worktreePaths: string[] }`
 - Response: `Result<null>` (`null` data is the start acknowledgement)
-- Starts (and replaces any existing) filesystem watcher for the active repo. Watches the repo's `.git` for worktree-list changes and the selected worktree's tree for diff changes.
+- Starts (and replaces any existing) filesystem watcher for the active repo. Watches the repo's `.git` for worktree-list changes and every worktree root for row-summary and selected-diff changes.
 - Flow: IPC handler -> `watchRepository` -> `RepoWatcher` port -> infrastructure watcher. On change it emits the `repo:changed` event (below).
 
 ### `watch:stop`
@@ -148,7 +167,7 @@ Error mapping lives in `src/main/ipc/mappers/errorMapper.ts` (it imports `ERROR_
 ### `repo:changed` (push: main -> renderer)
 
 - This is the **only** main-initiated channel; every other channel is renderer-initiated request/response.
-- **No payload and not a `Result` envelope** — it is a debounced "something changed, re-query now" signal, not data. The renderer responds by re-invoking `worktrees:list` and `diff:get`. Git stays the single source of truth; the watcher never computes a diff.
+- **No payload and not a `Result` envelope** — it is a debounced "something changed, re-query now" signal, not data. The renderer responds by re-invoking `worktrees:list`, `worktrees:summaries`, and the selected `diff:get` / `commits:unpushed` queries. Git stays the single source of truth; the watcher never computes data itself.
 
 ## Preload
 
@@ -158,9 +177,10 @@ Error mapping lives in `src/main/ipc/mappers/errorMapper.ts` (it imports `ERROR_
 interface DesktopApi {
   pickRepo(): Promise<Result<string | null>>;
   listWorktrees(repoPath: string): Promise<Result<WorktreeDto[]>>;
+  listWorktreeSummaries(worktreePaths: string[]): Promise<Result<WorktreeSummaryDto[]>>;
   getDiff(worktreePath: string): Promise<Result<GetDiffResponse>>;
   listUnpushedCommits(worktreePath: string): Promise<Result<ListUnpushedCommitsResponse>>;
-  startWatch(repoPath: string, selectedWorktreePath: string | null): Promise<Result<null>>;
+  startWatch(repoPath: string, worktreePaths: string[]): Promise<Result<null>>;
   stopWatch(): Promise<Result<null>>;
   onRepoChanged(listener: () => void): () => void; // returns an unsubscribe fn
 }

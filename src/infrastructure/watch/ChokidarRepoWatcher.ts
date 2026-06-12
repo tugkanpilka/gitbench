@@ -45,9 +45,8 @@ export class ChokidarRepoWatcher implements RepoWatcher {
       });
     };
 
-    // 1) The selected worktree's working tree: edits, adds, deletes.
-    if (target.selectedWorktreePath !== null) {
-      const worktreePath = target.selectedWorktreePath;
+    // 1) Every worktree's working tree: edits, adds, deletes update row summaries.
+    for (const worktreePath of new Set(target.worktreePaths)) {
       attach(
         startRecursiveWatch(worktreePath, signal, (path) =>
           isWorkingTreePathIgnored(worktreePath, path)

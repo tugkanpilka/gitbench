@@ -21,7 +21,9 @@ function clickOpenRepository(): void {
 /** Picks the stubbed repository and waits for its main worktree to render. */
 async function openRepository(): Promise<HTMLElement> {
   clickOpenRepository();
-  return screen.findByRole('button', { name: 'repo, main, aaaaaaa, main worktree' });
+  return screen.findByRole('button', {
+    name: /^repo, main, aaaaaaa, main worktree/,
+  });
 }
 
 describe('App', () => {
@@ -62,27 +64,31 @@ describe('App', () => {
     expect(screen.queryByRole('button', { name: 'Open Another Repository…' })).toBeNull();
   });
 
-  it('toggles the sidebar and persists its visibility', async () => {
+  it('does not render the removed content toolbar', async () => {
     render(<App />);
 
     await openRepository();
 
-    const toggle = screen.getByRole('button', { name: 'Hide sidebars' });
-    expect(toggle.getAttribute('aria-expanded')).toBe('true');
-    expect(document.getElementById('workspace-sidebar-panels')?.getAttribute('aria-hidden')).toBe(
-      'false'
-    );
+    expect(screen.queryByRole('radiogroup', { name: 'Diff view' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Switch to .* theme/ })).toBeNull();
+  });
 
-    fireEvent.click(toggle);
+  it('closes the worktree sidebar on selection and restores it from the detail header', async () => {
+    render(<App />);
 
-    const collapsedToggle = screen.getByRole('button', { name: 'Show sidebars' });
-    expect(collapsedToggle.getAttribute('aria-expanded')).toBe('false');
-    expect(document.getElementById('workspace-sidebar-panels')?.getAttribute('aria-hidden')).toBe(
-      'true'
-    );
-    expect(
-      JSON.parse(window.localStorage.getItem('gitbench.ui-preferences.v1') ?? '').sidebarOpen
-    ).toBe(false);
+    await openRepository();
+
+    const repositorySidebar = screen.getByRole('complementary', {
+      name: 'Repository worktrees',
+    });
+    expect(screen.getByRole('complementary', { name: 'Worktree details' })).toBeTruthy();
+    expect(repositorySidebar.getAttribute('aria-hidden')).toBe('false');
+
+    fireEvent.click(screen.getByRole('button', { name: /feature\/login/ }));
+
+    expect(repositorySidebar.getAttribute('aria-hidden')).toBe('true');
+    fireEvent.click(screen.getByRole('button', { name: 'Show worktree sidebar' }));
+    expect(repositorySidebar.getAttribute('aria-hidden')).toBe('false');
   });
 
   it('changes and persists the selected file-list view', async () => {

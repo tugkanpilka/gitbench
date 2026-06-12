@@ -1,9 +1,8 @@
-import type { WorktreeDto } from '../../../../../contracts/ipc';
+import type { WorktreeDto, WorktreeSummaryDto } from '../../../../../contracts/ipc';
 
 export type WorktreeRowProps = {
   worktree: WorktreeDto;
   selected: boolean;
-  fileCount: number | null;
-  unpushedCount: number | null;
+  summary: WorktreeSummaryDto | null;
   onSelect: (worktreePath: string) => void;
 };

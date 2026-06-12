@@ -11,6 +11,7 @@ import { GitCommandFailedError } from './errors/GitCommandFailedError';
 import { GitCliCommitReader } from './readers/GitCliCommitReader';
 import { GitCliDiffReader } from './readers/GitCliDiffReader';
 import { GitCliWorktreeReader } from './readers/GitCliWorktreeReader';
+import { GitCliWorktreeSummaryReader } from './readers/GitCliWorktreeSummaryReader';
 
 function gitAvailable(): boolean {
   try {
@@ -42,6 +43,7 @@ function git(repoPath: string, ...args: string[]): void {
 describe.skipIf(!gitAvailable())('git CLI readers (integration)', () => {
   const worktreeReader = new GitCliWorktreeReader();
   const diffReader = new GitCliDiffReader();
+  const summaryReader = new GitCliWorktreeSummaryReader();
 
   let root: string;
   let repo: string;
@@ -91,6 +93,37 @@ describe.skipIf(!gitAvailable())('git CLI readers (integration)', () => {
 
   it('returns "" for a clean worktree', async () => {
     await expect(diffReader.getUncommittedDiff(repo)).resolves.toBe('');
+  });
+
+  it('returns a clean summary without selecting the worktree', async () => {
+    await expect(summaryReader.listWorktreeSummaries([repo])).resolves.toEqual([
+      {
+        worktreePath: repo,
+        fileCount: 0,
+        additions: 0,
+        deletions: 0,
+        conflictCount: 0,
+        unpushedCount: 0,
+        behindCount: null,
+      },
+    ]);
+  });
+
+  it('summarizes tracked and untracked line changes', async () => {
+    writeFileSync(join(repo, 'file.txt'), 'hello\nworld\n');
+    writeFileSync(join(repo, 'new.txt'), 'one\ntwo\n');
+
+    await expect(summaryReader.listWorktreeSummaries([repo])).resolves.toEqual([
+      {
+        worktreePath: repo,
+        fileCount: 2,
+        additions: 3,
+        deletions: 0,
+        conflictCount: 0,
+        unpushedCount: 0,
+        behindCount: null,
+      },
+    ]);
   });
 
   it('returns a unified diff for modified tracked files', async () => {
@@ -165,6 +198,7 @@ describe.skipIf(!gitAvailable())('git CLI readers (integration)', () => {
 
 describe.skipIf(!gitAvailable())('GitCliCommitReader (integration)', () => {
   const reader = new GitCliCommitReader();
+  const summaryReader = new GitCliWorktreeSummaryReader();
 
   let root: string;
 
@@ -257,5 +291,20 @@ describe.skipIf(!gitAvailable())('GitCliCommitReader (integration)', () => {
     const result = await reader.listUnpushedCommits(repo);
 
     expect(result.commits.map((commit) => commit.subject)).toEqual(['feature work']);
+  });
+
+  it('summarizes commits ahead of an upstream without loading commit details', async () => {
+    const repo = repoWithRemote('summary-ahead', { setUpstream: true });
+    writeFileSync(join(repo, 'file.txt'), 'hello\nworld\n');
+    git(repo, 'add', '.');
+    git(repo, 'commit', '-m', 'local work');
+
+    const [summary] = await summaryReader.listWorktreeSummaries([repo]);
+
+    expect(summary).toMatchObject({
+      worktreePath: repo,
+      unpushedCount: 1,
+      behindCount: 0,
+    });
   });
 });

@@ -3,7 +3,6 @@ export type FileListMode = 'flat' | 'tree';
 
 export interface AppPreferences {
   theme: Theme;
-  sidebarOpen: boolean;
   fileListMode: FileListMode;
 }
 
@@ -44,7 +43,6 @@ export function readAppPreferences(
 ): AppPreferences {
   const defaults: AppPreferences = {
     theme: systemPrefersLight ? 'light' : 'dark',
-    sidebarOpen: true,
     fileListMode: 'flat',
   };
 
@@ -66,8 +64,6 @@ export function readAppPreferences(
     const candidate = parsed as Partial<AppPreferences>;
     return {
       theme: isTheme(candidate.theme) ? candidate.theme : defaults.theme,
-      sidebarOpen:
-        typeof candidate.sidebarOpen === 'boolean' ? candidate.sidebarOpen : defaults.sidebarOpen,
       fileListMode: isFileListMode(candidate.fileListMode)
         ? candidate.fileListMode
         : defaults.fileListMode,

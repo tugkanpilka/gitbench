@@ -12,7 +12,8 @@ export type WorktreeDetailSidebarProps = {
   fileListMode: FileListMode;
   activeFileId: string | null;
   diffStats: DiffStats | null;
+  repositorySidebarOpen: boolean;
   onSelectFile: (fileId: string) => void;
   onFileListModeChange: (mode: FileListMode) => void;
-  onToggleSidebar: () => void;
+  onToggleRepositorySidebar: () => void;
 };

@@ -22,6 +22,11 @@ function BrowserHarness() {
       <output aria-label="Worktrees">
         {browser.worktrees.map((worktree) => worktree.path).join(',') || '(empty)'}
       </output>
+      <output aria-label="Summaries">
+        {browser.summaries
+          .map((summary) => `${summary.worktreePath}:${summary.fileCount}`)
+          .join(',') || '(empty)'}
+      </output>
       <output aria-label="Selected">{browser.selectedPath ?? '(none)'}</output>
       <output aria-label="Diff">
         {browser.diff === null ? '(none)' : `${browser.diff.worktreePath}:${browser.diff.diffText}`}
@@ -241,7 +246,20 @@ describe('useWorktreeBrowser', () => {
     expect(await screen.findByText('/repo,/repo-feature')).toBeTruthy();
 
     expect(window.api.listWorktrees).toHaveBeenLastCalledWith('/repo');
+    expect(window.api.listWorktreeSummaries).toHaveBeenLastCalledWith(['/repo', '/repo-feature']);
     expect(screen.getByLabelText('Loading').textContent).toBe('false');
+  });
+
+  it('loads summaries for every worktree without requiring selection', async () => {
+    render(<BrowserHarness />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Pick repository' }));
+
+    await waitFor(() =>
+      expect(screen.getByLabelText('Summaries').textContent).toBe('/repo:0,/repo-feature:6')
+    );
+    expect(window.api.listWorktreeSummaries).toHaveBeenCalledWith(['/repo', '/repo-feature']);
+    expect(window.api.getDiff).not.toHaveBeenCalled();
   });
 
   it('refreshRepository failure empties the worktree list and reports the error', async () => {
@@ -283,10 +301,10 @@ describe('useWorktreeBrowser', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Pick repository' }));
       await waitFor(() => expect(screen.getByLabelText('Repository').textContent).toBe('/repo'));
 
-      expect(window.api.startWatch).toHaveBeenCalledWith('/repo', null);
+      expect(window.api.startWatch).toHaveBeenCalledWith('/repo', ['/repo', '/repo-feature']);
     });
 
-    it('restarts the watch when a worktree is selected', async () => {
+    it('does not restart the all-worktree watch when selection changes', async () => {
       render(<BrowserHarness />);
 
       fireEvent.click(screen.getByRole('button', { name: 'Pick repository' }));
@@ -297,7 +315,7 @@ describe('useWorktreeBrowser', () => {
         expect(screen.getByLabelText('Selected').textContent).toBe('/repo-feature')
       );
 
-      expect(window.api.startWatch).toHaveBeenLastCalledWith('/repo', '/repo-feature');
+      expect(window.api.startWatch).toHaveBeenCalledTimes(1);
     });
 
     it('stops watching on unmount', () => {
@@ -333,6 +351,7 @@ describe('useWorktreeBrowser', () => {
       await waitFor(() => expect(screen.getByLabelText('Diff loading').textContent).toBe('false'));
 
       vi.mocked(window.api.listWorktrees).mockClear();
+      vi.mocked(window.api.listWorktreeSummaries).mockClear();
       vi.mocked(window.api.getDiff).mockClear();
 
       await act(async () => {
@@ -343,6 +362,7 @@ describe('useWorktreeBrowser', () => {
         expect(window.api.listWorktrees).toHaveBeenCalledWith('/repo');
       });
       expect(window.api.getDiff).toHaveBeenCalledWith('/repo-feature');
+      expect(window.api.listWorktreeSummaries).toHaveBeenCalledWith(['/repo', '/repo-feature']);
       // Silent refresh: no loading spinner shown.
       expect(screen.getByLabelText('Loading').textContent).toBe('false');
     });
@@ -362,6 +382,7 @@ describe('useWorktreeBrowser', () => {
       });
 
       expect(window.api.listWorktrees).not.toHaveBeenCalled();
+      expect(window.api.listWorktreeSummaries).not.toHaveBeenCalled();
       expect(window.api.getDiff).not.toHaveBeenCalled();
     });
 

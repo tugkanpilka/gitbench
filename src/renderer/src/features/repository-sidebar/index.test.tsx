@@ -21,9 +21,8 @@ describe('RepositorySidebar', () => {
       <RepositorySidebar
         repoPath="/Users/dev/gitbench"
         worktrees={[WORKTREE]}
+        summaries={[]}
         selectedPath={null}
-        selectedFileCount={0}
-        selectedUnpushedCount={0}
         onSelectWorktree={() => undefined}
       />
     );
@@ -41,9 +40,8 @@ describe('RepositorySidebar', () => {
       <RepositorySidebar
         repoPath="/Users/dev/gitbench"
         worktrees={[WORKTREE]}
+        summaries={[]}
         selectedPath={null}
-        selectedFileCount={0}
-        selectedUnpushedCount={0}
         onSelectWorktree={() => undefined}
       />
     );

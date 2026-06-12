@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 
-import type { ErrorDto, Result, WorktreeDto } from '../../../contracts/ipc';
+import type { ErrorDto, Result, WorktreeDto, WorktreeSummaryDto } from '../../../contracts/ipc';
 
 export const okResult = <T>(data: T): Result<T> => ({ ok: true, data });
 
@@ -25,6 +25,26 @@ export const FEATURE_WORKTREE: WorktreeDto = {
   isLocked: false,
 };
 
+export const MAIN_WORKTREE_SUMMARY: WorktreeSummaryDto = {
+  worktreePath: MAIN_WORKTREE.path,
+  fileCount: 0,
+  additions: 0,
+  deletions: 0,
+  conflictCount: 0,
+  unpushedCount: 0,
+  behindCount: 0,
+};
+
+export const FEATURE_WORKTREE_SUMMARY: WorktreeSummaryDto = {
+  worktreePath: FEATURE_WORKTREE.path,
+  fileCount: 6,
+  additions: 124,
+  deletions: 18,
+  conflictCount: 0,
+  unpushedCount: 2,
+  behindCount: 1,
+};
+
 export function makeWorktree(overrides: Partial<WorktreeDto> = {}): WorktreeDto {
   return { ...MAIN_WORKTREE, ...overrides };
 }
@@ -42,10 +62,11 @@ export function stubApi(overrides: Partial<Window['api']> = {}): void {
   window.api = {
     pickRepo: vi.fn().mockResolvedValue(okResult<string | null>('/repo')),
     listWorktrees: vi.fn().mockResolvedValue(okResult([MAIN_WORKTREE, FEATURE_WORKTREE])),
-    getDiff: vi.fn().mockResolvedValue(okResult({ diffText: 'diff' })),
-    listUnpushedCommits: vi
+    listWorktreeSummaries: vi
       .fn()
-      .mockResolvedValue(okResult({ commits: [], truncated: false })),
+      .mockResolvedValue(okResult([MAIN_WORKTREE_SUMMARY, FEATURE_WORKTREE_SUMMARY])),
+    getDiff: vi.fn().mockResolvedValue(okResult({ diffText: 'diff' })),
+    listUnpushedCommits: vi.fn().mockResolvedValue(okResult({ commits: [], truncated: false })),
     startWatch: vi.fn().mockResolvedValue(okResult(null)),
     stopWatch: vi.fn().mockResolvedValue(okResult(null)),
     onRepoChanged: vi.fn().mockReturnValue(() => {}),

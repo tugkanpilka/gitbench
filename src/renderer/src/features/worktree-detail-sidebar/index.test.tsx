@@ -44,9 +44,13 @@ afterEach(() => cleanup());
 function renderSidebar({
   mode = 'flat',
   onSelectFile = () => undefined,
+  repositorySidebarOpen = true,
+  onToggleRepositorySidebar = () => undefined,
 }: {
   mode?: 'flat' | 'tree';
   onSelectFile?: (fileId: string) => void;
+  repositorySidebarOpen?: boolean;
+  onToggleRepositorySidebar?: () => void;
 } = {}) {
   render(
     <WorktreeDetailSidebar
@@ -58,9 +62,10 @@ function renderSidebar({
       fileListMode={mode}
       activeFileId={FILES[0].id}
       diffStats={{ additions: 2, deletions: 1 }}
+      repositorySidebarOpen={repositorySidebarOpen}
       onSelectFile={onSelectFile}
       onFileListModeChange={() => undefined}
-      onToggleSidebar={() => undefined}
+      onToggleRepositorySidebar={onToggleRepositorySidebar}
     />
   );
 }
@@ -71,7 +76,7 @@ describe('WorktreeDetailSidebar', () => {
 
     expect(screen.getByText('repo')).toBeTruthy();
     expect(screen.getByText('main')).toBeTruthy();
-    expect(screen.getByText('aaaaaaa')).toBeTruthy();
+    expect(screen.getByLabelText('2 additions, 1 deletion')).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Changes' })).toBeTruthy();
     expect(screen.getByText('Added')).toBeTruthy();
     expect(screen.getAllByText('Modified').length).toBeGreaterThan(0);
@@ -89,7 +94,15 @@ describe('WorktreeDetailSidebar', () => {
     const onSelectFile = vi.fn();
     renderSidebar({ onSelectFile });
 
-    fireEvent.click(screen.getByRole('button', { name: 'src/a.ts, 1 addition, 0 deletions' }));
+    const fileRow = screen.getByRole('button', {
+      name: 'src/a.ts, 1 addition, 0 deletions',
+    });
+
+    expect(fileRow.textContent).toBe('a.ts+1src');
+    expect(
+      screen.getByRole('button', { name: 'old.ts, 0 additions, 1 deletion' }).textContent
+    ).toBe('old.ts−1/');
+    fireEvent.click(fileRow);
 
     expect(onSelectFile).toHaveBeenCalledWith(FILES[0].id);
   });
@@ -105,6 +118,48 @@ describe('WorktreeDetailSidebar', () => {
     expect(folders[0].getAttribute('aria-expanded')).toBe('false');
   });
 
+  it('keeps the repository sidebar toggle visible in both states', () => {
+    const onToggleRepositorySidebar = vi.fn();
+    const { rerender } = render(
+      <WorktreeDetailSidebar
+        worktree={MAIN_WORKTREE}
+        changedFiles={FILES}
+        unpushedCommits={[UNPUSHED_COMMIT]}
+        commitsTruncated={false}
+        diffLoading={false}
+        fileListMode="flat"
+        activeFileId={FILES[0].id}
+        diffStats={{ additions: 2, deletions: 1 }}
+        repositorySidebarOpen={true}
+        onSelectFile={() => undefined}
+        onFileListModeChange={() => undefined}
+        onToggleRepositorySidebar={onToggleRepositorySidebar}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Hide worktree sidebar' }));
+
+    rerender(
+      <WorktreeDetailSidebar
+        worktree={MAIN_WORKTREE}
+        changedFiles={FILES}
+        unpushedCommits={[UNPUSHED_COMMIT]}
+        commitsTruncated={false}
+        diffLoading={false}
+        fileListMode="flat"
+        activeFileId={FILES[0].id}
+        diffStats={{ additions: 2, deletions: 1 }}
+        repositorySidebarOpen={false}
+        onSelectFile={() => undefined}
+        onFileListModeChange={() => undefined}
+        onToggleRepositorySidebar={onToggleRepositorySidebar}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Show worktree sidebar' }));
+
+    expect(onToggleRepositorySidebar).toHaveBeenCalledTimes(2);
+  });
+
   it('renders a placeholder before a worktree is selected', () => {
     render(
       <WorktreeDetailSidebar
@@ -116,9 +171,10 @@ describe('WorktreeDetailSidebar', () => {
         fileListMode="flat"
         activeFileId={null}
         diffStats={null}
+        repositorySidebarOpen={true}
         onSelectFile={() => undefined}
         onFileListModeChange={() => undefined}
-        onToggleSidebar={() => undefined}
+        onToggleRepositorySidebar={() => undefined}
       />
     );
 

@@ -1,6 +1,5 @@
 .app-shell {
-  --gb-active-source-sidebar-w: var(--gb-source-sidebar-w);
-  --gb-active-detail-sidebar-w: var(--gb-detail-sidebar-w-runtime, var(--gb-detail-sidebar-w));
+  --gb-active-repository-sidebar-w: var(--gb-sidebar-w);
 
   position: relative;
   display: flex;
@@ -10,18 +9,21 @@
   background: transparent;
 }
 
-.app-shell[data-sidebar-open='false'] {
-  --gb-active-source-sidebar-w: 0px;
-  --gb-active-detail-sidebar-w: 0px;
+.app-shell[data-repository-sidebar-open='false'] {
+  --gb-active-repository-sidebar-w: 0px;
 }
 
 .app-shell__sidebars {
   display: flex;
-  width: calc(var(--gb-active-source-sidebar-w) + var(--gb-active-detail-sidebar-w));
+  width: calc(var(--gb-active-repository-sidebar-w) + var(--gb-sidebar-w));
   min-height: 0;
   flex: none;
   overflow: hidden;
-  transition: width var(--gb-dur-slow) var(--gb-ease);
+  background: color-mix(in srgb, var(--gb-sidebar) 72%, transparent);
+  backdrop-filter: var(--gb-vibrancy);
+  -webkit-backdrop-filter: var(--gb-vibrancy);
+  transition: width var(--gb-dur-sidebar) var(--gb-ease-sidebar);
+  will-change: width;
 }
 
 .app-shell__repository-sidebar,
@@ -29,32 +31,48 @@
   min-height: 0;
   flex: none;
   overflow: hidden;
-  background: color-mix(in srgb, var(--gb-sidebar) 72%, transparent);
-  backdrop-filter: var(--gb-vibrancy);
-  -webkit-backdrop-filter: var(--gb-vibrancy);
+  background: transparent;
 }
 
 .app-shell__repository-sidebar {
-  width: var(--gb-active-source-sidebar-w);
+  width: var(--gb-active-repository-sidebar-w);
   border-right: 1px solid var(--gb-sidebar-edge);
+  transition:
+    width var(--gb-dur-sidebar) var(--gb-ease-sidebar),
+    border-color var(--gb-dur-sidebar) var(--gb-ease-sidebar);
+  will-change: width;
 }
 
 .app-shell__detail-sidebar {
-  width: var(--gb-active-detail-sidebar-w);
+  width: var(--gb-sidebar-w);
   border-right: 1px solid var(--gb-sidebar-edge);
 }
 
+.app-shell[data-repository-sidebar-open='false'] .app-shell__repository-sidebar {
+  border-right-color: transparent;
+}
+
 .app-shell__repository-sidebar > * {
-  width: var(--gb-source-sidebar-w);
+  width: var(--gb-sidebar-w);
+  opacity: 1;
+  transform: translateX(0);
+  transition:
+    opacity var(--gb-dur-base) var(--gb-ease),
+    transform var(--gb-dur-sidebar) var(--gb-ease-sidebar);
+  will-change: opacity, transform;
+}
+
+.app-shell[data-repository-sidebar-open='false'] .app-shell__repository-sidebar > * {
+  opacity: 0;
+  transform: translateX(-12px);
 }
 
 .app-shell__detail-sidebar > * {
-  width: var(--gb-active-detail-sidebar-w);
-  min-width: var(--gb-detail-sidebar-min);
+  width: var(--gb-sidebar-w);
 }
 
 .app-shell__content {
-  min-width: 0;
+  min-width: var(--gb-content-min-w);
   min-height: 0;
   flex: 1;
   overflow: auto;

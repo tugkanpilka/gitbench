@@ -2,6 +2,7 @@
 import type {
   GetDiffResponse,
   ListUnpushedCommitsResponse,
+  ListWorktreeSummariesResponse,
   ListWorktreesResponse,
   PickRepositoryResponse,
   Result,
@@ -22,14 +23,17 @@ export const desktopApi = {
   async listWorktrees(repoPath: string): Promise<ListWorktreesResponse> {
     return unwrap(await window.api.listWorktrees(repoPath));
   },
+  async listWorktreeSummaries(worktreePaths: string[]): Promise<ListWorktreeSummariesResponse> {
+    return unwrap(await window.api.listWorktreeSummaries(worktreePaths));
+  },
   async getDiff(worktreePath: string): Promise<GetDiffResponse> {
     return unwrap(await window.api.getDiff(worktreePath));
   },
   async listUnpushedCommits(worktreePath: string): Promise<ListUnpushedCommitsResponse> {
     return unwrap(await window.api.listUnpushedCommits(worktreePath));
   },
-  async startWatch(repoPath: string, selectedWorktreePath: string | null): Promise<null> {
-    return unwrap(await window.api.startWatch(repoPath, selectedWorktreePath));
+  async startWatch(repoPath: string, worktreePaths: string[]): Promise<null> {
+    return unwrap(await window.api.startWatch(repoPath, worktreePaths));
   },
   async stopWatch(): Promise<null> {
     return unwrap(await window.api.stopWatch());

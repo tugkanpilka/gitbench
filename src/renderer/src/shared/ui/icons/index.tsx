@@ -8,36 +8,6 @@ type TChevronProps = TIconProps & {
   collapsed: boolean;
 };
 
-const SIDEBAR_WIDTH = 17;
-const SIDEBAR_HEIGHT = 14;
-const SIDEBAR_VIEWBOX_WIDTH = 19;
-const SIDEBAR_VIEWBOX_HEIGHT = 16;
-const SIDEBAR_STROKE = 1.2;
-
-export const SidebarIcon = memo(function SidebarIcon({ className }: TIconProps) {
-  return (
-    <svg
-      className={className}
-      aria-hidden="true"
-      width={SIDEBAR_WIDTH}
-      height={SIDEBAR_HEIGHT}
-      viewBox={`0 0 ${SIDEBAR_VIEWBOX_WIDTH} ${SIDEBAR_VIEWBOX_HEIGHT}`}
-    >
-      <rect
-        x="1"
-        y="1"
-        width="17"
-        height="14"
-        rx="3"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={SIDEBAR_STROKE}
-      />
-      <line x1="7" y1="1" x2="7" y2="15" stroke="currentColor" strokeWidth={SIDEBAR_STROKE} />
-    </svg>
-  );
-});
-
 const SUN_SIZE = 14;
 const SUN_CIRCLE_STROKE = 1.4;
 const SUN_RAY_STROKE = 1.3;

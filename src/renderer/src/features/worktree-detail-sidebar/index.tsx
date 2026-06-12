@@ -1,6 +1,6 @@
 import { nameFromPath } from '../../shared/path/nameFromPath';
-import { SidebarIcon } from '../../shared/ui/icons';
 import { DiffStat } from '../../shared/ui/diff-stat';
+import { Chevron } from '../../shared/ui/icons';
 import { SegmentedControl } from '../../shared/ui/segmented-control';
 import { ChangedFilesSection } from '../worktree-list/changed-files-section';
 import { UnpushedCommitsSection } from '../worktree-list/unpushed-commits-section';
@@ -21,9 +21,10 @@ export function WorktreeDetailSidebar({
   fileListMode,
   activeFileId,
   diffStats,
+  repositorySidebarOpen,
   onSelectFile,
   onFileListModeChange,
-  onToggleSidebar,
+  onToggleRepositorySidebar,
 }: WorktreeDetailSidebarProps) {
   if (worktree === null) {
     return (
@@ -31,21 +32,33 @@ export function WorktreeDetailSidebar({
         <p className={styles['worktree-detail-sidebar__placeholder']}>
           Select a worktree to inspect its changes.
         </p>
-        <DetailFooter
-          fileListMode={fileListMode}
-          onFileListModeChange={onFileListModeChange}
-          onToggleSidebar={onToggleSidebar}
-        />
+        <DetailFooter fileListMode={fileListMode} onFileListModeChange={onFileListModeChange} />
       </div>
     );
   }
 
-  const shortSha = worktree.headSha.slice(0, 7);
   const reference = worktree.branch ?? 'Detached HEAD';
 
   return (
     <div className={styles['worktree-detail-sidebar']}>
-      <header className={styles['worktree-detail-sidebar__header']}>
+      <header
+        className={styles['worktree-detail-sidebar__header']}
+        data-repository-sidebar-open={repositorySidebarOpen}
+      >
+        <div className={styles['worktree-detail-sidebar__toolbar']}>
+          <button
+            type="button"
+            className={styles['worktree-detail-sidebar__back']}
+            aria-label={`${repositorySidebarOpen ? 'Hide' : 'Show'} worktree sidebar`}
+            aria-expanded={repositorySidebarOpen}
+            onClick={onToggleRepositorySidebar}
+          >
+            <Chevron collapsed={false} className={styles['worktree-detail-sidebar__back-icon']} />
+          </button>
+        </div>
+      </header>
+
+      <div className={styles['worktree-detail-sidebar__content']}>
         <div className={styles['worktree-detail-sidebar__identity']}>
           <strong className={styles['worktree-detail-sidebar__name']} title={worktree.path}>
             {nameFromPath(worktree.path)}
@@ -53,16 +66,14 @@ export function WorktreeDetailSidebar({
           <span className={styles['worktree-detail-sidebar__reference']} title={reference}>
             {reference}
           </span>
-        </div>
-        <div className={styles['worktree-detail-sidebar__summary']}>
           {diffStats !== null && (
-            <DiffStat additions={diffStats.additions} deletions={diffStats.deletions} />
+            <DiffStat
+              className={styles['worktree-detail-sidebar__diff-stat']}
+              additions={diffStats.additions}
+              deletions={diffStats.deletions}
+            />
           )}
-          <span className={styles['worktree-detail-sidebar__sha']}>{shortSha}</span>
         </div>
-      </header>
-
-      <div className={styles['worktree-detail-sidebar__content']}>
         {diffLoading ? (
           <p className={styles['worktree-detail-sidebar__loading']}>Loading changes…</p>
         ) : (
@@ -78,11 +89,7 @@ export function WorktreeDetailSidebar({
         )}
       </div>
 
-      <DetailFooter
-        fileListMode={fileListMode}
-        onFileListModeChange={onFileListModeChange}
-        onToggleSidebar={onToggleSidebar}
-      />
+      <DetailFooter fileListMode={fileListMode} onFileListModeChange={onFileListModeChange} />
     </div>
   );
 }
@@ -90,20 +97,9 @@ export function WorktreeDetailSidebar({
 function DetailFooter({
   fileListMode,
   onFileListModeChange,
-  onToggleSidebar,
-}: Pick<WorktreeDetailSidebarProps, 'fileListMode' | 'onFileListModeChange' | 'onToggleSidebar'>) {
+}: Pick<WorktreeDetailSidebarProps, 'fileListMode' | 'onFileListModeChange'>) {
   return (
     <footer className={styles['worktree-detail-sidebar__footer']}>
-      <button
-        type="button"
-        className={styles['worktree-detail-sidebar__toggle']}
-        aria-controls="workspace-sidebar-panels"
-        aria-expanded="true"
-        aria-label="Hide sidebars"
-        onClick={onToggleSidebar}
-      >
-        <SidebarIcon />
-      </button>
       <SegmentedControl
         className={styles['worktree-detail-sidebar__view-toggle']}
         ariaLabel="File list view"
