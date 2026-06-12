@@ -1,5 +1,5 @@
 export interface StartWatchRequest {
   repoPath: string;
-  /** The worktree whose diff is currently open, or null if none is selected. */
-  selectedWorktreePath: string | null;
+  /** Every current worktree root whose working files can affect sidebar summaries. */
+  worktreePaths: string[];
 }

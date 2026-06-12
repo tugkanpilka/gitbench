@@ -74,15 +74,52 @@ Gotchas, in order of how much they will bite:
 4. **Binary changes** appear as `Binary files a/… and b/… differ` lines; the diff renderer must tolerate them.
 5. **Renames** appear as `rename from` / `rename to` headers (rename detection is on by default in modern git). The diff renderer must tolerate these too.
 
+## Unpushed commits (the `commits:unpushed` channel)
+
+`GitCliCommitReader` lists commits on a worktree's HEAD that haven't been pushed, with each commit's changed files. The two ref probes run in parallel, then one `git log`.
+
+Ref probes go through the shared `refResolves` helper (`src/infrastructure/git/refResolves.ts`): `rev-parse --verify --quiet <ref>` with `acceptedExitCodes: [1]`. A missing ref exits 1 with **empty** stderr (accepted, returns false); a real failure (corrupt ref, bad object) writes stderr and still rejects — so breakage is never mistaken for "ref absent". The diff reader's unborn-HEAD guard is built on the same helper.
+
+Resolving the "unpushed" range, in priority order:
+
+1. **`@{upstream}..HEAD`** when the branch has an upstream — this is exactly git status's "ahead by N". Detect with `refResolves(path, '@{upstream}')` (a failed resolution = no upstream, **not** an error here — treated as "fall through").
+2. **`HEAD --not --remotes`** when there's no upstream but at least one remote exists (`git remote` non-empty) — commits reachable from HEAD but not from any remote-tracking ref. Covers a never-pushed feature branch.
+3. **empty** when there's no remote at all — "unpushed" is undefined, so the list is empty (not an error).
+
+Unborn HEAD (zero commits) short-circuits to an empty list, same `refResolves` guard as the diff reader.
+
+The log call:
+
+```text
+git -C <worktreePath> -c core.quotePath=false --no-pager log <range> \
+  --no-color --max-count=101 --name-status --format=%x1e%H%x1f%h%x1f%an%x1f%cI%x1f%s
+```
+
+- `--format=%x1e…` prefixes each commit with a Record-Separator byte (0x1e) and joins metadata fields with Unit-Separator bytes (0x1f). Git does **not** strip these bytes from metadata (a crafted subject can contain them), so `parseCommitLog` (a pure, fixture-tested function) additionally validates each record's 40-hex sha header and drops phantom records. `%cI` is the committer date (matches `git log` ordering; the author date would go stale on rebase/cherry-pick). `--name-status` appends `STATUS\tpath` lines (renames/copies carry `Rxxx`/`Cxxx` and two tab-separated paths).
+- `-c core.quotePath=false` keeps non-ASCII paths literal instead of `\xNN`-escaped. Paths containing literal tabs or newlines remain out of scope (document, don't crash) — consistent with the rest of the git layer.
+- **Cap:** `--max-count=101` requests one more than the 100-commit display cap so truncation is detected honestly and surfaced as `truncated: true` rather than silently dropped.
+- Merge commits show no files under default `--name-status` (no diff); they parse to an empty `files` array, which the UI tolerates.
+
+## Worktree summaries (the `worktrees:summaries` channel)
+
+`GitCliWorktreeSummaryReader` populates every repository-sidebar row without generating full diffs or commit payloads. Worktrees are processed with bounded concurrency.
+
+- `git status --porcelain=v1 -z --untracked-files=all` supplies changed-file, conflict, and untracked-path data.
+- `git diff --numstat HEAD` supplies staged + unstaged tracked line counts.
+- Untracked line counts use `git diff --no-index --numstat /dev/null <path>` with bounded concurrency. Binary `-` columns count as zero lines while the file still contributes to `fileCount`.
+- Upstream branches use `git rev-list --left-right --count @{upstream}...HEAD` for behind/ahead counts.
+- Branches without upstreams reuse the unpushed fallback: `git rev-list --count HEAD --not --remotes`; `behindCount` is `null`.
+- Unborn repositories retain porcelain file/conflict counts but report zero line and push counts because there is no `HEAD` baseline.
+
 ## File watching (the `watch:start` channel)
 
-`src/infrastructure/watch/ChokidarRepoWatcher.ts` turns filesystem changes into a debounced "re-query" signal. It never reads diffs — git stays the source of truth; the renderer re-runs `worktrees:list` / `diff:get` on each signal.
+`src/infrastructure/watch/ChokidarRepoWatcher.ts` turns filesystem changes into a debounced "re-query" signal. It never reads Git data itself — git stays the source of truth; the renderer refreshes the worktree list, all row summaries, and the selected diff/commit data on each signal.
 
 On macOS, recursive paths use the native `fsevents` API directly. Chokidar v4 performs an initial directory crawl and opens one watcher per directory there; large repositories can exhaust the default file-descriptor limit and stall Electron's main process even when `git diff` is empty. FSEvents observes a whole tree through one native stream without that crawl. Other platforms keep the Chokidar fallback.
 
-Two watch targets, one debounced `onChange`:
+Watch targets share one debounced `onChange`:
 
-1. **Selected worktree's working tree** — file edits/adds/deletes. Ignores `node_modules` and `.git` (the object store under `.git` would storm).
+1. **Every current worktree's working tree** — file edits/adds/deletes update sidebar summaries even before selection. Ignores `node_modules` and `.git` (the object store under `.git` would storm).
 2. **Shared git dir** — resolved with `git -C <repoPath> rev-parse --path-format=absolute --git-common-dir` (absolute output; `--git-common-dir` alone can be relative). This one dir holds `refs`, `logs`, `index`, and `worktrees/` — so it catches commits/resets/checkouts **and** add/remove/lock for _every_ worktree, including linked ones (their per-worktree `HEAD`/`index`/`logs` live under `worktrees/<name>/`). Only the `objects` and `lfs` stores are ignored.
 
 Why not watch each worktree's `.git/HEAD` file directly: a commit on a branch leaves the symbolic `HEAD` file unchanged — what moves is `refs/heads/<branch>` and `logs/HEAD`. Watching the whole git dir (minus `objects`) covers all of these without per-worktree path resolution.

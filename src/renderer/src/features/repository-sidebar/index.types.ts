@@ -1,16 +1,9 @@
-import type { WorktreeDto } from '../../../../contracts/ipc';
-import type { FileListMode } from '../../shared/preferences/appPreferences';
-import type { DiffStats } from '../../shared/ui/diff-stat/index.types';
-import type { DiffFileModel } from '../diff-viewer/utils/diffModel.types';
+import type { WorktreeDto, WorktreeSummaryDto } from '../../../../contracts/ipc';
 
 export type RepositorySidebarProps = {
   repoPath: string;
   worktrees: WorktreeDto[];
+  summaries: WorktreeSummaryDto[];
   selectedPath: string | null;
-  changedFiles: DiffFileModel[];
-  fileListMode: FileListMode;
-  activeFileId: string | null;
-  diffStats: DiffStats | null;
   onSelectWorktree: (worktreePath: string) => void;
-  onSelectFile: (fileId: string) => void;
 };

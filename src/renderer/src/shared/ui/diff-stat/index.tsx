@@ -16,6 +16,8 @@ export function DiffStat({
   className,
   ...props
 }: DiffStatProps) {
+  const showAdditions = additions > 0 || deletions === 0;
+  const showDeletions = deletions > 0 || additions === 0;
   const classes = cx(
     styles['gb-diff-stat'],
     onSelection && styles['gb-diff-stat--on-selection'],
@@ -24,12 +26,16 @@ export function DiffStat({
 
   return (
     <span className={classes} aria-label={diffStatLabel(additions, deletions)} {...props}>
-      <span className={styles['gb-diff-stat__add']} aria-hidden="true">
-        +{additions}
-      </span>
-      <span className={styles['gb-diff-stat__delete']} aria-hidden="true">
-        −{deletions}
-      </span>
+      {showAdditions && (
+        <span className={styles['gb-diff-stat__add']} aria-hidden="true">
+          +{additions}
+        </span>
+      )}
+      {showDeletions && (
+        <span className={styles['gb-diff-stat__delete']} aria-hidden="true">
+          −{deletions}
+        </span>
+      )}
     </span>
   );
 }

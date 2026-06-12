@@ -18,11 +18,13 @@ type Result<T> = { ok: true; data: T } | { ok: false; error: ErrorDto };
 src/contracts/ipc/
   api.ts          # DesktopApi exposed as window.api
   channels.ts     # canonical IPC channel names
+  commits.ts      # unpushed-commits request/response and CommitDto
   diff.ts         # diff request/response
   errors.ts       # ErrorDto
   repository.ts   # repository picker response
   result.ts       # Result<T>
   watch.ts        # watch lifecycle request
+  worktreeSummaries.ts # per-worktree status/stat/push summaries
   worktrees.ts    # worktree request/response and WorktreeDto
   index.ts        # public exports
 ```
@@ -42,6 +44,46 @@ interface WorktreeDto {
 
 interface GetDiffResponse {
   diffText: string; // "" is a valid clean-worktree result
+}
+
+interface WorktreeSummaryDto {
+  worktreePath: string;
+  fileCount: number;
+  additions: number;
+  deletions: number;
+  conflictCount: number;
+  unpushedCount: number;
+  behindCount: number | null; // null when the worktree has no upstream
+}
+
+type CommitFileChangeStatus =
+  | 'added'
+  | 'modified'
+  | 'deleted'
+  | 'renamed'
+  | 'copied'
+  | 'typeChanged'
+  | 'unmerged'
+  | 'unknown';
+
+interface CommitFileChange {
+  status: CommitFileChangeStatus;
+  path: string; // destination path for renames/copies
+  previousPath: string | null; // source path for renames/copies, else null
+}
+
+interface CommitDto {
+  sha: string;
+  shortSha: string;
+  author: string;
+  committedAt: string; // committer date, ISO 8601
+  subject: string;
+  files: CommitFileChange[];
+}
+
+interface ListUnpushedCommitsResponse {
+  commits: CommitDto[]; // newest first; [] is a valid "nothing unpushed" result
+  truncated: boolean; // true when the list was capped (more exist than shown)
 }
 
 interface ErrorDto {
@@ -64,7 +106,7 @@ type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
 
 `ErrorDto.code` derives its union from `ERROR_CODES`; the string values themselves are unchanged. Add or rename a code only here, and update this document in the same commit.
 
-Domain entities never cross IPC. `src/main/ipc/mappers/worktreeMapper.ts` maps `Worktree` into `WorktreeDto`.
+Domain entities never cross IPC. `src/main/ipc/mappers/worktreeMapper.ts` maps `Worktree` into `WorktreeDto`; `src/main/ipc/mappers/commitMapper.ts` maps the application-layer `UnpushedCommits` into `ListUnpushedCommitsResponse`.
 
 Error mapping lives in `src/main/ipc/mappers/errorMapper.ts` (it imports `ERROR_CODES` rather than inlining literals):
 
@@ -94,11 +136,26 @@ Error mapping lives in `src/main/ipc/mappers/errorMapper.ts` (it imports `ERROR_
 - Response: `Result<GetDiffResponse>`
 - Flow: IPC handler -> `getUncommittedDiff` -> `DiffReader` -> Git CLI reader -> raw unified diff.
 
+### `worktrees:summaries`
+
+- Request: `ListWorktreeSummariesRequest` with `{ worktreePaths: string[] }`
+- Response: `Result<ListWorktreeSummariesResponse>`
+- Returns lightweight status data for every worktree row without loading full diffs or commit details.
+- Flow: IPC handler -> `listWorktreeSummaries` -> `WorktreeSummaryReader` -> bounded-concurrency Git CLI queries -> DTO mapper.
+- `fileCount` and `conflictCount` come from porcelain status; additions/deletions include tracked and untracked files; push counts use upstream ahead/behind when available and the existing remote fallback for branches without upstreams.
+
+### `commits:unpushed`
+
+- Request: `ListUnpushedCommitsRequest` with `{ worktreePath: string }`
+- Response: `Result<ListUnpushedCommitsResponse>`
+- Flow: IPC handler -> `listUnpushedCommits` -> `CommitReader` -> Git CLI reader -> `parseCommitLog` -> `CommitDto` mapper.
+- "Unpushed" is resolved per worktree: ahead of `@{upstream}` when set, else commits not on any remote-tracking ref, else empty (no remote). An empty `commits` array is a valid success state, never an error. The list is capped (`truncated: true` when more exist). See `agent_docs/git-notes.md`.
+
 ### `watch:start`
 
-- Request: `StartWatchRequest` with `{ repoPath: string; selectedWorktreePath: string | null }`
+- Request: `StartWatchRequest` with `{ repoPath: string; worktreePaths: string[] }`
 - Response: `Result<null>` (`null` data is the start acknowledgement)
-- Starts (and replaces any existing) filesystem watcher for the active repo. Watches the repo's `.git` for worktree-list changes and the selected worktree's tree for diff changes.
+- Starts (and replaces any existing) filesystem watcher for the active repo. Watches the repo's `.git` for worktree-list changes and every worktree root for row-summary and selected-diff changes.
 - Flow: IPC handler -> `watchRepository` -> `RepoWatcher` port -> infrastructure watcher. On change it emits the `repo:changed` event (below).
 
 ### `watch:stop`
@@ -110,7 +167,7 @@ Error mapping lives in `src/main/ipc/mappers/errorMapper.ts` (it imports `ERROR_
 ### `repo:changed` (push: main -> renderer)
 
 - This is the **only** main-initiated channel; every other channel is renderer-initiated request/response.
-- **No payload and not a `Result` envelope** — it is a debounced "something changed, re-query now" signal, not data. The renderer responds by re-invoking `worktrees:list` and `diff:get`. Git stays the single source of truth; the watcher never computes a diff.
+- **No payload and not a `Result` envelope** — it is a debounced "something changed, re-query now" signal, not data. The renderer responds by re-invoking `worktrees:list`, `worktrees:summaries`, and the selected `diff:get` / `commits:unpushed` queries. Git stays the single source of truth; the watcher never computes data itself.
 
 ## Preload
 
@@ -120,8 +177,10 @@ Error mapping lives in `src/main/ipc/mappers/errorMapper.ts` (it imports `ERROR_
 interface DesktopApi {
   pickRepo(): Promise<Result<string | null>>;
   listWorktrees(repoPath: string): Promise<Result<WorktreeDto[]>>;
+  listWorktreeSummaries(worktreePaths: string[]): Promise<Result<WorktreeSummaryDto[]>>;
   getDiff(worktreePath: string): Promise<Result<GetDiffResponse>>;
-  startWatch(repoPath: string, selectedWorktreePath: string | null): Promise<Result<null>>;
+  listUnpushedCommits(worktreePath: string): Promise<Result<ListUnpushedCommitsResponse>>;
+  startWatch(repoPath: string, worktreePaths: string[]): Promise<Result<null>>;
   stopWatch(): Promise<Result<null>>;
   onRepoChanged(listener: () => void): () => void; // returns an unsubscribe fn
 }

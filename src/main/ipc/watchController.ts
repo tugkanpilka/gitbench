@@ -6,8 +6,8 @@ import type { ApplicationServices } from '../bootstrap/compositionRoot';
 
 /**
  * Owns the single active filesystem watch. `start` replaces any prior watch (the app
- * watches one repo / one selected worktree at a time); `stop` disposes it. Lives in
- * main because it bridges the application use case to the renderer's lifecycle —
+ * watches one repo and all of its worktrees at a time); `stop` disposes it. Lives in
+ * main because it bridges the application use case to the renderer's lifecycle.
  * index.ts disposes it on window close / quit so a watcher never outlives its window.
  */
 export interface WatchController {

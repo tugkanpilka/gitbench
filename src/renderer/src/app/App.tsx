@@ -1,12 +1,10 @@
 import { useMemo, useState } from 'react';
 
-import { ContentToolbar } from '../features/content-toolbar';
-import type { ViewType } from '../features/diff-viewer/index.types';
 import { buildDiffModel, EMPTY_DIFF_MODEL } from '../features/diff-viewer/utils/diffModel';
 import { RepositorySidebar } from '../features/repository-sidebar';
 import { WelcomeScreen } from '../features/welcome';
 import { useWorktreeBrowser } from '../features/worktree-browser';
-import { nameFromPath } from '../shared/path/nameFromPath';
+import { WorktreeDetailSidebar } from '../features/worktree-detail-sidebar';
 import { AppShell } from './app-shell';
 import { useAppPreferences } from './hooks/useAppPreferences';
 import { useDiffNavigation } from './hooks/useDiffNavigation';
@@ -15,7 +13,7 @@ import { Workspace } from './workspace';
 export default function App() {
   const browser = useWorktreeBrowser();
   const preferences = useAppPreferences();
-  const [viewType, setViewType] = useState<ViewType>('unified');
+  const [repositorySidebarOpen, setRepositorySidebarOpen] = useState(true);
   const isCleanWorktree = browser.diff !== null && browser.diff.diffText === '';
 
   const diffModel = useMemo(() => {
@@ -26,11 +24,18 @@ export default function App() {
   }, [browser.diff, isCleanWorktree]);
 
   const navigation = useDiffNavigation(diffModel);
+  const selectedWorktree =
+    browser.worktrees.find((worktree) => worktree.path === browser.selectedPath) ?? null;
 
   const diffStats =
     diffModel.files.length > 0
       ? { additions: diffModel.additions, deletions: diffModel.deletions }
       : null;
+
+  const selectWorktree = (worktreePath: string): void => {
+    setRepositorySidebarOpen(false);
+    void browser.selectWorktree(worktreePath);
+  };
 
   if (browser.repoPath === null) {
     return (
@@ -44,42 +49,39 @@ export default function App() {
 
   return (
     <AppShell
-      sidebarOpen={preferences.sidebarOpen}
-      sidebar={
+      repositorySidebarOpen={repositorySidebarOpen}
+      repositorySidebar={
         <RepositorySidebar
           repoPath={browser.repoPath}
           worktrees={browser.worktrees}
+          summaries={browser.summaries}
           selectedPath={browser.selectedPath}
+          onSelectWorktree={selectWorktree}
+        />
+      }
+      detailSidebar={
+        <WorktreeDetailSidebar
+          worktree={selectedWorktree}
           changedFiles={diffModel.files}
+          unpushedCommits={browser.commits?.commits ?? []}
+          commitsTruncated={browser.commits?.truncated ?? false}
+          diffLoading={browser.diffLoading}
           fileListMode={preferences.fileListMode}
           activeFileId={navigation.activeFileId}
           diffStats={diffStats}
-          onSelectWorktree={browser.selectWorktree}
+          repositorySidebarOpen={repositorySidebarOpen}
           onSelectFile={navigation.selectFile}
+          onFileListModeChange={preferences.setFileListMode}
+          onToggleRepositorySidebar={() => setRepositorySidebarOpen((open) => !open)}
         />
       }
     >
-      <ContentToolbar
-        worktreeName={browser.diff ? nameFromPath(browser.diff.worktreePath) : null}
-        repoName={nameFromPath(browser.repoPath)}
-        fileCount={diffModel.files.length}
-        diffStats={diffStats}
-        viewType={viewType}
-        theme={preferences.theme}
-        sidebarOpen={preferences.sidebarOpen}
-        fileListMode={preferences.fileListMode}
-        onViewTypeChange={setViewType}
-        onToggleTheme={preferences.toggleTheme}
-        onToggleSidebar={preferences.toggleSidebar}
-        onFileListModeChange={preferences.setFileListMode}
-      />
       <Workspace
         error={browser.error}
         diffLoading={browser.diffLoading}
         hasDiff={browser.diff !== null}
         isCleanWorktree={isCleanWorktree}
         diffModel={diffModel}
-        viewType={viewType}
         navigationTarget={navigation.navigationTarget}
         onActiveFileChange={navigation.setActiveFileId}
       />

@@ -30,12 +30,10 @@ describe('appPreferences', () => {
 
     expect(readAppPreferences(storage, true)).toEqual({
       theme: 'light',
-      sidebarOpen: true,
       fileListMode: 'flat',
     });
     expect(readAppPreferences(storage, false)).toEqual({
       theme: 'dark',
-      sidebarOpen: true,
       fileListMode: 'flat',
     });
   });
@@ -44,14 +42,13 @@ describe('appPreferences', () => {
     const { storage } = createStorage(
       JSON.stringify({
         theme: 'light',
-        sidebarOpen: 'invalid',
+        sidebarOpen: false,
         fileListMode: 'invalid',
       })
     );
 
     expect(readAppPreferences(storage, false)).toEqual({
       theme: 'light',
-      sidebarOpen: true,
       fileListMode: 'flat',
     });
   });
@@ -61,7 +58,6 @@ describe('appPreferences', () => {
 
     expect(readAppPreferences(storage, false)).toEqual({
       theme: 'dark',
-      sidebarOpen: true,
       fileListMode: 'flat',
     });
   });
@@ -69,11 +65,9 @@ describe('appPreferences', () => {
   it('writes the versioned preference payload', () => {
     const { storage, getValue } = createStorage();
 
-    writeAppPreferences({ theme: 'light', sidebarOpen: false, fileListMode: 'tree' }, storage);
+    writeAppPreferences({ theme: 'light', fileListMode: 'tree' }, storage);
 
-    expect(getValue()).toBe(
-      JSON.stringify({ theme: 'light', sidebarOpen: false, fileListMode: 'tree' })
-    );
+    expect(getValue()).toBe(JSON.stringify({ theme: 'light', fileListMode: 'tree' }));
   });
 
   it('exposes the versioned storage key', () => {

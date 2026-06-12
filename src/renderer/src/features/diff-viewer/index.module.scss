@@ -40,8 +40,7 @@
 .diff-file__header {
   position: sticky;
   z-index: 2;
-  /* Sticky offset equals the content toolbar height. */
-  top: var(--gb-toolbar-h);
+  top: 0;
   height: var(--gb-file-header-h);
   border-bottom: 1px solid var(--gb-border-soft);
   background: color-mix(in srgb, var(--gb-panel) 88%, transparent);

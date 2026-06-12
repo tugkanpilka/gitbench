@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
 
-import type { WorktreeDto } from '../../../../contracts/ipc';
+import type { WorktreeDto, WorktreeSummaryDto } from '../../../../contracts/ipc';
 import { ApiError } from '../../shared/api/ApiError';
 import { desktopApi } from '../../shared/api/desktopApi';
-import type { DiffState } from './index.types';
+import type { CommitsState, DiffState } from './index.types';
 
 function describeError(error: unknown): string {
   if (error instanceof ApiError) {
@@ -12,18 +12,31 @@ function describeError(error: unknown): string {
   return 'Unexpected error.';
 }
 
+// Marks any in-flight request on `ref` as stale and returns the signal that guards
+// the new one. ipcRenderer.invoke can't be cancelled, so the AbortController is used
+// purely for freshness: callers check signal.aborted before committing results.
+function beginRequest(ref: MutableRefObject<AbortController | null>): AbortSignal {
+  ref.current?.abort();
+  const controller = new AbortController();
+  ref.current = controller;
+  return controller.signal;
+}
+
 export function useWorktreeBrowser() {
   const [repoPath, setRepoPath] = useState<string | null>(null);
   const [worktrees, setWorktrees] = useState<WorktreeDto[]>([]);
+  const [summaries, setSummaries] = useState<WorktreeSummaryDto[]>([]);
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const [diff, setDiff] = useState<DiffState | null>(null);
+  const [commits, setCommits] = useState<CommitsState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [diffLoading, setDiffLoading] = useState(false);
-  // Latest-wins token for diff loads. ipcRenderer.invoke can't be cancelled, so
-  // this AbortController is used purely for freshness: a superseded request's
-  // signal is aborted, and we check signal.aborted before committing results.
+  // Independent latest-wins tokens (see beginRequest) for the diff and the
+  // secondary unpushed-commits load.
   const diffRequest = useRef<AbortController | null>(null);
+  const commitsRequest = useRef<AbortController | null>(null);
+  const summariesRequest = useRef<AbortController | null>(null);
 
   // Latest repo/selection, read by the stable repo:changed subscription without
   // re-subscribing on every change. Mirrored synchronously each render.
@@ -32,6 +45,29 @@ export function useWorktreeBrowser() {
   repoPathRef.current = repoPath;
   selectedPathRef.current = selectedPath;
 
+  // Summary data is secondary: rows remain selectable when a summary query fails.
+  const loadSummaries = useCallback(async (nextWorktrees: WorktreeDto[], clear: boolean) => {
+    const signal = beginRequest(summariesRequest);
+    if (clear) {
+      setSummaries([]);
+    }
+    if (nextWorktrees.length === 0) {
+      setSummaries([]);
+      return;
+    }
+
+    try {
+      const response = await desktopApi.listWorktreeSummaries(
+        nextWorktrees.map((worktree) => worktree.path)
+      );
+      if (!signal.aborted) {
+        setSummaries(response);
+      }
+    } catch {
+      // Keep the last known summaries on a quiet refresh failure.
+    }
+  }, []);
+
   // Never throws: failures are reported via setError and signalled as null, so
   // callers' own try/catch only ever sees errors from other desktopApi calls.
   const loadWorktrees = useCallback(async (path: string): Promise<WorktreeDto[] | null> => {
@@ -39,6 +75,8 @@ export function useWorktreeBrowser() {
       return await desktopApi.listWorktrees(path);
     } catch (caught) {
       setWorktrees([]);
+      setSummaries([]);
+      beginRequest(summariesRequest);
       setError(describeError(caught));
       return null;
     }
@@ -52,12 +90,13 @@ export function useWorktreeBrowser() {
         const nextWorktrees = await loadWorktrees(path);
         if (nextWorktrees !== null) {
           setWorktrees(nextWorktrees);
+          void loadSummaries(nextWorktrees, false);
         }
       } finally {
         setLoading(false);
       }
     },
-    [loadWorktrees]
+    [loadSummaries, loadWorktrees]
   );
 
   // Quiet list reload for auto-refresh: updates the sidebar without flipping the
@@ -67,26 +106,18 @@ export function useWorktreeBrowser() {
       const nextWorktrees = await loadWorktrees(path);
       if (nextWorktrees !== null) {
         setWorktrees(nextWorktrees);
+        void loadSummaries(nextWorktrees, false);
       }
     },
-    [loadWorktrees]
+    [loadSummaries, loadWorktrees]
   );
-
-  // Marks any in-flight diff load as stale and returns the signal that guards
-  // the new load. Aborting the previous controller is the latest-wins token.
-  const beginDiffRequest = useCallback((): AbortSignal => {
-    diffRequest.current?.abort();
-    const controller = new AbortController();
-    diffRequest.current = controller;
-    return controller.signal;
-  }, []);
 
   // Loads the diff for a worktree. `showLoading` is true for a user selection (clear
   // the view, show the spinner) and false for an auto-refresh (keep the current view;
   // only swap it in when the text actually changed, preserving the scroll position).
   const loadDiff = useCallback(
     async (worktreePath: string, showLoading: boolean) => {
-      const signal = beginDiffRequest();
+      const signal = beginRequest(diffRequest);
       if (showLoading) {
         setDiff(null);
         setDiffLoading(true);
@@ -115,8 +146,39 @@ export function useWorktreeBrowser() {
         }
       }
     },
-    [beginDiffRequest]
+    []
   );
+
+  // Loads the unpushed commits for a worktree. Secondary to the diff: failures are
+  // swallowed (the section just hides) so they never block the diff view or steal the
+  // shared error slot. `clear` drops stale commits immediately on a user selection;
+  // an auto-refresh (`clear` false) keeps the current list on failure, like loadDiff.
+  const loadCommits = useCallback(async (worktreePath: string, clear: boolean) => {
+    const signal = beginRequest(commitsRequest);
+    if (clear) {
+      setCommits(null);
+    }
+    try {
+      const response = await desktopApi.listUnpushedCommits(worktreePath);
+      if (signal.aborted) {
+        return;
+      }
+      // Keep the previous reference when nothing changed (a sha pins its content),
+      // so watcher ticks don't re-render the whole sidebar subtree.
+      setCommits((prev) =>
+        prev &&
+        prev.truncated === response.truncated &&
+        prev.commits.length === response.commits.length &&
+        prev.commits.every((commit, index) => commit.sha === response.commits[index].sha)
+          ? prev
+          : { commits: response.commits, truncated: response.truncated }
+      );
+    } catch {
+      if (!signal.aborted && clear) {
+        setCommits(null);
+      }
+    }
+  }, []);
 
   const pickRepository = async () => {
     setLoading(true);
@@ -134,9 +196,12 @@ export function useWorktreeBrowser() {
 
       setRepoPath(picked);
       setWorktrees(nextWorktrees);
+      void loadSummaries(nextWorktrees, true);
       setSelectedPath(null);
       setDiff(null);
-      beginDiffRequest();
+      setCommits(null);
+      beginRequest(diffRequest);
+      beginRequest(commitsRequest);
       setDiffLoading(false);
     } catch (caught) {
       setError(describeError(caught));
@@ -157,21 +222,30 @@ export function useWorktreeBrowser() {
     async (worktreePath: string) => {
       selectedPathRef.current = worktreePath;
       setSelectedPath(worktreePath);
-      await loadDiff(worktreePath, true);
+      await Promise.all([loadDiff(worktreePath, true), loadCommits(worktreePath, true)]);
     },
-    [loadDiff]
+    [loadDiff, loadCommits]
   );
 
-  // Keep the watcher pointed at the current repo and selected worktree. startWatch
-  // replaces any prior watch on the main side, so no explicit stop between changes.
+  // Filesystem paths cannot contain NUL, so this is a stable dependency key for
+  // restarting the watcher only when the set/order of worktree roots changes.
+  const watchedWorktreePaths = worktrees.map((worktree) => worktree.path).join('\0');
+
+  // Watch every worktree so non-selected row summaries stay current as agents edit.
+  // startWatch replaces any prior watch on the main side.
   useEffect(() => {
     if (repoPath === null) {
       return;
     }
-    void desktopApi.startWatch(repoPath, selectedPath).catch(() => {
-      // A watch failure is non-fatal — manual refresh still works.
-    });
-  }, [repoPath, selectedPath]);
+    void desktopApi
+      .startWatch(
+        repoPath,
+        watchedWorktreePaths.length === 0 ? [] : watchedWorktreePaths.split('\0')
+      )
+      .catch(() => {
+        // A watch failure is non-fatal — manual refresh still works.
+      });
+  }, [repoPath, watchedWorktreePaths]);
 
   // Stop watching when the browser unmounts.
   useEffect(
@@ -191,16 +265,19 @@ export function useWorktreeBrowser() {
       }
       if (selectedPathRef.current !== null) {
         void loadDiff(selectedPathRef.current, false);
+        void loadCommits(selectedPathRef.current, false);
       }
     };
     return desktopApi.onRepoChanged(onChanged);
-  }, [reloadWorktrees, loadDiff]);
+  }, [reloadWorktrees, loadDiff, loadCommits]);
 
   return {
     repoPath,
     worktrees,
+    summaries,
     selectedPath,
     diff,
+    commits,
     error,
     loading,
     diffLoading,

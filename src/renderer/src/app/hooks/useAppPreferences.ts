@@ -10,10 +10,8 @@ import {
 
 interface AppPreferenceController {
   theme: Theme;
-  sidebarOpen: boolean;
   fileListMode: FileListMode;
   toggleTheme: () => void;
-  toggleSidebar: () => void;
   setFileListMode: (mode: FileListMode) => void;
 }
 
@@ -34,13 +32,6 @@ export function useAppPreferences(): AppPreferenceController {
     }));
   }, []);
 
-  const toggleSidebar = useCallback(() => {
-    setPreferences((current) => ({
-      ...current,
-      sidebarOpen: !current.sidebarOpen,
-    }));
-  }, []);
-
   const setFileListMode = useCallback((fileListMode: FileListMode) => {
     setPreferences((current) => ({
       ...current,
@@ -50,10 +41,8 @@ export function useAppPreferences(): AppPreferenceController {
 
   return {
     theme: preferences.theme,
-    sidebarOpen: preferences.sidebarOpen,
     fileListMode: preferences.fileListMode,
     toggleTheme,
-    toggleSidebar,
     setFileListMode,
   };
 }

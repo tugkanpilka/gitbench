@@ -12,13 +12,9 @@ function PreferenceHarness() {
   return (
     <>
       <output aria-label="Theme">{preferences.theme}</output>
-      <output aria-label="Sidebar">{String(preferences.sidebarOpen)}</output>
       <output aria-label="File list mode">{preferences.fileListMode}</output>
       <button type="button" onClick={preferences.toggleTheme}>
         Toggle theme
-      </button>
-      <button type="button" onClick={preferences.toggleSidebar}>
-        Toggle sidebar
       </button>
       <button type="button" onClick={() => preferences.setFileListMode('flat')}>
         Switch to flat view
@@ -55,7 +51,6 @@ describe('useAppPreferences', () => {
     render(<PreferenceHarness />);
 
     expect(screen.getByLabelText('Theme').textContent).toBe('light');
-    expect(screen.getByLabelText('Sidebar').textContent).toBe('false');
     expect(screen.getByLabelText('File list mode').textContent).toBe('tree');
   });
 
@@ -77,21 +72,16 @@ describe('useAppPreferences', () => {
     expect(document.documentElement.dataset.theme).toBeUndefined();
     expect(storedPreferences()).toEqual({
       theme: 'dark',
-      sidebarOpen: false,
       fileListMode: 'tree',
     });
   });
 
-  it('toggleSidebar persists the sidebar visibility', () => {
+  it('drops the legacy sidebar visibility preference', () => {
     seedStoredPreferences();
     render(<PreferenceHarness />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Toggle sidebar' }));
-
-    expect(screen.getByLabelText('Sidebar').textContent).toBe('true');
     expect(storedPreferences()).toEqual({
       theme: 'light',
-      sidebarOpen: true,
       fileListMode: 'tree',
     });
   });
@@ -105,7 +95,6 @@ describe('useAppPreferences', () => {
     expect(screen.getByLabelText('File list mode').textContent).toBe('flat');
     expect(storedPreferences()).toEqual({
       theme: 'light',
-      sidebarOpen: false,
       fileListMode: 'flat',
     });
   });

@@ -1,7 +1,14 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { failResult, MAIN_WORKTREE, okResult, stubApi } from '../../test/fixtures';
+import {
+  failResult,
+  FEATURE_WORKTREE_SUMMARY,
+  MAIN_WORKTREE,
+  MAIN_WORKTREE_SUMMARY,
+  okResult,
+  stubApi,
+} from '../../test/fixtures';
 import { ApiError } from './ApiError';
 import { desktopApi } from './desktopApi';
 
@@ -17,6 +24,10 @@ describe('desktopApi', () => {
   it('returns ok:true data verbatim', async () => {
     expect(await desktopApi.pickRepo()).toBe('/repo');
     expect(await desktopApi.listWorktrees('/repo')).toEqual([MAIN_WORKTREE]);
+    expect(await desktopApi.listWorktreeSummaries(['/repo'])).toEqual([
+      MAIN_WORKTREE_SUMMARY,
+      FEATURE_WORKTREE_SUMMARY,
+    ]);
     expect(await desktopApi.getDiff('/repo')).toEqual({ diffText: 'diff' });
   });
 
@@ -52,10 +63,12 @@ describe('desktopApi', () => {
   it('delegates each method to the matching window.api channel with its argument', async () => {
     await desktopApi.pickRepo();
     await desktopApi.listWorktrees('/repo');
+    await desktopApi.listWorktreeSummaries(['/repo', '/repo-feature']);
     await desktopApi.getDiff('/repo-feature');
 
     expect(window.api.pickRepo).toHaveBeenCalledWith();
     expect(window.api.listWorktrees).toHaveBeenCalledWith('/repo');
+    expect(window.api.listWorktreeSummaries).toHaveBeenCalledWith(['/repo', '/repo-feature']);
     expect(window.api.getDiff).toHaveBeenCalledWith('/repo-feature');
   });
 });

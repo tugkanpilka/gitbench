@@ -8,7 +8,7 @@ export function registerWatchHandlers(controller: WatchController): void {
   handleWithEvent<StartWatchRequest, null>(IPC_CHANNELS.startWatch, async (request, event) => {
     const { sender } = event;
     await controller.start(
-      { repoPath: request.repoPath, selectedWorktreePath: request.selectedWorktreePath },
+      { repoPath: request.repoPath, worktreePaths: request.worktreePaths },
       () => {
         // The window may close between a filesystem event and this callback.
         if (!sender.isDestroyed()) {

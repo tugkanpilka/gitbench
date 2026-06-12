@@ -1,5 +1,6 @@
 import type { DiffReader } from '../../../application/worktrees/ports/DiffReader';
 import { GitCommandFailedError } from '../errors/GitCommandFailedError';
+import { refResolves } from '../refResolves';
 import { runGit } from '../runGit';
 
 const UNTRACKED_DIFF_CONCURRENCY = 8;
@@ -57,14 +58,8 @@ export class GitCliDiffReader implements DiffReader {
    * an empty diff: there may be staged files, and an empty diff would lie.
    */
   private async assertHeadExists(worktreePath: string): Promise<void> {
-    try {
-      await runGit(worktreePath, ['rev-parse', '--verify', '--quiet', 'HEAD']);
-    } catch (error) {
-      if (error instanceof GitCommandFailedError) {
-        // Keep the original stderr detail reachable for debugging via `cause`.
-        throw new GitCommandFailedError('Repository has no commits yet.', { cause: error });
-      }
-      throw error; // GitNotInstalledError / NotARepositoryError / WorktreeNotFoundError
+    if (!(await refResolves(worktreePath, 'HEAD'))) {
+      throw new GitCommandFailedError('Repository has no commits yet.');
     }
   }
 }

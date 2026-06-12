@@ -9,26 +9,42 @@ export function FileNavigationRow({ file, depth, showDirectory }: FileNavigation
   const { activeFileId, onSelectFile } = useFileListContext();
   const active = file.id === activeFileId;
   const path = `${file.path.directory}${file.path.name}`;
+  const directory = file.path.directory === '' ? '/' : file.path.directory.replace(/\/$/, '');
 
   return (
     <li>
       <button
         type="button"
-        className={styles['file-navigation-row']}
+        className={`${styles['file-navigation-row']} ${
+          showDirectory ? styles['file-navigation-row--flat'] : ''
+        }`}
         aria-label={`${path}, ${diffStatLabel(file.additions, file.deletions)}`}
         aria-current={active ? 'location' : undefined}
         style={{ paddingLeft: treeRowIndent(depth) }}
         onClick={() => onSelectFile(file.id)}
       >
-        <IndentGuides depth={depth} />
-        <span className={styles['file-navigation-row__path']} title={path}>
-          {showDirectory && (
-            <span className={styles['file-navigation-row__directory']}>{file.path.directory}</span>
-          )}
-          <FileIcon name={file.path.name} />
-          <span className={styles['file-navigation-row__name']}>{file.path.name}</span>
-        </span>
-        <DiffStat additions={file.additions} deletions={file.deletions} />
+        {showDirectory ? (
+          <>
+            <span className={styles['file-navigation-row__flat-main']}>
+              <span className={styles['file-navigation-row__name']} title={path}>
+                {file.path.name}
+              </span>
+              <DiffStat additions={file.additions} deletions={file.deletions} />
+            </span>
+            <span className={styles['file-navigation-row__directory']} title={directory}>
+              {directory}
+            </span>
+          </>
+        ) : (
+          <>
+            <IndentGuides depth={depth} />
+            <span className={styles['file-navigation-row__path']} title={path}>
+              <FileIcon name={file.path.name} />
+              <span className={styles['file-navigation-row__name']}>{file.path.name}</span>
+            </span>
+            <DiffStat additions={file.additions} deletions={file.deletions} />
+          </>
+        )}
       </button>
     </li>
   );

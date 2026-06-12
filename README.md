@@ -5,7 +5,7 @@
 <p><strong>A desktop diff viewer for parallel, agent-driven Git worktree workflows.</strong></p>
 
 <p>
-Pick a repository, browse its worktrees in a sidebar, and read the uncommitted diff of any of them — without <code>cd</code>-ing around and running <code>git diff</code> by hand.
+Pick a repository, browse its worktrees and selected-worktree details in a two-sidebar layout, and read the uncommitted diff of any of them — without <code>cd</code>-ing around and running <code>git diff</code> by hand.
 </p>
 
 <p>
@@ -31,7 +31,7 @@ You're running coding agents in parallel. Each one works in its own [Git worktre
 
 Worktrees scatter across sibling directories, and the only built-in way to see an agent's progress is to `cd` into its checkout and run `git diff` — for every worktree, repeatedly, as the agents churn. GitBench replaces that loop with one window:
 
-- **One sidebar, every worktree.** See all of a repository's worktrees at a glance, with branch, HEAD SHA, and main/locked/detached status.
+- **Two focused sidebars.** Keep every worktree visible in the source list while the adjacent detail sidebar shows the selected worktree's changed files and unpushed commits.
 - **One click, the full diff.** Select a worktree and read staged, unstaged, untracked, and deleted files together in a fast, readable diff pane.
 - **Built for watching agents work.** Filesystem and Git metadata changes refresh the selected worktree automatically.
 
@@ -55,7 +55,7 @@ Open the downloaded `.dmg` and drag GitBench into Applications. Installed releas
 ## Features
 
 - **Repository picker** — choose any local Git repository via the system folder dialog.
-- **Worktree sidebar** — every worktree of the repository as a flat list (they're sibling checkouts, not a hierarchy), with branch name, HEAD SHA, and main/locked/detached status. Works whether you open the main worktree or a linked one.
+- **Worktree sidebars** — every worktree stays in a flat source list (they're sibling checkouts, not a hierarchy); the selected worktree's branch, HEAD, changed files, and unpushed commits appear in the adjacent detail sidebar.
 - **Diff viewer** — the selected worktree's staged, unstaged, untracked, and deleted files in one unified view. A clean worktree shows a dedicated empty state, not an error. Binary changes, empty files, and renames are tolerated.
 - **Automatic refresh** — filesystem and Git metadata changes trigger a debounced re-query, so agent output appears without a manual refresh loop.
 

@@ -6,13 +6,9 @@ import styles from './index.module.scss';
 export function RepositorySidebar({
   repoPath,
   worktrees,
+  summaries,
   selectedPath,
-  changedFiles,
-  fileListMode,
-  activeFileId,
-  diffStats,
   onSelectWorktree,
-  onSelectFile,
 }: RepositorySidebarProps) {
   const repositoryName = nameFromPath(repoPath);
 
@@ -22,6 +18,9 @@ export function RepositorySidebar({
         <span className={styles['repository-sidebar__repo-name']} title={repoPath}>
           {repositoryName}
         </span>
+        <span className={styles['repository-sidebar__repo-meta']}>
+          {worktrees.length} {worktrees.length === 1 ? 'worktree' : 'worktrees'}
+        </span>
       </header>
 
       <nav className={styles['repository-sidebar__navigation']} aria-label="Worktrees">
@@ -30,13 +29,9 @@ export function RepositorySidebar({
         </header>
         <WorktreeList
           worktrees={worktrees}
+          summaries={summaries}
           selectedPath={selectedPath}
-          changedFiles={changedFiles}
-          fileListMode={fileListMode}
-          activeFileId={activeFileId}
-          diffStats={diffStats}
           onSelect={onSelectWorktree}
-          onSelectFile={onSelectFile}
         />
       </nav>
     </div>

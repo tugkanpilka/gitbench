@@ -13,10 +13,12 @@
   --gb-shadow-traffic: inset 0 0 0 0.5px rgba(0, 0, 0, 0.15);
 
   --gb-ease: ease;
+  --gb-ease-sidebar: cubic-bezier(0.32, 0.72, 0, 1);
   --gb-dur-fast: 0.08s;
   --gb-dur-quick: 0.12s;
   --gb-dur-base: 0.15s;
   --gb-dur-slow: 0.22s;
+  --gb-dur-sidebar: 0.32s;
   --gb-dur-theme: 0.3s;
 }
 
@@ -26,6 +28,7 @@
     --gb-dur-quick: 0s;
     --gb-dur-base: 0s;
     --gb-dur-slow: 0s;
+    --gb-dur-sidebar: 0s;
     --gb-dur-theme: 0s;
   }
 }
