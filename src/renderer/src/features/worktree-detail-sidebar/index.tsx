@@ -160,6 +160,7 @@ function DetailFooter({
       {fileListMode === 'flat' && (
         <SegmentedControl
           className={styles['worktree-detail-sidebar__view-toggle']}
+          density="compact"
           ariaLabel="Flat group view"
           items={FLAT_GROUP_MODE_ITEMS}
           value={flatGroupMode}
@@ -168,6 +169,7 @@ function DetailFooter({
       )}
       <SegmentedControl
         className={styles['worktree-detail-sidebar__view-toggle']}
+        density="compact"
         ariaLabel="File list view"
         items={FILE_LIST_MODE_ITEMS}
         value={fileListMode}

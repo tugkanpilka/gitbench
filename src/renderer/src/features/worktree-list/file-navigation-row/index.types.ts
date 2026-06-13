@@ -1,7 +1,7 @@
-import type { DiffFileModel } from '../../diff-viewer/utils/diffModel.types';
+import type { ChangedFileItem } from '../changed-file-item';
 
 export type FileNavigationRowProps = {
-  file: DiffFileModel;
+  file: ChangedFileItem;
   depth: number;
   showDirectory: boolean;
 };

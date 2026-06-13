@@ -1,6 +1,6 @@
 import { DiffStat, diffStatLabel } from '../../../shared/ui/diff-stat';
 import { useFileListContext } from '../file-list-context';
-import { diffFileStatusBadge, directoryLabel } from '../file-status';
+import { changedFileStatusBadge, directoryLabel } from '../file-status';
 import { FileIcon } from '../file-icon';
 import { FlatFileRowContent } from '../flat-file-row';
 import { IndentGuides, treeRowIndent } from '../indent-guides';
@@ -27,11 +27,17 @@ export function FileNavigationRow({ file, depth, showDirectory }: FileNavigation
       >
         {showDirectory ? (
           <FlatFileRowContent
-            status={diffFileStatusBadge(file.file.type)}
+            status={changedFileStatusBadge(file.status)}
             name={file.path.name}
             nameTitle={path}
             directory={directory}
-            trailing={<DiffStat additions={file.additions} deletions={file.deletions} />}
+            trailing={
+              <DiffStat
+                additions={file.additions}
+                deletions={file.deletions}
+                className={styles['file-navigation-row__diff-stat']}
+              />
+            }
           />
         ) : (
           <>
@@ -40,7 +46,12 @@ export function FileNavigationRow({ file, depth, showDirectory }: FileNavigation
               <FileIcon name={file.path.name} />
               <span className={styles['file-navigation-row__name']}>{file.path.name}</span>
             </span>
-            <DiffStat additions={file.additions} deletions={file.deletions} />
+            <DiffStat
+              additions={file.additions}
+              deletions={file.deletions}
+              emphasis="muted"
+              className={styles['file-navigation-row__diff-stat']}
+            />
           </>
         )}
       </button>

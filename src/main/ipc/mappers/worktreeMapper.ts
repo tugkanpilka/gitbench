@@ -1,7 +1,7 @@
 import type { WorktreeDto } from '../../../contracts/ipc';
-import type { Worktree } from '../../../domain/worktree/Worktree';
+import type { ParsedWorktree } from '../../../infrastructure/git/parsers/porcelainParser';
 
-export function toWorktreeDto(worktree: Worktree): WorktreeDto {
+export function toWorktreeDto(worktree: ParsedWorktree): WorktreeDto {
   return {
     path: worktree.path,
     branch: worktree.branch,

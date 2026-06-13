@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { createRef } from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -67,6 +68,7 @@ function renderDiffView(overrides: Partial<DiffViewProps> = {}) {
       clean={false}
       viewType="unified"
       navigationTarget={null}
+      scrollContainerRef={createRef<HTMLElement>()}
       onActiveFileChange={() => undefined}
       {...overrides}
     />
@@ -134,7 +136,8 @@ describe('DiffView', () => {
   it('opens a collapsed file and scrolls to a requested sidebar target', () => {
     const model = buildDiffModel(TEXT_DIFF);
     const onActiveFileChange = vi.fn();
-    const { rerender } = renderDiffView({ model, onActiveFileChange });
+    const scrollContainerRef = createRef<HTMLElement>();
+    const { rerender } = renderDiffView({ model, onActiveFileChange, scrollContainerRef });
     const toggle = screen.getByRole('button', { name: /src\/a.ts/ });
     const section = screen.getByRole('region', { name: 'src/a.ts' });
     const scrollIntoView = vi.fn();
@@ -152,6 +155,7 @@ describe('DiffView', () => {
         clean={false}
         viewType="unified"
         navigationTarget={{ fileId: model.files[0].id, requestId: 1 }}
+        scrollContainerRef={scrollContainerRef}
         onActiveFileChange={onActiveFileChange}
       />
     );
@@ -164,26 +168,26 @@ describe('DiffView', () => {
   it('reports the active file while the diff stream scrolls', () => {
     const model = buildDiffModel(MULTI_FILE_DIFF);
     const onActiveFileChange = vi.fn();
-    const { container } = render(
-      <div className="app-shell__content">
-        <DiffView
-          model={model}
-          clean={false}
-          viewType="unified"
-          navigationTarget={null}
-          onActiveFileChange={onActiveFileChange}
-        />
-      </div>
+    const scrollRoot = document.createElement('div');
+    document.body.appendChild(scrollRoot);
+    const scrollContainerRef = { current: scrollRoot };
+
+    render(
+      <DiffView
+        model={model}
+        clean={false}
+        viewType="unified"
+        navigationTarget={null}
+        scrollContainerRef={scrollContainerRef}
+        onActiveFileChange={onActiveFileChange}
+      />,
+      { container: scrollRoot }
     );
-    const scrollRoot = container.querySelector<HTMLElement>('.app-shell__content');
     const sections = screen.getAllByRole('region');
     Object.defineProperty(sections[0], 'offsetTop', { configurable: true, value: 0 });
     Object.defineProperty(sections[1], 'offsetTop', { configurable: true, value: 500 });
     onActiveFileChange.mockClear();
 
-    if (scrollRoot === null) {
-      throw new Error('Expected diff scroll root.');
-    }
     scrollRoot.scrollTop = 520;
     fireEvent.scroll(scrollRoot);
 

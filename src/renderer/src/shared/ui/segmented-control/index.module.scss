@@ -42,6 +42,11 @@
     background var(--gb-dur-quick) var(--gb-ease);
 }
 
+.gb-segmented-control--compact .gb-segmented-control__item {
+  padding: 2px 5px;
+  font-size: var(--gb-text-2xs);
+}
+
 .gb-segmented-control__item[aria-checked='true'] {
   color: var(--gb-text);
 }

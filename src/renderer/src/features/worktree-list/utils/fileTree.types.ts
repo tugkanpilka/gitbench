@@ -1,13 +1,13 @@
-import type { DiffFileModel } from '../../diff-viewer/utils/diffModel.types';
+import type { ChangedFileItem } from '../changed-file-item';
 
 export interface FileTreeDirectory {
   name: string;
   path: string;
   directories: FileTreeDirectory[];
-  files: DiffFileModel[];
+  files: ChangedFileItem[];
 }
 
 export interface FileTree {
   directories: FileTreeDirectory[];
-  files: DiffFileModel[];
+  files: ChangedFileItem[];
 }

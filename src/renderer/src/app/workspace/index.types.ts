@@ -1,3 +1,5 @@
+import type { RefObject } from 'react';
+
 import type { DiffModel } from '../../features/diff-viewer/utils/diffModel.types';
 import type { DiffNavigationTarget } from '../../features/diff-viewer/index.types';
 
@@ -8,5 +10,6 @@ export type WorkspaceProps = {
   isCleanWorktree: boolean;
   diffModel: DiffModel;
   navigationTarget: DiffNavigationTarget | null;
+  scrollContainerRef: RefObject<HTMLElement | null>;
   onActiveFileChange: (fileId: string | null) => void;
 };

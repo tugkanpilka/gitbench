@@ -2,8 +2,8 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import { toggledSet } from '../../shared/collections/toggledSet';
-import type { DiffFileModel } from '../diff-viewer/utils/diffModel.types';
-import { directoryPathsForFile } from './utils/fileTree';
+import type { ChangedFileItem } from './changed-file-item';
+import { directoryPathsForDirectory } from './utils/fileTree';
 
 /**
  * Shared file-navigation state for the changed-files tree of the selected worktree.
@@ -21,7 +21,7 @@ export type FileListContextValue = {
 const FileListContext = createContext<FileListContextValue | null>(null);
 
 export type FileListProviderProps = {
-  files: DiffFileModel[];
+  files: ChangedFileItem[];
   activeFileId: string | null;
   onSelectFile: (fileId: string) => void;
   children: ReactNode;
@@ -46,7 +46,7 @@ export function FileListProvider({
       return;
     }
 
-    const activeDirectoryPaths = directoryPathsForFile(activeFile);
+    const activeDirectoryPaths = directoryPathsForDirectory(activeFile.path.directory);
     setCollapsedDirectories((current) => {
       if (!activeDirectoryPaths.some((path) => current.has(path))) {
         return current;

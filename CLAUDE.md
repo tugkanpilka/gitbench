@@ -21,7 +21,7 @@ npm run lint
 
 ## Architecture, one line
 
-renderer → preload (`window.api`) → main IPC handlers → application use cases → domain, with infrastructure implementing application ports
+renderer → preload (`window.api`) → main IPC handlers → concrete infrastructure readers, with application holding errors/shared types and domain reserved for future entities (no single-impl ports or forwarding factories)
 
 Layer rules, import matrix, directory layout: `agent_docs/architecture.md`.
 
@@ -29,8 +29,8 @@ Layer rules, import matrix, directory layout: `agent_docs/architecture.md`.
 
 1. `contextIsolation: true`, `nodeIntegration: false`. Never weaken these.
 2. `ipcRenderer` exists in exactly one file: `src/preload/index.ts`.
-3. `src/domain` and `src/application` are pure TypeScript — no `electron`, no `node:*` imports. Side effects live behind application ports and are implemented in `src/infrastructure`.
-4. Nothing throws across IPC. Handlers return `Result<T>` envelopes; domain entities never cross IPC — map them under `src/main/ipc/mappers`. The contract lives in `agent_docs/ipc-contract.md` and changes to channels/DTOs/error codes must update that file **in the same commit**.
+3. `src/domain` and `src/application` are pure TypeScript — no `electron`, no `node:*` imports. Side effects live in `src/infrastructure` (concrete readers), which never imports `contracts`, `main`, or `preload`.
+4. Nothing throws across IPC. Handlers return `Result<T>` envelopes; reader/application entities never cross IPC — map them to DTOs under `src/main/ipc/mappers`. The contract lives in `agent_docs/ipc-contract.md` and changes to channels/DTOs/error codes must update that file **in the same commit**.
 5. Git is spawned only through `src/infrastructure/git/runGit.ts`, with argument arrays. Never interpolate a path into a shell string.
 6. `diffText === ""` is a valid success state ("clean worktree"), never an error.
 7. Worktrees render as a **flat list** — `git worktree list` returns sibling checkouts, not a hierarchy. Tree UI is reserved for changed files _within_ a worktree, if that view is ever added.

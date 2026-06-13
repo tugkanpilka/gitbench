@@ -8,12 +8,12 @@ import { handle } from '../handle';
 import { toListUnpushedCommitsResponse } from '../mappers/commitMapper';
 
 export function registerListUnpushedCommitsHandler({
-  listUnpushedCommits,
-}: Pick<ApplicationServices, 'listUnpushedCommits'>): void {
+  commitReader,
+}: Pick<ApplicationServices, 'commitReader'>): void {
   // An empty commit list is a valid success state and travels as a success Result.
   handle<ListUnpushedCommitsRequest, ListUnpushedCommitsResponse>(
     IPC_CHANNELS.listUnpushedCommits,
     async (request) =>
-      toListUnpushedCommitsResponse(await listUnpushedCommits(request.worktreePath))
+      toListUnpushedCommitsResponse(await commitReader.listUnpushedCommits(request.worktreePath))
   );
 }

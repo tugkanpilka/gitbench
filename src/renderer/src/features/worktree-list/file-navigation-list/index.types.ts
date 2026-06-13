@@ -1,7 +1,7 @@
 import type { FileListMode } from '../../../shared/preferences/appPreferences';
-import type { DiffFileModel } from '../../diff-viewer/utils/diffModel.types';
+import type { ChangedFileItem } from '../changed-file-item';
 
 export type FileNavigationListProps = {
-  files: DiffFileModel[];
+  files: ChangedFileItem[];
   mode: FileListMode;
 };

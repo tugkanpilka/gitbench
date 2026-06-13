@@ -1,22 +1,22 @@
-import { useLayoutEffect, useState } from 'react';
+import { useState } from 'react';
 
-export function useScrollToSection(
-  sectionRefs: { current: Map<string, HTMLElement> },
-  collapsedFiles: Set<string>
-): (fileId: string | null) => void {
-  const [pendingScrollId, setPendingScrollId] = useState<string | null>(null);
+type ScrollToSection = (fileId: string) => void;
 
-  useLayoutEffect(() => {
-    if (pendingScrollId === null) {
-      return;
-    }
-
-    sectionRefs.current.get(pendingScrollId)?.scrollIntoView?.({
+/**
+ * Command hook: returns a stable function that scrolls a diff file's section into view
+ * when it is currently mounted. The caller invokes it after ensuring the target is
+ * expanded, so there is no long-lived pending-scroll state cleared inside a layout
+ * effect. The command is created once (the `sectionRefs` ref object is itself stable,
+ * read at call time), so callers can safely depend on its identity.
+ */
+export function useScrollToSection(sectionRefs: {
+  current: Map<string, HTMLElement>;
+}): ScrollToSection {
+  const [scrollToSection] = useState<ScrollToSection>(() => (fileId: string) => {
+    sectionRefs.current.get(fileId)?.scrollIntoView?.({
       behavior: 'smooth',
       block: 'start',
     });
-    setPendingScrollId(null);
-  }, [collapsedFiles, pendingScrollId, sectionRefs]);
-
-  return setPendingScrollId;
+  });
+  return scrollToSection;
 }

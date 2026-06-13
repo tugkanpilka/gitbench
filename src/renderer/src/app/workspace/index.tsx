@@ -10,6 +10,7 @@ export function Workspace({
   isCleanWorktree,
   diffModel,
   navigationTarget,
+  scrollContainerRef,
   onActiveFileChange,
 }: WorkspaceProps) {
   const classes = cx(styles['workspace'], hasDiff && styles['workspace--diff']);
@@ -37,6 +38,7 @@ export function Workspace({
           clean={isCleanWorktree}
           viewType="unified"
           navigationTarget={navigationTarget}
+          scrollContainerRef={scrollContainerRef}
           onActiveFileChange={onActiveFileChange}
         />
       )}

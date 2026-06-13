@@ -1,5 +1,5 @@
-import type { WorktreeSummary } from '../../../application/worktrees/ports/WorktreeSummaryReader';
 import type { WorktreeSummaryDto } from '../../../contracts/ipc';
+import type { WorktreeSummary } from '../../../infrastructure/git/readers/GitCliWorktreeSummaryReader';
 
 export function toWorktreeSummaryDto(summary: WorktreeSummary): WorktreeSummaryDto {
   return {

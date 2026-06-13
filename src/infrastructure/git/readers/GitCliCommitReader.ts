@@ -1,7 +1,4 @@
-import type {
-  CommitReader,
-  UnpushedCommits,
-} from '../../../application/worktrees/ports/CommitReader';
+import type { UnpushedCommits } from '../../../application/worktrees/commits';
 import { COMMIT_LOG_FORMAT, parseCommitLog } from '../parsers/commitLogParser';
 import { refResolves } from '../refResolves';
 import { runGit } from '../runGit';
@@ -11,7 +8,7 @@ import { resolveUnpushedStrategy } from '../unpushedStrategy';
 // sidebar. We request one extra to detect (and flag) truncation honestly.
 const MAX_COMMITS = 100;
 
-export class GitCliCommitReader implements CommitReader {
+export class GitCliCommitReader {
   async listUnpushedCommits(worktreePath: string): Promise<UnpushedCommits> {
     // The probes are independent read-only rev-parses, so run them together.
     const [headExists, hasUpstream] = await Promise.all([

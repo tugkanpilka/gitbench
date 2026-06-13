@@ -1,9 +1,9 @@
-import type { FileData } from 'react-diff-view';
-
 import type { CommitFileChangeStatus } from '../../../../contracts/ipc';
 
 // CSS suffix for `.file-navigation-row__status-box--<class>` in index.module.scss,
 // which defines: add, modify, delete, rename, copy (rename/copy share one rule).
+// Mirrors react-diff-view's FileData['type'], but the changed-files subtree consumes
+// this neutral union (via ChangedFileItem) instead of the diff viewer's model.
 export type FileStatusClass = 'add' | 'modify' | 'delete' | 'rename' | 'copy';
 
 export interface FileStatusBadge {
@@ -25,7 +25,7 @@ const COMMIT_STATUS: Record<CommitFileChangeStatus, FileStatusBadge> = {
   unknown: { char: '?', cssClass: 'modify' },
 };
 
-const DIFF_TYPE_CHAR: Record<FileData['type'], string> = {
+const DIFF_TYPE_CHAR: Record<FileStatusClass, string> = {
   add: 'A',
   modify: 'M',
   delete: 'D',
@@ -37,9 +37,9 @@ export function commitFileStatusBadge(status: CommitFileChangeStatus): FileStatu
   return COMMIT_STATUS[status];
 }
 
-export function diffFileStatusBadge(type: FileData['type']): FileStatusBadge {
-  // A diff file type doubles as its own CSS suffix (add/modify/delete/rename/copy).
-  return { char: DIFF_TYPE_CHAR[type], cssClass: type };
+export function changedFileStatusBadge(status: FileStatusClass): FileStatusBadge {
+  // A changed-file status doubles as its own CSS suffix (add/modify/delete/rename/copy).
+  return { char: DIFF_TYPE_CHAR[status], cssClass: status };
 }
 
 // Display label for a file's parent directory: root paths read as '/', and a

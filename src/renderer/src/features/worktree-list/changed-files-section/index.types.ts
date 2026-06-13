@@ -1,8 +1,8 @@
 import type { FileListMode, FlatGroupMode } from '../../../shared/preferences/appPreferences';
-import type { DiffFileModel } from '../../diff-viewer/utils/diffModel.types';
+import type { ChangedFileItem } from '../changed-file-item';
 
 export type ChangedFilesSectionProps = {
-  changedFiles: DiffFileModel[];
+  changedFiles: ChangedFileItem[];
   fileListMode: FileListMode;
   flatGroupMode: FlatGroupMode;
   activeFileId: string | null;

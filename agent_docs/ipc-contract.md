@@ -104,11 +104,11 @@ const ERROR_CODES = {
 type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
 ```
 
-`ErrorDto.code` derives its union from `ERROR_CODES`; the string values themselves are unchanged. Add or rename a code only here, and update this document in the same commit.
+`ErrorDto.code` derives its union from `ERROR_CODES`; the string values themselves are unchanged. `ERROR_CODES` is re-exported from the contracts barrel (`src/contracts/ipc/index.ts`), so consumers such as `errorMapper.ts` import it from there. Add or rename a code only in `errors.ts`, and update this document in the same commit.
 
-Domain entities never cross IPC. `src/main/ipc/mappers/worktreeMapper.ts` maps `Worktree` into `WorktreeDto`; `src/main/ipc/mappers/commitMapper.ts` maps the application-layer `UnpushedCommits` into `ListUnpushedCommitsResponse`.
+Reader/application entities never cross IPC. `src/main/ipc/mappers/worktreeMapper.ts` maps the infrastructure `ParsedWorktree` into `WorktreeDto`; `src/main/ipc/mappers/commitMapper.ts` maps the application-layer `UnpushedCommits` into `ListUnpushedCommitsResponse`.
 
-Error mapping lives in `src/main/ipc/mappers/errorMapper.ts` (it imports `ERROR_CODES` rather than inlining literals):
+Error mapping lives in `src/main/ipc/mappers/errorMapper.ts` (it imports `ERROR_CODES` from the contracts barrel rather than inlining literals):
 
 - `GitNotInstalledError` -> `GIT_NOT_INSTALLED`
 - `NotARepositoryError` -> `NOT_A_REPOSITORY`
@@ -128,27 +128,27 @@ Error mapping lives in `src/main/ipc/mappers/errorMapper.ts` (it imports `ERROR_
 
 - Request: `ListWorktreesRequest` with `{ repoPath: string }`
 - Response: `Result<ListWorktreesResponse>`
-- Flow: IPC handler -> `listWorktrees` -> `WorktreeReader` -> Git CLI reader -> parser -> domain entities -> DTO mapper.
+- Flow: IPC handler -> `GitCliWorktreeReader.listWorktrees` -> porcelain parser -> `worktreeMapper` -> `WorktreeDto[]`.
 
 ### `diff:get`
 
 - Request: `GetDiffRequest` with `{ worktreePath: string }`
 - Response: `Result<GetDiffResponse>`
-- Flow: IPC handler -> `getUncommittedDiff` -> `DiffReader` -> Git CLI reader -> raw unified diff.
+- Flow: IPC handler -> `GitCliDiffReader.getUncommittedDiff` -> raw unified diff.
 
 ### `worktrees:summaries`
 
 - Request: `ListWorktreeSummariesRequest` with `{ worktreePaths: string[] }`
 - Response: `Result<ListWorktreeSummariesResponse>`
 - Returns lightweight status data for every worktree row without loading full diffs or commit details.
-- Flow: IPC handler -> `listWorktreeSummaries` -> `WorktreeSummaryReader` -> bounded-concurrency Git CLI queries -> DTO mapper.
+- Flow: IPC handler -> `GitCliWorktreeSummaryReader.listWorktreeSummaries` -> bounded-concurrency Git CLI queries -> `worktreeSummaryMapper`.
 - `fileCount` and `conflictCount` come from porcelain status; additions/deletions include tracked and untracked files; push counts use upstream ahead/behind when available and the existing remote fallback for branches without upstreams.
 
 ### `commits:unpushed`
 
 - Request: `ListUnpushedCommitsRequest` with `{ worktreePath: string }`
 - Response: `Result<ListUnpushedCommitsResponse>`
-- Flow: IPC handler -> `listUnpushedCommits` -> `CommitReader` -> Git CLI reader -> `parseCommitLog` -> `CommitDto` mapper.
+- Flow: IPC handler -> `GitCliCommitReader.listUnpushedCommits` -> `parseCommitLog` -> `commitMapper` -> `ListUnpushedCommitsResponse`.
 - "Unpushed" is resolved per worktree: ahead of `@{upstream}` when set, else commits not on any remote-tracking ref, else empty (no remote). An empty `commits` array is a valid success state, never an error. The list is capped (`truncated: true` when more exist). See `agent_docs/git-notes.md`.
 
 ### `watch:start`
@@ -156,7 +156,7 @@ Error mapping lives in `src/main/ipc/mappers/errorMapper.ts` (it imports `ERROR_
 - Request: `StartWatchRequest` with `{ repoPath: string; worktreePaths: string[] }`
 - Response: `Result<null>` (`null` data is the start acknowledgement)
 - Starts (and replaces any existing) filesystem watcher for the active repo. Watches the repo's `.git` for worktree-list changes and every worktree root for row-summary and selected-diff changes.
-- Flow: IPC handler -> `watchRepository` -> `RepoWatcher` port -> infrastructure watcher. On change it emits the `repo:changed` event (below).
+- Flow: IPC handler -> `WatchController` -> `ChokidarRepoWatcher.watch`. On change it emits the `repo:changed` event (below).
 
 ### `watch:stop`
 
@@ -197,10 +197,9 @@ not structured-clone-safe.
 
 1. Design the channel name, request, response, and errors here first.
 2. Add the channel constant and transport types under `src/contracts/ipc`.
-3. Add an application use case and port when domain/application behavior is involved.
-4. Implement external behavior in infrastructure.
-5. Register a focused handler under `src/main/ipc/handlers`.
-6. Map domain entities and errors under `src/main/ipc/mappers`.
-7. Expose the method through `DesktopApi` and `src/preload/index.ts`.
-8. Unwrap it in `src/renderer/src/shared/api/desktopApi.ts`.
-9. Cover success, failure, and valid empty states with tests.
+3. Implement external behavior in infrastructure as a concrete reader (no application port — reintroduce one only when a second implementation or a real test seam exists). Construct it in `compositionRoot.ts`.
+4. Register a focused handler under `src/main/ipc/handlers` that calls the reader directly.
+5. Map reader/application results and errors to DTOs under `src/main/ipc/mappers`.
+6. Expose the method through `DesktopApi` and `src/preload/index.ts`.
+7. Unwrap it in `src/renderer/src/shared/api/desktopApi.ts`.
+8. Cover success, failure, and valid empty states with tests.

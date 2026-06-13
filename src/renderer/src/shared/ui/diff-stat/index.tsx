@@ -13,6 +13,7 @@ export function DiffStat({
   additions,
   deletions,
   onSelection = false,
+  emphasis = 'default',
   className,
   ...props
 }: DiffStatProps) {
@@ -21,6 +22,7 @@ export function DiffStat({
   const classes = cx(
     styles['gb-diff-stat'],
     onSelection && styles['gb-diff-stat--on-selection'],
+    emphasis === 'muted' && styles['gb-diff-stat--muted'],
     className
   );
 

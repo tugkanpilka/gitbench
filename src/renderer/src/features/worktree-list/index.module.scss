@@ -359,16 +359,8 @@
   white-space: nowrap;
 }
 
-.file-navigation-row :global(.gb-diff-stat) {
+.file-navigation-row__diff-stat {
   margin-left: auto;
-  opacity: 0.8;
-  transform: scale(0.9);
-  transform-origin: right center;
-}
-
-.file-navigation-row--flat :global(.gb-diff-stat) {
-  opacity: 1;
-  transform: none;
 }
 
 .file-tree-guide {

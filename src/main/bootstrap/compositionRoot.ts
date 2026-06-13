@@ -1,28 +1,29 @@
-import { makeGetUncommittedDiff } from '../../application/worktrees/use-cases/getUncommittedDiff';
-import { makeListUnpushedCommits } from '../../application/worktrees/use-cases/listUnpushedCommits';
-import { makeListWorktreeSummaries } from '../../application/worktrees/use-cases/listWorktreeSummaries';
-import { makeListWorktrees } from '../../application/worktrees/use-cases/listWorktrees';
-import { makeWatchRepository } from '../../application/worktrees/use-cases/watchRepository';
 import { GitCliCommitReader } from '../../infrastructure/git/readers/GitCliCommitReader';
 import { GitCliDiffReader } from '../../infrastructure/git/readers/GitCliDiffReader';
 import { GitCliWorktreeReader } from '../../infrastructure/git/readers/GitCliWorktreeReader';
 import { GitCliWorktreeSummaryReader } from '../../infrastructure/git/readers/GitCliWorktreeSummaryReader';
 import { ChokidarRepoWatcher } from '../../infrastructure/watch/ChokidarRepoWatcher';
 
+/**
+ * The concrete infrastructure readers/watcher, constructed once and injected into the
+ * IPC handlers. There is no intermediate application port or forwarding factory: this
+ * viewer commits to the git CLI with no pluggable backend, so handlers call these
+ * readers directly while main still maps their results to DTOs at the boundary.
+ */
 export interface ApplicationServices {
-  listWorktrees: ReturnType<typeof makeListWorktrees>;
-  listWorktreeSummaries: ReturnType<typeof makeListWorktreeSummaries>;
-  getUncommittedDiff: ReturnType<typeof makeGetUncommittedDiff>;
-  listUnpushedCommits: ReturnType<typeof makeListUnpushedCommits>;
-  watchRepository: ReturnType<typeof makeWatchRepository>;
+  worktreeReader: GitCliWorktreeReader;
+  worktreeSummaryReader: GitCliWorktreeSummaryReader;
+  diffReader: GitCliDiffReader;
+  commitReader: GitCliCommitReader;
+  watcher: ChokidarRepoWatcher;
 }
 
 export function createApplicationServices(): ApplicationServices {
   return {
-    listWorktrees: makeListWorktrees(new GitCliWorktreeReader()),
-    listWorktreeSummaries: makeListWorktreeSummaries(new GitCliWorktreeSummaryReader()),
-    getUncommittedDiff: makeGetUncommittedDiff(new GitCliDiffReader()),
-    listUnpushedCommits: makeListUnpushedCommits(new GitCliCommitReader()),
-    watchRepository: makeWatchRepository(new ChokidarRepoWatcher()),
+    worktreeReader: new GitCliWorktreeReader(),
+    worktreeSummaryReader: new GitCliWorktreeSummaryReader(),
+    diffReader: new GitCliDiffReader(),
+    commitReader: new GitCliCommitReader(),
+    watcher: new ChokidarRepoWatcher(),
   };
 }

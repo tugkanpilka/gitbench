@@ -1,3 +1,4 @@
+import type { RefObject } from 'react';
 import type { ViewType } from 'react-diff-view';
 import type { DiffModel } from './utils/diffModel.types';
 
@@ -13,5 +14,6 @@ export type DiffViewProps = {
   clean: boolean;
   viewType: ViewType;
   navigationTarget: DiffNavigationTarget | null;
+  scrollContainerRef: RefObject<HTMLElement | null>;
   onActiveFileChange: (fileId: string) => void;
 };

@@ -8,9 +8,9 @@ import { handle } from '../handle';
 import { toWorktreeDto } from '../mappers/worktreeMapper';
 
 export function registerListWorktreesHandler({
-  listWorktrees,
-}: Pick<ApplicationServices, 'listWorktrees'>): void {
+  worktreeReader,
+}: Pick<ApplicationServices, 'worktreeReader'>): void {
   handle<ListWorktreesRequest, ListWorktreesResponse>(IPC_CHANNELS.listWorktrees, async (request) =>
-    (await listWorktrees(request.repoPath)).map(toWorktreeDto)
+    (await worktreeReader.listWorktrees(request.repoPath)).map(toWorktreeDto)
   );
 }

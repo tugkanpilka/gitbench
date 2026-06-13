@@ -28,31 +28,6 @@ export default tseslint.config(
     },
   },
   {
-    files: ['src/domain/**/*.ts'],
-    rules: {
-      'no-restricted-imports': [
-        'error',
-        {
-          patterns: [
-            {
-              group: [
-                '**/application/**',
-                '**/contracts/**',
-                '**/infrastructure/**',
-                '**/main/**',
-                '**/preload/**',
-                '**/renderer/**',
-                'electron',
-                'node:*',
-              ],
-              message: 'Domain must not depend on outer layers or runtime frameworks.',
-            },
-          ],
-        },
-      ],
-    },
-  },
-  {
     files: ['src/application/**/*.ts'],
     rules: {
       'no-restricted-imports': [
@@ -117,7 +92,7 @@ export default tseslint.config(
                 'electron',
               ],
               message:
-                'Infrastructure implements application ports and must not depend on UI adapters.',
+                'Infrastructure must not depend on contracts, the main/preload/renderer layers, or electron.',
             },
           ],
         },
