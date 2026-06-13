@@ -54,11 +54,23 @@ describe('parseCommitLog', () => {
   it('parses multiple commits in order', () => {
     const fixture =
       record(
-        { sha: SHA_A, shortSha: 'aaaaaaa', author: 'Ada', date: '2026-06-12T10:30:00+03:00', subject: 'second' },
+        {
+          sha: SHA_A,
+          shortSha: 'aaaaaaa',
+          author: 'Ada',
+          date: '2026-06-12T10:30:00+03:00',
+          subject: 'second',
+        },
         ['M\ta.ts']
       ) +
       record(
-        { sha: SHA_B, shortSha: 'bbbbbbb', author: 'Ada', date: '2026-06-12T09:00:00+03:00', subject: 'first' },
+        {
+          sha: SHA_B,
+          shortSha: 'bbbbbbb',
+          author: 'Ada',
+          date: '2026-06-12T09:00:00+03:00',
+          subject: 'first',
+        },
         ['A\tb.ts']
       );
 
@@ -70,7 +82,13 @@ describe('parseCommitLog', () => {
 
   it('parses renames and copies with both paths', () => {
     const fixture = record(
-      { sha: SHA_A, shortSha: 'aaaaaaa', author: 'Ada', date: '2026-06-12T10:30:00+03:00', subject: 'move things' },
+      {
+        sha: SHA_A,
+        shortSha: 'aaaaaaa',
+        author: 'Ada',
+        date: '2026-06-12T10:30:00+03:00',
+        subject: 'move things',
+      },
       ['R100\told/name.ts\tnew/name.ts', 'C075\tsource.ts\tcopy.ts']
     );
 
@@ -102,7 +120,13 @@ describe('parseCommitLog', () => {
 
   it('tolerates a commit with no file changes (merge/empty)', () => {
     const fixture = record(
-      { sha: SHA_A, shortSha: 'aaaaaaa', author: 'Ada', date: '2026-06-12T10:30:00+03:00', subject: 'empty commit' },
+      {
+        sha: SHA_A,
+        shortSha: 'aaaaaaa',
+        author: 'Ada',
+        date: '2026-06-12T10:30:00+03:00',
+        subject: 'empty commit',
+      },
       []
     );
 

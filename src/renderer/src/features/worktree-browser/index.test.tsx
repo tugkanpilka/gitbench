@@ -304,6 +304,25 @@ describe('useWorktreeBrowser', () => {
       expect(window.api.startWatch).toHaveBeenCalledWith('/repo', ['/repo', '/repo-feature']);
     });
 
+    it('restarts the watch when the set of worktree roots changes', async () => {
+      stubApi({
+        listWorktrees: vi
+          .fn()
+          .mockResolvedValueOnce(okResult([MAIN_WORKTREE]))
+          .mockResolvedValueOnce(okResult([MAIN_WORKTREE, FEATURE_WORKTREE])),
+      });
+      render(<BrowserHarness />);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Pick repository' }));
+      await waitFor(() => expect(window.api.startWatch).toHaveBeenCalledWith('/repo', ['/repo']));
+
+      fireEvent.click(screen.getByRole('button', { name: 'Refresh repository' }));
+      await waitFor(() =>
+        expect(window.api.startWatch).toHaveBeenLastCalledWith('/repo', ['/repo', '/repo-feature'])
+      );
+      expect(window.api.startWatch).toHaveBeenCalledTimes(2);
+    });
+
     it('does not restart the all-worktree watch when selection changes', async () => {
       render(<BrowserHarness />);
 

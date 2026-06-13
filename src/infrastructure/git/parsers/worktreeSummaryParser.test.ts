@@ -36,4 +36,8 @@ describe('parseNumstat', () => {
       deletions: 2,
     });
   });
+
+  it('returns zero stats for empty output (a clean worktree)', () => {
+    expect(parseNumstat('')).toEqual({ additions: 0, deletions: 0 });
+  });
 });

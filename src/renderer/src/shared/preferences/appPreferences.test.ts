@@ -25,16 +25,13 @@ function createStorage(initialValue: string | null = null): {
 }
 
 describe('appPreferences', () => {
-  it('uses the system theme only when no stored preference exists', () => {
+  it("defaults to the 'system' theme when no stored preference exists", () => {
     const { storage } = createStorage();
 
-    expect(readAppPreferences(storage, true)).toEqual({
-      theme: 'light',
-      fileListMode: 'flat',
-      flatGroupMode: 'status',
-    });
-    expect(readAppPreferences(storage, false)).toEqual({
-      theme: 'dark',
+    // 'system' is a first-class stored value; it is resolved to light/dark at
+    // apply time (see applyTheme), not when reading preferences.
+    expect(readAppPreferences(storage)).toEqual({
+      theme: 'system',
       fileListMode: 'flat',
       flatGroupMode: 'status',
     });
@@ -49,7 +46,7 @@ describe('appPreferences', () => {
       })
     );
 
-    expect(readAppPreferences(storage, false)).toEqual({
+    expect(readAppPreferences(storage)).toEqual({
       theme: 'light',
       fileListMode: 'flat',
       flatGroupMode: 'status',
@@ -59,8 +56,8 @@ describe('appPreferences', () => {
   it('ignores malformed storage content', () => {
     const { storage } = createStorage('{not-json');
 
-    expect(readAppPreferences(storage, false)).toEqual({
-      theme: 'dark',
+    expect(readAppPreferences(storage)).toEqual({
+      theme: 'system',
       fileListMode: 'flat',
       flatGroupMode: 'status',
     });

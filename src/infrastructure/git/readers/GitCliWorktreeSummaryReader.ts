@@ -2,6 +2,7 @@ import type {
   WorktreeSummary,
   WorktreeSummaryReader,
 } from '../../../application/worktrees/ports/WorktreeSummaryReader';
+import { mapWithConcurrency } from '../mapWithConcurrency';
 import {
   parseNumstat,
   parseWorktreeStatus,
@@ -9,20 +10,20 @@ import {
 } from '../parsers/worktreeSummaryParser';
 import { refResolves } from '../refResolves';
 import { runGit } from '../runGit';
+import { resolveUnpushedStrategy } from '../unpushedStrategy';
 
 const SUMMARY_CONCURRENCY = 4;
 const UNTRACKED_STATS_CONCURRENCY = 8;
 
 export class GitCliWorktreeSummaryReader implements WorktreeSummaryReader {
   async listWorktreeSummaries(worktreePaths: string[]): Promise<WorktreeSummary[]> {
-    const summaries: WorktreeSummary[] = [];
-
-    for (let offset = 0; offset < worktreePaths.length; offset += SUMMARY_CONCURRENCY) {
-      const batch = worktreePaths.slice(offset, offset + SUMMARY_CONCURRENCY);
-      summaries.push(...(await Promise.all(batch.map((path) => this.readSummary(path)))));
-    }
-
-    return summaries;
+    // Summaries are decorative: one unreadable worktree (mid-rebase, permissions,
+    // a transient git error) must not blank out every other row's stats. Drop the
+    // failed path so the renderer simply shows that worktree without a summary.
+    const summaries = await mapWithConcurrency(worktreePaths, SUMMARY_CONCURRENCY, (path) =>
+      this.readSummary(path).catch(() => null)
+    );
+    return summaries.filter((summary): summary is WorktreeSummary => summary !== null);
   }
 
   private async readSummary(worktreePath: string): Promise<WorktreeSummary> {
@@ -67,45 +68,46 @@ export class GitCliWorktreeSummaryReader implements WorktreeSummaryReader {
     worktreePath: string,
     untrackedPaths: string[]
   ): Promise<LineStats> {
-    const total: LineStats = { additions: 0, deletions: 0 };
-
-    for (let offset = 0; offset < untrackedPaths.length; offset += UNTRACKED_STATS_CONCURRENCY) {
-      const batch = untrackedPaths.slice(offset, offset + UNTRACKED_STATS_CONCURRENCY);
-      const outputs = await Promise.all(
-        batch.map((path) =>
-          runGit(
-            worktreePath,
-            [
-              '--no-pager',
-              'diff',
-              '--no-index',
-              '--numstat',
-              '--no-ext-diff',
-              '--no-textconv',
-              '--',
-              '/dev/null',
-              path,
-            ],
-            { acceptedExitCodes: [1] }
-          )
-        )
-      );
-
-      for (const output of outputs) {
-        const stats = parseNumstat(output);
-        total.additions += stats.additions;
-        total.deletions += stats.deletions;
+    const perFile = await mapWithConcurrency(
+      untrackedPaths,
+      UNTRACKED_STATS_CONCURRENCY,
+      async (path) => {
+        const output = await runGit(
+          worktreePath,
+          [
+            '--no-pager',
+            'diff',
+            '--no-index',
+            '--numstat',
+            '--no-ext-diff',
+            '--no-textconv',
+            '--',
+            '/dev/null',
+            path,
+          ],
+          { acceptedExitCodes: [1] }
+        );
+        return parseNumstat(output);
       }
-    }
+    );
 
-    return total;
+    return perFile.reduce<LineStats>(
+      (total, stats) => ({
+        additions: total.additions + stats.additions,
+        deletions: total.deletions + stats.deletions,
+      }),
+      { additions: 0, deletions: 0 }
+    );
   }
 
   private async getPushCounts(
     worktreePath: string,
     hasUpstream: boolean
   ): Promise<{ unpushedCount: number; behindCount: number | null }> {
-    if (hasUpstream) {
+    const strategy = await resolveUnpushedStrategy(worktreePath, hasUpstream);
+
+    if (strategy === 'upstream') {
+      // --left-right --count yields "<behind>\t<ahead>" against the tracking branch.
       const output = await runGit(worktreePath, [
         'rev-list',
         '--left-right',
@@ -113,17 +115,15 @@ export class GitCliWorktreeSummaryReader implements WorktreeSummaryReader {
         '@{upstream}...HEAD',
       ]);
       const [behind = '0', ahead = '0'] = output.trim().split(/\s+/);
-      return {
-        unpushedCount: parseCount(ahead),
-        behindCount: parseCount(behind),
-      };
+      return { unpushedCount: parseCount(ahead), behindCount: parseCount(behind) };
     }
 
-    const remotes = (await runGit(worktreePath, ['remote'])).trim();
-    if (remotes.length === 0) {
+    if (strategy === 'none') {
       return { unpushedCount: 0, behindCount: null };
     }
 
+    // No upstream but remotes exist: count commits absent from every remote-tracking
+    // ref. "Behind" is undefined without a tracking branch.
     const output = await runGit(worktreePath, [
       'rev-list',
       '--count',

@@ -1,6 +1,8 @@
 import { DiffStat, diffStatLabel } from '../../../shared/ui/diff-stat';
 import { useFileListContext } from '../file-list-context';
+import { diffFileStatusBadge, directoryLabel } from '../file-status';
 import { FileIcon } from '../file-icon';
+import { FlatFileRowContent } from '../flat-file-row';
 import { IndentGuides, treeRowIndent } from '../indent-guides';
 import type { FileNavigationRowProps } from './index.types';
 import styles from '../index.module.scss';
@@ -9,7 +11,7 @@ export function FileNavigationRow({ file, depth, showDirectory }: FileNavigation
   const { activeFileId, onSelectFile } = useFileListContext();
   const active = file.id === activeFileId;
   const path = `${file.path.directory}${file.path.name}`;
-  const directory = file.path.directory === '' ? '/' : file.path.directory.replace(/\/$/, '');
+  const directory = directoryLabel(file.path.directory);
 
   return (
     <li>
@@ -24,30 +26,13 @@ export function FileNavigationRow({ file, depth, showDirectory }: FileNavigation
         onClick={() => onSelectFile(file.id)}
       >
         {showDirectory ? (
-          <>
-            <div
-              className={`${styles['file-navigation-row__status-box']} ${
-                styles[`file-navigation-row__status-box--${file.file.type}`]
-              }`}
-            >
-              {file.file.type === 'add' && 'A'}
-              {file.file.type === 'modify' && 'M'}
-              {file.file.type === 'delete' && 'D'}
-              {file.file.type === 'rename' && 'R'}
-              {file.file.type === 'copy' && 'C'}
-            </div>
-            <div className={styles['file-navigation-row__flat-content']}>
-              <span className={styles['file-navigation-row__flat-main']}>
-                <span className={styles['file-navigation-row__name']} title={path}>
-                  {file.path.name}
-                </span>
-                <DiffStat additions={file.additions} deletions={file.deletions} />
-              </span>
-              <span className={styles['file-navigation-row__directory']} title={directory}>
-                {directory}
-              </span>
-            </div>
-          </>
+          <FlatFileRowContent
+            status={diffFileStatusBadge(file.file.type)}
+            name={file.path.name}
+            nameTitle={path}
+            directory={directory}
+            trailing={<DiffStat additions={file.additions} deletions={file.deletions} />}
+          />
         ) : (
           <>
             <IndentGuides depth={depth} />

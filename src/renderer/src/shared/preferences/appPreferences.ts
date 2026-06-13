@@ -27,12 +27,25 @@ function isFlatGroupMode(value: unknown): value is FlatGroupMode {
   return value === 'status' || value === 'none';
 }
 
+const COLOR_SCHEME_QUERY = '(prefers-color-scheme: light)';
+
 export function prefersLightTheme(): boolean {
   return (
     typeof window !== 'undefined' &&
     typeof window.matchMedia === 'function' &&
-    window.matchMedia('(prefers-color-scheme: light)').matches
+    window.matchMedia(COLOR_SCHEME_QUERY).matches
   );
+}
+
+// Subscribes to OS light/dark changes. A no-op (and safe to call) in environments
+// without matchMedia — jsdom and the test harness don't provide it.
+export function watchSystemTheme(onChange: () => void): () => void {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return () => {};
+  }
+  const mediaQuery = window.matchMedia(COLOR_SCHEME_QUERY);
+  mediaQuery.addEventListener('change', onChange);
+  return () => mediaQuery.removeEventListener('change', onChange);
 }
 
 export function getPreferenceStorage(): PreferenceStorage | null {
@@ -44,8 +57,7 @@ export function getPreferenceStorage(): PreferenceStorage | null {
 }
 
 export function readAppPreferences(
-  storage: PreferenceStorage | null = getPreferenceStorage(),
-  systemPrefersLight = prefersLightTheme()
+  storage: PreferenceStorage | null = getPreferenceStorage()
 ): AppPreferences {
   const defaults: AppPreferences = {
     theme: 'system',

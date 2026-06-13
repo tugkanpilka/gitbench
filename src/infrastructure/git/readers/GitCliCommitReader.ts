@@ -1,7 +1,11 @@
-import type { CommitReader, UnpushedCommits } from '../../../application/worktrees/ports/CommitReader';
+import type {
+  CommitReader,
+  UnpushedCommits,
+} from '../../../application/worktrees/ports/CommitReader';
 import { COMMIT_LOG_FORMAT, parseCommitLog } from '../parsers/commitLogParser';
 import { refResolves } from '../refResolves';
 import { runGit } from '../runGit';
+import { resolveUnpushedStrategy } from '../unpushedStrategy';
 
 // Cap the list so a long-lived local branch can't dump thousands of commits into the
 // sidebar. We request one extra to detect (and flag) truncation honestly.
@@ -20,11 +24,12 @@ export class GitCliCommitReader implements CommitReader {
       return { commits: [], truncated: false };
     }
 
-    const range = await this.resolveUnpushedRange(worktreePath, hasUpstream);
-    if (range === null) {
+    const strategy = await resolveUnpushedStrategy(worktreePath, hasUpstream);
+    if (strategy === 'none') {
       // No upstream and no remote — "unpushed" is undefined, so show nothing.
       return { commits: [], truncated: false };
     }
+    const range = strategy === 'upstream' ? ['@{upstream}..HEAD'] : ['HEAD', '--not', '--remotes'];
 
     // `-c core.quotePath=false` keeps non-ASCII paths literal instead of \xNN-escaped.
     const stdout = await runGit(worktreePath, [
@@ -45,26 +50,5 @@ export class GitCliCommitReader implements CommitReader {
       commits: truncated ? parsed.slice(0, MAX_COMMITS) : parsed,
       truncated,
     };
-  }
-
-  /**
-   * The rev range for "unpushed", in priority order:
-   *  1. `@{upstream}..HEAD` — ahead of the branch's tracking branch (git status's count).
-   *  2. `HEAD --not --remotes` — no upstream, but commits not on any remote-tracking ref.
-   *  3. null — no remote at all; nothing is "pushable".
-   */
-  private async resolveUnpushedRange(
-    worktreePath: string,
-    hasUpstream: boolean
-  ): Promise<string[] | null> {
-    if (hasUpstream) {
-      return ['@{upstream}..HEAD'];
-    }
-
-    const remotes = (await runGit(worktreePath, ['remote'])).trim();
-    if (remotes.length === 0) {
-      return null;
-    }
-    return ['HEAD', '--not', '--remotes'];
   }
 }

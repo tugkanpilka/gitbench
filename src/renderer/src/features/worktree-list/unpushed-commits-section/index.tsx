@@ -8,6 +8,8 @@ import { toggledSet } from '../../../shared/collections/toggledSet';
 import { cx } from '../../../shared/ui/cx';
 import { Chevron } from '../../../shared/ui/icons';
 import { splitPath } from '../../diff-viewer/utils/diffModel';
+import { commitFileStatusBadge, directoryLabel } from '../file-status';
+import { FlatFileRowContent } from '../flat-file-row';
 import type { UnpushedCommitsSectionProps } from './index.types';
 import sharedStyles from '../index.module.scss';
 import styles from './index.module.scss';
@@ -69,7 +71,7 @@ export function UnpushedCommitsSection({ commits, truncated }: UnpushedCommitsSe
         onClick={() => setExpanded(!expanded)}
         aria-expanded={expanded}
       >
-        <h2 className={styles['unpushed-commits__label']}>Unpushed</h2>
+        <span className={styles['unpushed-commits__label']}>Unpushed</span>
         <span className={styles['unpushed-commits__count']}>
           {commits.length}
           {truncated ? '+' : ''}
@@ -151,58 +153,26 @@ function FileGroupView({ group }: { group: FileGroup }) {
   );
 }
 
-function getStatusChar(status: CommitFileChangeStatus) {
-  switch (status) {
-    case 'added': return 'A';
-    case 'modified': return 'M';
-    case 'deleted': return 'D';
-    case 'renamed': return 'R';
-    case 'copied': return 'C';
-    case 'unmerged': return 'U';
-    case 'typeChanged': return 'T';
-    default: return '?';
-  }
-}
-
-function getStatusClass(status: CommitFileChangeStatus) {
-  switch (status) {
-    case 'added': return 'add';
-    case 'modified': return 'modify';
-    case 'deleted': return 'delete';
-    case 'renamed': return 'rename';
-    case 'copied': return 'copy';
-    default: return 'modify';
-  }
-}
-
 function CommitFileRow({ file }: { file: CommitFileChange }) {
   const { directory, name } = splitPath(file.path);
-  const title = file.previousPath !== null ? `${file.previousPath} → ${file.path}` : file.path;
-  const directoryLabel = directory === '' ? '/' : directory.replace(/\/$/, '');
+  const nameTitle = file.previousPath !== null ? `${file.previousPath} → ${file.path}` : file.path;
 
   return (
     <li>
       <div
-        className={`${sharedStyles['file-navigation-row']} ${sharedStyles['file-navigation-row--flat']}`}
+        className={cx(
+          sharedStyles['file-navigation-row'],
+          sharedStyles['file-navigation-row--flat']
+        )}
+        // Read-only row: it borrows the changed-file row layout but is not selectable.
         style={{ cursor: 'default' }}
       >
-        <div
-          className={`${sharedStyles['file-navigation-row__status-box']} ${
-            sharedStyles[`file-navigation-row__status-box--${getStatusClass(file.status)}`]
-          }`}
-        >
-          {getStatusChar(file.status)}
-        </div>
-        <div className={sharedStyles['file-navigation-row__flat-content']}>
-          <span className={sharedStyles['file-navigation-row__flat-main']}>
-            <span className={sharedStyles['file-navigation-row__name']} title={title}>
-              {name}
-            </span>
-          </span>
-          <span className={sharedStyles['file-navigation-row__directory']} title={directoryLabel}>
-            {directoryLabel}
-          </span>
-        </div>
+        <FlatFileRowContent
+          status={commitFileStatusBadge(file.status)}
+          name={name}
+          nameTitle={nameTitle}
+          directory={directoryLabel(directory)}
+        />
       </div>
     </li>
   );

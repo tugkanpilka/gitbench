@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import { nameFromPath } from '../../shared/path/nameFromPath';
 import { DiffStat } from '../../shared/ui/diff-stat';
 import { Chevron, TreeListIcon, FlatListIcon } from '../../shared/ui/icons';
@@ -31,6 +33,10 @@ export function WorktreeDetailSidebar({
   if (worktree === null) {
     return (
       <div className={styles['worktree-detail-sidebar']}>
+        <DetailHeader
+          repositorySidebarOpen={repositorySidebarOpen}
+          onToggleRepositorySidebar={onToggleRepositorySidebar}
+        />
         <p className={styles['worktree-detail-sidebar__placeholder']}>
           Select a worktree to inspect its changes.
         </p>
@@ -48,41 +54,28 @@ export function WorktreeDetailSidebar({
 
   return (
     <div className={styles['worktree-detail-sidebar']}>
-      <header
-        className={styles['worktree-detail-sidebar__header']}
-        data-repository-sidebar-open={repositorySidebarOpen}
+      <DetailHeader
+        repositorySidebarOpen={repositorySidebarOpen}
+        onToggleRepositorySidebar={onToggleRepositorySidebar}
       >
-        <div className={styles['worktree-detail-sidebar__toolbar']}>
-          <div className={styles['worktree-detail-sidebar__toolbar-content']}>
-            <button
-              type="button"
-              className={styles['worktree-detail-sidebar__back']}
-              aria-label={`${repositorySidebarOpen ? 'Hide' : 'Show'} worktree sidebar`}
-              aria-expanded={repositorySidebarOpen}
-              onClick={onToggleRepositorySidebar}
-            >
-              <Chevron collapsed={false} className={styles['worktree-detail-sidebar__back-icon']} />
-            </button>
-            <div className={styles['worktree-detail-sidebar__identity']}>
-              <div className={styles['worktree-detail-sidebar__title']}>
-                <span className={styles['worktree-detail-sidebar__name']} title={worktree.path}>
-                  {nameFromPath(worktree.path)}
-                </span>
-                {diffStats !== null && (
-                  <DiffStat
-                    className={styles['worktree-detail-sidebar__diff-stat']}
-                    additions={diffStats.additions}
-                    deletions={diffStats.deletions}
-                  />
-                )}
-              </div>
-              <span className={styles['worktree-detail-sidebar__reference']} title={reference}>
-                {reference}
-              </span>
-            </div>
+        <div className={styles['worktree-detail-sidebar__identity']}>
+          <div className={styles['worktree-detail-sidebar__title']}>
+            <span className={styles['worktree-detail-sidebar__name']} title={worktree.path}>
+              {nameFromPath(worktree.path)}
+            </span>
+            {diffStats !== null && (
+              <DiffStat
+                className={styles['worktree-detail-sidebar__diff-stat']}
+                additions={diffStats.additions}
+                deletions={diffStats.deletions}
+              />
+            )}
           </div>
+          <span className={styles['worktree-detail-sidebar__reference']} title={reference}>
+            {reference}
+          </span>
         </div>
-      </header>
+      </DetailHeader>
 
       <div className={styles['worktree-detail-sidebar__content']}>
         {diffLoading ? (
@@ -109,6 +102,42 @@ export function WorktreeDetailSidebar({
         onFlatGroupModeChange={onFlatGroupModeChange}
       />
     </div>
+  );
+}
+
+// Header bar carrying the repository-sidebar toggle. Rendered in both the selected
+// and placeholder states so the (possibly inert) repository sidebar can always be
+// reopened — `children` carries the worktree identity when one is selected.
+function DetailHeader({
+  repositorySidebarOpen,
+  onToggleRepositorySidebar,
+  children,
+}: Pick<WorktreeDetailSidebarProps, 'repositorySidebarOpen' | 'onToggleRepositorySidebar'> & {
+  children?: ReactNode;
+}) {
+  return (
+    <header
+      className={styles['worktree-detail-sidebar__header']}
+      data-repository-sidebar-open={repositorySidebarOpen}
+    >
+      <div className={styles['worktree-detail-sidebar__toolbar']}>
+        <div className={styles['worktree-detail-sidebar__toolbar-content']}>
+          <button
+            type="button"
+            className={styles['worktree-detail-sidebar__back']}
+            aria-label={`${repositorySidebarOpen ? 'Hide' : 'Show'} worktree sidebar`}
+            aria-expanded={repositorySidebarOpen}
+            onClick={onToggleRepositorySidebar}
+          >
+            <Chevron
+              collapsed={!repositorySidebarOpen}
+              className={styles['worktree-detail-sidebar__back-icon']}
+            />
+          </button>
+          {children}
+        </div>
+      </div>
+    </header>
   );
 }
 

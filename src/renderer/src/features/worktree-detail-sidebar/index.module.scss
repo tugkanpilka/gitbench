@@ -65,14 +65,20 @@
 .worktree-detail-sidebar__back-icon {
   width: 9px;
   height: 9px;
+  // Sidebar open: point left ("hide"). Closed (data-collapsed='true'): point right ("show").
   transform: rotate(180deg);
+  transition: transform var(--gb-dur-quick) var(--gb-ease);
+}
+
+.worktree-detail-sidebar__back-icon[data-collapsed='true'] {
+  transform: rotate(0deg);
 }
 
 .worktree-detail-sidebar__identity {
   display: flex;
   flex: 1;
   min-width: 0;
-  padding-left: 6px;
+  padding-left: var(--gb-space-3);
   flex-direction: column;
   justify-content: center;
   gap: 0;
@@ -87,9 +93,9 @@
 
 .worktree-detail-sidebar__name {
   overflow: hidden;
-  font-size: 11px;
+  font-size: var(--gb-text-xs);
   font-weight: var(--gb-weight-medium);
-  line-height: 1.2;
+  line-height: var(--gb-leading-ui);
   color: var(--gb-text);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -98,15 +104,15 @@
 .worktree-detail-sidebar__reference {
   overflow: hidden;
   min-width: 0;
-  font-size: 11px;
+  font-size: var(--gb-text-xs);
   color: var(--gb-faint);
-  line-height: 1.2;
+  line-height: var(--gb-leading-ui);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .worktree-detail-sidebar__diff-stat {
-  font-size: 10px;
+  font-size: var(--gb-text-2xs);
   line-height: 1;
   flex: none;
 }
@@ -142,7 +148,7 @@
 .worktree-detail-sidebar__footer {
   display: flex;
   min-height: 48px;
-  padding: 8px 16px;
+  padding: var(--gb-space-4) var(--gb-space-6);
   border-top: 1px solid var(--gb-sidebar-edge);
   align-items: center;
   justify-content: center;

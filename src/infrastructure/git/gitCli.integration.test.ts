@@ -194,6 +194,27 @@ describe.skipIf(!gitAvailable())('git CLI readers (integration)', () => {
     await rejection.toBeInstanceOf(GitCommandFailedError);
     await rejection.toThrow('Repository has no commits yet.');
   });
+
+  it('summarizes an unborn HEAD with no diff against HEAD and no push counts', async () => {
+    const unborn = join(root, 'unborn-summary');
+    mkdirSync(unborn);
+    git(unborn, 'init', '-b', 'main');
+    writeFileSync(join(unborn, 'draft.txt'), 'wip\n');
+
+    // No commit yet → `git diff HEAD` is impossible, so stats stay zero, but the
+    // untracked file is still counted and ahead/behind is undefined (null behind).
+    await expect(summaryReader.listWorktreeSummaries([unborn])).resolves.toEqual([
+      {
+        worktreePath: unborn,
+        fileCount: 1,
+        additions: 0,
+        deletions: 0,
+        conflictCount: 0,
+        unpushedCount: 0,
+        behindCount: null,
+      },
+    ]);
+  });
 });
 
 describe.skipIf(!gitAvailable())('GitCliCommitReader (integration)', () => {

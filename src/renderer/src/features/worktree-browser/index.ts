@@ -1,4 +1,11 @@
-import { startTransition, useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
+import {
+  startTransition,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type MutableRefObject,
+} from 'react';
 
 import type { WorktreeDto, WorktreeSummaryDto } from '../../../../contracts/ipc';
 import { ApiError } from '../../shared/api/ApiError';
@@ -37,14 +44,17 @@ export function useWorktreeBrowser() {
   const diffRequest = useRef<AbortController | null>(null);
   const commitsRequest = useRef<AbortController | null>(null);
   const summariesRequest = useRef<AbortController | null>(null);
-  const selectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Latest repo/selection, read by the stable repo:changed subscription without
-  // re-subscribing on every change. Mirrored synchronously each render.
+  // re-subscribing on every change. Mirrored in an effect (not during render) so a
+  // discarded transition render can't leave the refs ahead of committed state — the
+  // subscription would otherwise refresh a selection that was never committed.
   const repoPathRef = useRef<string | null>(null);
   const selectedPathRef = useRef<string | null>(null);
-  repoPathRef.current = repoPath;
-  selectedPathRef.current = selectedPath;
+  useEffect(() => {
+    repoPathRef.current = repoPath;
+    selectedPathRef.current = selectedPath;
+  }, [repoPath, selectedPath]);
 
   // Summary data is secondary: rows remain selectable when a summary query fails.
   const loadSummaries = useCallback(async (nextWorktrees: WorktreeDto[], clear: boolean) => {
@@ -116,41 +126,38 @@ export function useWorktreeBrowser() {
   // Loads the diff for a worktree. `showLoading` is true for a user selection (clear
   // the view, show the spinner) and false for an auto-refresh (keep the current view;
   // only swap it in when the text actually changed, preserving the scroll position).
-  const loadDiff = useCallback(
-    async (worktreePath: string, showLoading: boolean) => {
-      const signal = beginRequest(diffRequest);
-      if (showLoading) {
-        setDiff(null);
-        setDiffLoading(true);
+  const loadDiff = useCallback(async (worktreePath: string, showLoading: boolean) => {
+    const signal = beginRequest(diffRequest);
+    if (showLoading) {
+      setDiff(null);
+      setDiffLoading(true);
+    }
+    setError(null);
+    try {
+      const response = await desktopApi.getDiff(worktreePath);
+      if (signal.aborted) {
+        return;
       }
-      setError(null);
-      try {
-        const response = await desktopApi.getDiff(worktreePath);
-        if (signal.aborted) {
-          return;
+      startTransition(() => {
+        setDiff((prev) =>
+          prev && prev.worktreePath === worktreePath && prev.diffText === response.diffText
+            ? prev
+            : { worktreePath, diffText: response.diffText }
+        );
+      });
+    } catch (caught) {
+      if (!signal.aborted) {
+        if (showLoading) {
+          setDiff(null);
         }
-        startTransition(() => {
-          setDiff((prev) =>
-            prev && prev.worktreePath === worktreePath && prev.diffText === response.diffText
-              ? prev
-              : { worktreePath, diffText: response.diffText }
-          );
-        });
-      } catch (caught) {
-        if (!signal.aborted) {
-          if (showLoading) {
-            setDiff(null);
-          }
-          setError(describeError(caught));
-        }
-      } finally {
-        if (!signal.aborted) {
-          setDiffLoading(false);
-        }
+        setError(describeError(caught));
       }
-    },
-    []
-  );
+    } finally {
+      if (!signal.aborted) {
+        setDiffLoading(false);
+      }
+    }
+  }, []);
 
   // Loads the unpushed commits for a worktree. Secondary to the diff: failures are
   // swallowed (the section just hides) so they never block the diff view or steal the
@@ -223,25 +230,14 @@ export function useWorktreeBrowser() {
     }
   };
 
+  // A user selection clears the old view and shows the spinner (showLoading/clear
+  // true); loadDiff/loadCommits handle that. App wraps this call in startTransition
+  // so the sidebar animation stays smooth without a manual deferral.
   const selectWorktree = useCallback(
     async (worktreePath: string) => {
       selectedPathRef.current = worktreePath;
       setSelectedPath(worktreePath);
-
-      // Immediately clear the old state so the UI reflects the loading state instantly
-      setDiff(null);
-      setDiffLoading(true);
-      setCommits(null);
-
-      if (selectTimeoutRef.current) {
-        clearTimeout(selectTimeoutRef.current);
-      }
-
-      // Defer the heavy API calls and parsing by 150ms. This gives the sidebar
-      // opening/closing animation time to start smoothly without dropping frames.
-      selectTimeoutRef.current = setTimeout(() => {
-        void Promise.all([loadDiff(worktreePath, false), loadCommits(worktreePath, false)]);
-      }, 150);
+      await Promise.all([loadDiff(worktreePath, true), loadCommits(worktreePath, true)]);
     },
     [loadDiff, loadCommits]
   );

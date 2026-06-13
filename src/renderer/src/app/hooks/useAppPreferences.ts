@@ -6,6 +6,7 @@ import {
   type FlatGroupMode,
   readAppPreferences,
   type Theme,
+  watchSystemTheme,
   writeAppPreferences,
 } from '../../shared/preferences/appPreferences';
 
@@ -24,30 +25,17 @@ export function useAppPreferences(): AppPreferenceController {
   useEffect(() => {
     applyTheme(preferences.theme);
     writeAppPreferences(preferences);
-
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: light)');
-    const handleChange = () => {
-      // Re-apply the theme when the system preference changes
-      applyTheme(preferences.theme);
-    };
-
-    mediaQuery.addEventListener('change', handleChange);
-    return () => {
-      mediaQuery.removeEventListener('change', handleChange);
-    };
   }, [preferences]);
+
+  // Re-apply the theme when the OS preference flips, but only while following it.
+  // Re-subscribes on theme change only, not on every preference write.
+  useEffect(() => watchSystemTheme(() => applyTheme(preferences.theme)), [preferences.theme]);
 
   const toggleTheme = useCallback(() => {
     setPreferences((current) => {
-      let nextTheme: Theme = 'system';
-      if (current.theme === 'system') nextTheme = 'light';
-      else if (current.theme === 'light') nextTheme = 'dark';
-      else nextTheme = 'system';
-      
-      return {
-        ...current,
-        theme: nextTheme,
-      };
+      const nextTheme: Theme =
+        current.theme === 'system' ? 'light' : current.theme === 'light' ? 'dark' : 'system';
+      return { ...current, theme: nextTheme };
     });
   }, []);
 

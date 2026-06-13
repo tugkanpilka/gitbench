@@ -43,16 +43,18 @@ afterEach(() => cleanup());
 
 function renderSidebar({
   mode = 'flat',
+  flatGroupMode = 'status',
   onSelectFile = () => undefined,
   repositorySidebarOpen = true,
   onToggleRepositorySidebar = () => undefined,
 }: {
   mode?: 'flat' | 'tree';
+  flatGroupMode?: 'status' | 'none';
   onSelectFile?: (fileId: string) => void;
   repositorySidebarOpen?: boolean;
   onToggleRepositorySidebar?: () => void;
 } = {}) {
-  render(
+  return render(
     <WorktreeDetailSidebar
       worktree={MAIN_WORKTREE}
       changedFiles={FILES}
@@ -60,7 +62,7 @@ function renderSidebar({
       commitsTruncated={false}
       diffLoading={false}
       fileListMode={mode}
-      flatGroupMode="status"
+      flatGroupMode={flatGroupMode}
       activeFileId={FILES[0].id}
       diffStats={{ additions: 2, deletions: 1 }}
       repositorySidebarOpen={repositorySidebarOpen}
@@ -110,6 +112,17 @@ describe('WorktreeDetailSidebar', () => {
     fireEvent.click(fileRow);
 
     expect(onSelectFile).toHaveBeenCalledWith(FILES[0].id);
+  });
+
+  it('renders an ungrouped flat list when flatGroupMode is none', () => {
+    renderSidebar({ mode: 'flat', flatGroupMode: 'none' });
+
+    // Files still render and stay navigable…
+    expect(screen.getByRole('button', { name: 'src/a.ts, 1 addition, 0 deletions' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'old.ts, 0 additions, 1 deletion' })).toBeTruthy();
+    // …but without the per-status group headers shown in 'status' mode.
+    expect(screen.queryByText('Added')).toBeNull();
+    expect(screen.queryByText('Deleted')).toBeNull();
   });
 
   it('supports folder navigation in tree mode', () => {
@@ -190,5 +203,8 @@ describe('WorktreeDetailSidebar', () => {
     );
 
     expect(screen.getByText('Select a worktree to inspect its changes.')).toBeTruthy();
+    // The sidebar toggle must stay reachable even with no selection, so a closed
+    // (inert) repository sidebar can always be reopened.
+    expect(screen.getByRole('button', { name: 'Hide worktree sidebar' })).toBeTruthy();
   });
 });

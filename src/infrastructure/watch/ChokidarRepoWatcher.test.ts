@@ -39,4 +39,28 @@ describe('ChokidarRepoWatcher', () => {
       expect(stop).toHaveBeenCalledTimes(1);
     }
   });
+
+  it('keeps working-tree watchers and never throws when git-dir resolution fails', async () => {
+    const stop = vi.fn<StopRecursiveWatch>(async () => {});
+    // The shared git-dir resolution (rev-parse) fails; auto-refresh is best-effort
+    // and must not take down the main process (CLAUDE.md / git-notes.md).
+    vi.mocked(runGit).mockRejectedValue(new Error('not a git repository'));
+    vi.mocked(startRecursiveWatch).mockResolvedValue(stop);
+
+    const handle = new ChokidarRepoWatcher().watch(
+      { repoPath: '/repo', worktreePaths: ['/repo', '/linked'] },
+      () => {}
+    );
+
+    // The working trees are still watched even though the git dir could not resolve…
+    await vi.waitFor(() =>
+      expect(vi.mocked(startRecursiveWatch).mock.calls.map(([path]) => path)).toEqual([
+        '/repo',
+        '/linked',
+      ])
+    );
+
+    // …and the rejected resolution is swallowed, so stop() resolves cleanly.
+    await expect(handle.stop()).resolves.toBeUndefined();
+  });
 });

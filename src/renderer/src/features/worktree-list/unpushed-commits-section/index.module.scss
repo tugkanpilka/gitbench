@@ -184,33 +184,3 @@
   flex-direction: column;
   list-style: none;
 }
-
-.commit-file {
-  display: flex;
-  height: 22px;
-  padding: 0 4px 0 27px;
-  align-items: center;
-  gap: var(--gb-space-2);
-}
-
-.commit-file__path {
-  display: flex;
-  min-width: 0;
-  flex: 1;
-  overflow: hidden;
-  align-items: center;
-  font-size: var(--gb-text-sm);
-  white-space: nowrap;
-}
-
-.commit-file__dir {
-  overflow: hidden;
-  color: var(--gb-dim);
-  opacity: 0.7;
-  text-overflow: ellipsis;
-}
-
-.commit-file__name {
-  flex: none;
-  color: var(--gb-text);
-}
