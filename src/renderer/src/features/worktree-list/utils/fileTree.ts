@@ -1,10 +1,10 @@
-import type { DiffFileModel } from '../../diff-viewer/utils/diffModel.types';
+import type { ChangedFileItem } from '../changed-file-item';
 import type { FileTree } from './fileTree.types';
 interface MutableDirectory {
   name: string;
   path: string;
   directories: Map<string, MutableDirectory>;
-  files: DiffFileModel[];
+  files: ChangedFileItem[];
 }
 
 function createDirectory(name: string, path: string): MutableDirectory {
@@ -27,7 +27,7 @@ function toFileTree(directory: MutableDirectory): FileTree {
   };
 }
 
-export function buildFileTree(files: DiffFileModel[]): FileTree {
+export function buildFileTree(files: ChangedFileItem[]): FileTree {
   const root = createDirectory('', '');
 
   for (const file of files) {
@@ -52,8 +52,11 @@ export function buildFileTree(files: DiffFileModel[]): FileTree {
   return toFileTree(root);
 }
 
-export function directoryPathsForFile(file: DiffFileModel): string[] {
-  const names = file.path.directory.split('/').filter(Boolean);
+// Every ancestor directory path of a file, from the repository root down to its
+// immediate parent. Takes the raw directory string (ChangedFileItem.path.directory)
+// so it stays independent of any file model.
+export function directoryPathsForDirectory(directory: string): string[] {
+  const names = directory.split('/').filter(Boolean);
   const paths: string[] = [];
   let currentPath = '';
 

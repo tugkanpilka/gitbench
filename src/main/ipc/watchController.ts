@@ -1,13 +1,13 @@
 import type {
   RepoWatchHandle,
   RepoWatchTarget,
-} from '../../application/worktrees/ports/RepoWatcher';
+} from '../../infrastructure/watch/ChokidarRepoWatcher';
 import type { ApplicationServices } from '../bootstrap/compositionRoot';
 
 /**
  * Owns the single active filesystem watch. `start` replaces any prior watch (the app
  * watches one repo and all of its worktrees at a time); `stop` disposes it. Lives in
- * main because it bridges the application use case to the renderer's lifecycle.
+ * main because it bridges the infrastructure watcher to the renderer's lifecycle.
  * index.ts disposes it on window close / quit so a watcher never outlives its window.
  */
 export interface WatchController {
@@ -16,8 +16,8 @@ export interface WatchController {
 }
 
 export function createWatchController({
-  watchRepository,
-}: Pick<ApplicationServices, 'watchRepository'>): WatchController {
+  watcher,
+}: Pick<ApplicationServices, 'watcher'>): WatchController {
   let active: RepoWatchHandle | null = null;
 
   async function stop(): Promise<void> {
@@ -31,7 +31,7 @@ export function createWatchController({
   return {
     async start(target, onChange) {
       await stop();
-      active = watchRepository(target, onChange);
+      active = watcher.watch(target, onChange);
     },
     stop,
   };

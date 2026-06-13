@@ -1,3 +1,6 @@
+import { useMemo } from 'react';
+
+import type { ChangedFileItem } from '../changed-file-item';
 import { FileListProvider } from '../file-list-context';
 import { FileNavigationList } from '../file-navigation-list';
 import type { ChangedFilesSectionProps } from './index.types';
@@ -6,10 +9,13 @@ import styles from '../index.module.scss';
 type FileGroup = {
   key: 'added' | 'modified' | 'deleted' | 'other';
   label: string;
-  files: ChangedFilesSectionProps['changedFiles'];
+  files: ChangedFileItem[];
 };
 
-function groupChangedFiles(files: ChangedFilesSectionProps['changedFiles']): FileGroup[] {
+// Pure and component-state-free, so it lives at module scope. Memoizing its call (below)
+// keeps group references stable across unrelated re-renders, which stops FileListProvider
+// from resetting collapse state when the file list itself has not changed.
+function groupChangedFiles(files: ChangedFileItem[]): FileGroup[] {
   const groups: FileGroup[] = [
     { key: 'added', label: 'Added', files: [] },
     { key: 'modified', label: 'Modified', files: [] },
@@ -18,11 +24,11 @@ function groupChangedFiles(files: ChangedFilesSectionProps['changedFiles']): Fil
   ];
 
   for (const file of files) {
-    if (file.file.type === 'add') {
+    if (file.status === 'add') {
       groups[0].files.push(file);
-    } else if (file.file.type === 'delete') {
+    } else if (file.status === 'delete') {
       groups[2].files.push(file);
-    } else if (file.file.type === 'modify') {
+    } else if (file.status === 'modify') {
       groups[1].files.push(file);
     } else {
       groups[3].files.push(file);
@@ -41,8 +47,9 @@ export function ChangedFilesSection({
   onSelectFile,
 }: ChangedFilesSectionProps) {
   const isGrouped = fileListMode === 'tree' || flatGroupMode === 'status';
+  const statusGroups = useMemo(() => groupChangedFiles(changedFiles), [changedFiles]);
   const groups = isGrouped
-    ? groupChangedFiles(changedFiles)
+    ? statusGroups
     : [{ key: 'all' as const, label: 'All Files', files: changedFiles }];
 
   return (

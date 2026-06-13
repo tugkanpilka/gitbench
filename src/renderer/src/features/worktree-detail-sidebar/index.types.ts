@@ -1,11 +1,11 @@
 import type { CommitDto, WorktreeDto } from '../../../../contracts/ipc';
 import type { FileListMode, FlatGroupMode } from '../../shared/preferences/appPreferences';
 import type { DiffStats } from '../../shared/ui/diff-stat/index.types';
-import type { DiffFileModel } from '../diff-viewer/utils/diffModel.types';
+import type { ChangedFileItem } from '../worktree-list/changed-file-item';
 
 export type WorktreeDetailSidebarProps = {
   worktree: WorktreeDto | null;
-  changedFiles: DiffFileModel[];
+  changedFiles: ChangedFileItem[];
   unpushedCommits: CommitDto[];
   commitsTruncated: boolean;
   diffLoading: boolean;

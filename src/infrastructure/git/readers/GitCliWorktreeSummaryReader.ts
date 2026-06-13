@@ -1,7 +1,3 @@
-import type {
-  WorktreeSummary,
-  WorktreeSummaryReader,
-} from '../../../application/worktrees/ports/WorktreeSummaryReader';
 import { mapWithConcurrency } from '../mapWithConcurrency';
 import {
   parseNumstat,
@@ -15,7 +11,23 @@ import { resolveUnpushedStrategy } from '../unpushedStrategy';
 const SUMMARY_CONCURRENCY = 4;
 const UNTRACKED_STATS_CONCURRENCY = 8;
 
-export class GitCliWorktreeSummaryReader implements WorktreeSummaryReader {
+/**
+ * A per-worktree status summary as read from git, before it is mapped to the contract
+ * DTO at the IPC boundary. Structurally matches `WorktreeSummaryDto`; infrastructure
+ * cannot import contracts, so the shape lives here and `worktreeSummaryMapper` is the
+ * compile-time tripwire that keeps the two aligned.
+ */
+export interface WorktreeSummary {
+  worktreePath: string;
+  fileCount: number;
+  additions: number;
+  deletions: number;
+  conflictCount: number;
+  unpushedCount: number;
+  behindCount: number | null;
+}
+
+export class GitCliWorktreeSummaryReader {
   async listWorktreeSummaries(worktreePaths: string[]): Promise<WorktreeSummary[]> {
     // Summaries are decorative: one unreadable worktree (mid-rebase, permissions,
     // a transient git error) must not blank out every other row's stats. Drop the

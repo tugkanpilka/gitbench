@@ -1,4 +1,4 @@
-import type { UnpushedCommits } from '../../../application/worktrees/ports/CommitReader';
+import type { UnpushedCommits } from '../../../application/worktrees/commits';
 import type { ListUnpushedCommitsResponse } from '../../../contracts/ipc';
 
 export function toListUnpushedCommitsResponse(

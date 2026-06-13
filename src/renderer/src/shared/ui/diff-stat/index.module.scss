@@ -22,3 +22,9 @@
 .gb-diff-stat--on-selection .gb-diff-stat__delete {
   color: var(--gb-sel-del-text);
 }
+
+.gb-diff-stat--muted {
+  opacity: 0.8;
+  transform: scale(0.9);
+  transform-origin: right center;
+}

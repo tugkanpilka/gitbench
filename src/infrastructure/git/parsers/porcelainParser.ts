@@ -1,11 +1,23 @@
-import type { Worktree } from '../../../domain/worktree/Worktree';
+/**
+ * A worktree as read from git, before it is mapped to the contract DTO at the IPC
+ * boundary. Structurally matches `WorktreeDto`; infrastructure cannot import contracts,
+ * so the shape lives here and `worktreeMapper` is the compile-time tripwire that keeps
+ * the two aligned. There is no behaviorless domain entity in between.
+ */
+export interface ParsedWorktree {
+  path: string;
+  branch: string | null; // null = detached HEAD, or a bare main worktree
+  headSha: string; // "" for a bare main worktree (porcelain emits no HEAD line)
+  isMain: boolean;
+  isLocked: boolean;
+}
 
 /**
- * Pure function: `git worktree list --porcelain` output → Worktree entities.
+ * Pure function: `git worktree list --porcelain` output → parsed worktrees.
  * Format details: agent_docs/git-notes.md. Entries are blank-line separated;
  * the first entry is always the main worktree.
  */
-export function parseWorktreeListPorcelain(output: string): Worktree[] {
+export function parseWorktreeListPorcelain(output: string): ParsedWorktree[] {
   const blocks = output
     .split(/\n{2,}/)
     .map((block) => block.trim())

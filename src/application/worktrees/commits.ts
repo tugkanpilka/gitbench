@@ -1,3 +1,12 @@
+/**
+ * Canonical commit-change types shared by the infrastructure git readers/parsers and
+ * the main-process mappers. They live in the application layer because both
+ * infrastructure and main may depend on it, whereas infrastructure must not import
+ * contracts (see agent_docs/architecture.md import matrix). The contracts copy in
+ * `contracts/ipc/commits.ts` is the wire/DTO surface for the renderer; `commitMapper`
+ * is the compile-time tripwire that keeps the two structurally identical.
+ */
+
 /** How a file changed in a commit, normalized from git's status letters. */
 export type CommitFileChangeStatus =
   | 'added'
@@ -32,13 +41,4 @@ export interface UnpushedCommits {
   commits: UnpushedCommit[];
   /** True when the list was capped — more unpushed commits exist than returned. */
   truncated: boolean;
-}
-
-export interface CommitReader {
-  /**
-   * Commits on the worktree's HEAD that have not been pushed: ahead of the branch's
-   * upstream when one is set, otherwise not reachable from any remote-tracking ref.
-   * Empty when there is nothing unpushed (or no remote to push to) — never an error.
-   */
-  listUnpushedCommits(worktreePath: string): Promise<UnpushedCommits>;
 }

@@ -5,15 +5,23 @@ Clean Architecture with Electron process boundaries as delivery adapters. The go
 ## Dependency direction
 
 ```text
-renderer -> preload/window.api -> main IPC handlers -> application -> domain
+renderer -> preload/window.api -> main IPC handlers -> infrastructure readers
                                                     |
-                                                    -> infrastructure implements application ports
+                                                    -> application (errors) -> domain
 ```
+
+Main wires the concrete infrastructure readers (and the watcher) directly and injects
+them into thin handlers. There are no single-implementation application ports or
+forwarding use-case factories: this viewer commits to the git CLI with no pluggable
+backend, so the port + factory ceremony was removed. The infra/application directional
+boundary still holds — infrastructure may depend on application errors; application
+never depends on infrastructure. Reintroduce a port only when a second implementation
+or a real test seam actually exists.
 
 Dependencies point inward:
 
 ```text
-domain         -> nothing
+domain         -> nothing                                  (currently no files)
 application    -> domain
 infrastructure -> application, domain, node:*
 contracts      -> nothing outside contracts
@@ -22,14 +30,16 @@ preload        -> contracts, electron
 renderer       -> contracts (types/runtime channel contract), renderer-local modules
 ```
 
-Violations are architecture bugs even when the code works. ESLint enforces the major import boundaries in `eslint.config.mjs`.
+The `domain` rows describe the permission boundary that still applies the moment a
+real entity is added; the `src/domain` directory itself is currently absent (see the
+Responsibilities table). Violations are architecture bugs even when the code works. ESLint enforces the major import boundaries in `eslint.config.mjs`.
 
 ## Responsibilities
 
 | Layer          | Location             | Responsibility                                                               |
 | -------------- | -------------------- | ---------------------------------------------------------------------------- |
-| Domain         | `src/domain`         | Business entities and invariants. Pure TypeScript.                           |
-| Application    | `src/application`    | Use cases, output ports, and application-level errors. Pure TypeScript.      |
+| Domain         | `src/domain`         | Business entities and invariants. Pure TypeScript. **Currently absent** — the directory was removed with the behaviorless `Worktree` alias; recreate it only when a real worktree entity with invariants exists. |
+| Application    | `src/application`    | Application-level errors and the canonical commit-change types. Pure TypeScript. |
 | Infrastructure | `src/infrastructure` | Output adapters. The Git CLI implementation and parsing live here.           |
 | Contracts      | `src/contracts`      | IPC channels, request/response DTOs, `Result<T>`, and the preload API type.  |
 | Main           | `src/main`           | Electron lifecycle, composition root, IPC input adapters, DTO/error mapping. |
@@ -40,33 +50,33 @@ Violations are architecture bugs even when the code works. ESLint enforces the m
 
 ```text
 src/
-  domain/
-    worktree/
-      Worktree.ts
+  # domain/ — directory removed (the behaviorless Worktree alias is gone);
+  #           recreate only for a future entity that carries real invariants
 
   application/
     worktrees/
+      commits.ts           # canonical CommitFileChange/Status + UnpushedCommit(s)
       errors/
-      ports/
-        CommitReader.ts
-        DiffReader.ts
-        WorktreeReader.ts
-      use-cases/
-        getUncommittedDiff.ts
-        listUnpushedCommits.ts
-        listWorktrees.ts
+        NotARepositoryError.ts
+        WorktreeNotFoundError.ts
 
   infrastructure/
     git/
       errors/
+      mapWithConcurrency.ts
       parsers/
         commitLogParser.ts
-        porcelainParser.ts
-      readers/
+        porcelainParser.ts   # exports ParsedWorktree (the reader's pre-DTO shape)
+        worktreeSummaryParser.ts
+      readers/               # concrete readers, wired directly by main (no port interface)
         GitCliCommitReader.ts
         GitCliDiffReader.ts
         GitCliWorktreeReader.ts
+        GitCliWorktreeSummaryReader.ts
       runGit.ts
+    watch/
+      ChokidarRepoWatcher.ts # exports RepoWatchTarget/RepoWatchHandle; containsIgnoredSegment
+      recursiveWatch.ts
 
   contracts/
     ipc/
@@ -105,24 +115,44 @@ src/
   renderer/
     src/
       app/
+        App.tsx              # composition boundary: maps diffModel.files -> ChangedFileItem[],
+                             # owns the scroll-container ref injected into AppShell + DiffView
+        app-shell/           # attaches the scroll-container ref to the scrollable <main>
+        workspace/
+        hooks/
+          useDiffNavigation.ts  # model-identity reset during render (no synchronous effect)
+        changedFileItems.ts  # toChangedFileItems(): DiffFileModel[] -> ChangedFileItem[]
       features/
         diff-viewer/
-        repository-picker/
+          index.tsx          # collapse state reset via a React key on model identity
+          hooks/
+            useActiveFileScrollSpy.ts  # injected scrollContainerRef param
+            useScrollToSection.ts      # command hook (no pending-scroll state)
         repository-sidebar/
         worktree-detail-sidebar/
         worktree-browser/
+          index.ts           # thin facade composing the three resource hooks
+          hooks/
+            useRepositoryCatalog.ts       # repo path, worktrees, summaries, open/refresh
+            useSelectedWorktreeDetails.ts  # selection, diff, commits
+            useRepositoryWatcher.ts        # watch start/stop + repo:changed subscription
+            useLatestRequest.ts            # latest-wins freshness guard
         worktree-list/
+          changed-file-item.ts  # neutral ChangedFileItem model (no diff-viewer import)
       shared/
         api/
+        ui/
+          diff-stat/          # emphasis variant ("muted") — owns its own presentation
+          segmented-control/  # density variant ("compact") — owns its own presentation
       styles/
 ```
 
 ## Boundary rules
 
 1. Domain and application code must not import `electron`, `node:*`, React, contracts, or outer layers.
-2. Infrastructure implements application ports. It must not be imported by application or domain.
-3. `src/main/bootstrap/compositionRoot.ts` is the only place that constructs concrete Git adapters and injects them into use cases.
-4. Domain entities never cross IPC. Main IPC mappers convert them into contract DTOs.
+2. Infrastructure provides the concrete readers/watcher. It may import application errors and the canonical commit types; it must not be imported by application or domain, and must not import contracts.
+3. `src/main/bootstrap/compositionRoot.ts` is the only place that constructs the concrete readers/watcher and injects them into handlers.
+4. Reader/application entities never cross IPC. Main IPC mappers convert them into contract DTOs (`ParsedWorktree`/`WorktreeSummary`/`UnpushedCommits` -> DTOs).
 5. IPC handlers catch all failures and return `Result<T>` envelopes.
 6. `src/preload/index.ts` is the only file that imports `ipcRenderer`.
 7. Renderer code accesses IPC only through `src/renderer/src/shared/api/desktopApi.ts`.
@@ -139,8 +169,12 @@ src/
 
 ## Testing strategy
 
-- Domain/application: unit tests with fake port implementations, without Electron or child processes.
+- Application: pure unit tests of errors and shared types, without Electron or child processes.
 - Git parsers: pure fixture-based tests.
 - Git readers: integration tests against temporary repositories, skipped if Git is unavailable.
 - Main IPC mappers/handlers: focused unit tests when mapping or branching behavior grows.
 - Renderer: component tests stub `window.api`, including errors and empty-diff behavior.
+
+The planned renderer module boundaries, state migration, shared UI extraction criteria,
+and responsive layout contract are documented in
+[`renderer-refactoring.md`](renderer-refactoring.md).

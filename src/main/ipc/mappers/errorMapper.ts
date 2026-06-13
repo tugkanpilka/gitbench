@@ -1,7 +1,6 @@
 import { NotARepositoryError } from '../../../application/worktrees/errors/NotARepositoryError';
 import { WorktreeNotFoundError } from '../../../application/worktrees/errors/WorktreeNotFoundError';
-import type { ErrorDto } from '../../../contracts/ipc';
-import { ERROR_CODES } from '../../../contracts/ipc/errors';
+import { ERROR_CODES, type ErrorDto } from '../../../contracts/ipc';
 import { GitCommandFailedError } from '../../../infrastructure/git/errors/GitCommandFailedError';
 import { GitNotInstalledError } from '../../../infrastructure/git/errors/GitNotInstalledError';
 

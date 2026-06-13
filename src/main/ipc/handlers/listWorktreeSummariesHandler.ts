@@ -8,11 +8,13 @@ import { handle } from '../handle';
 import { toWorktreeSummaryDto } from '../mappers/worktreeSummaryMapper';
 
 export function registerListWorktreeSummariesHandler({
-  listWorktreeSummaries,
-}: Pick<ApplicationServices, 'listWorktreeSummaries'>): void {
+  worktreeSummaryReader,
+}: Pick<ApplicationServices, 'worktreeSummaryReader'>): void {
   handle<ListWorktreeSummariesRequest, ListWorktreeSummariesResponse>(
     IPC_CHANNELS.listWorktreeSummaries,
     async (request) =>
-      (await listWorktreeSummaries(request.worktreePaths)).map(toWorktreeSummaryDto)
+      (await worktreeSummaryReader.listWorktreeSummaries(request.worktreePaths)).map(
+        toWorktreeSummaryDto
+      )
   );
 }

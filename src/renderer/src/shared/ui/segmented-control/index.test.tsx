@@ -42,4 +42,23 @@ describe('SegmentedControl', () => {
     expect(onChange).toHaveBeenLastCalledWith('split');
     expect(document.activeElement).toBe(screen.getByRole('radio', { name: 'Split' }));
   });
+
+  it('applies its own compact-density class without relying on a parent override', () => {
+    const { container } = render(
+      <SegmentedControl
+        ariaLabel="Diff layout"
+        density="compact"
+        items={[
+          { value: 'unified', label: 'Unified' },
+          { value: 'split', label: 'Split' },
+        ]}
+        value="unified"
+        onChange={vi.fn()}
+      />
+    );
+
+    const root = container.querySelector('[role="radiogroup"]');
+    const compactClass = [...(root?.classList ?? [])].find((name) => name.includes('compact'));
+    expect(compactClass).toBeDefined();
+  });
 });

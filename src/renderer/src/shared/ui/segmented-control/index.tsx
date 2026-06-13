@@ -23,8 +23,13 @@ export function SegmentedControl<T extends string>({
   value,
   onChange,
   className,
+  density = 'comfortable',
 }: SegmentedControlProps<T>) {
-  const classes = cx(styles['gb-segmented-control'], className);
+  const classes = cx(
+    styles['gb-segmented-control'],
+    density === 'compact' && styles['gb-segmented-control--compact'],
+    className
+  );
   const containerRef = useRef<HTMLDivElement>(null);
   const [indicatorStyle, setIndicatorStyle] = useState<{
     left: number;

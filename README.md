@@ -92,11 +92,12 @@ renderer → preload (window.api) → main IPC handlers → application → doma
 
 Details live in `agent_docs/`:
 
-| Document                                                   | Covers                                                            |
-| ---------------------------------------------------------- | ----------------------------------------------------------------- |
-| [`agent_docs/architecture.md`](agent_docs/architecture.md) | Layer rules, import matrix, directory layout, testing strategy    |
-| [`agent_docs/ipc-contract.md`](agent_docs/ipc-contract.md) | Channels, DTOs, error codes, how to add a channel                 |
-| [`agent_docs/git-notes.md`](agent_docs/git-notes.md)       | How git is spawned, output parsing, error classification, gotchas |
+| Document                                                                   | Covers                                                            |
+| -------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| [`agent_docs/architecture.md`](agent_docs/architecture.md)                 | Layer rules, import matrix, directory layout, testing strategy    |
+| [`agent_docs/renderer-refactoring.md`](agent_docs/renderer-refactoring.md) | Renderer state, feature boundaries, shared UI, migration plan     |
+| [`agent_docs/ipc-contract.md`](agent_docs/ipc-contract.md)                 | Channels, DTOs, error codes, how to add a channel                 |
+| [`agent_docs/git-notes.md`](agent_docs/git-notes.md)                       | How git is spawned, output parsing, error classification, gotchas |
 
 ## How GitBench talks to Git
 

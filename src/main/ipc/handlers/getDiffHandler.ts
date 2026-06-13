@@ -3,10 +3,10 @@ import type { ApplicationServices } from '../../bootstrap/compositionRoot';
 import { handle } from '../handle';
 
 export function registerGetDiffHandler({
-  getUncommittedDiff,
-}: Pick<ApplicationServices, 'getUncommittedDiff'>): void {
+  diffReader,
+}: Pick<ApplicationServices, 'diffReader'>): void {
   // "" is a valid clean-worktree diff and travels as a success Result.
   handle<GetDiffRequest, GetDiffResponse>(IPC_CHANNELS.getDiff, async (request) => ({
-    diffText: await getUncommittedDiff(request.worktreePath),
+    diffText: await diffReader.getUncommittedDiff(request.worktreePath),
   }));
 }

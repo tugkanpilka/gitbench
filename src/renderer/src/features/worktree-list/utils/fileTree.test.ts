@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
+import { toChangedFileItems } from '../../../app/changedFileItems';
 import { buildDiffModel } from '../../diff-viewer/utils/diffModel';
-import { buildFileTree, directoryPathsForFile } from './fileTree';
+import { buildFileTree, directoryPathsForDirectory } from './fileTree';
 
-const FILES = buildDiffModel(`diff --git a/src/components/Button.tsx b/src/components/Button.tsx
+const FILES = toChangedFileItems(
+  buildDiffModel(`diff --git a/src/components/Button.tsx b/src/components/Button.tsx
 index 1111111..2222222 100644
 --- a/src/components/Button.tsx
 +++ b/src/components/Button.tsx
@@ -24,7 +26,8 @@ index 5555555..6666666 100644
 @@ -1 +1,2 @@
  # GitBench
 +Worktree diff viewer
-`).files;
+`).files
+);
 
 describe('fileTree', () => {
   it('groups files into nested directories while retaining root files', () => {
@@ -39,8 +42,8 @@ describe('fileTree', () => {
     ]);
   });
 
-  it('returns every ancestor path for an active file', () => {
-    expect(directoryPathsForFile(FILES[0])).toEqual(['src/', 'src/components/']);
-    expect(directoryPathsForFile(FILES[2])).toEqual([]);
+  it('returns every ancestor path for a file directory', () => {
+    expect(directoryPathsForDirectory(FILES[0].path.directory)).toEqual(['src/', 'src/components/']);
+    expect(directoryPathsForDirectory(FILES[2].path.directory)).toEqual([]);
   });
 });

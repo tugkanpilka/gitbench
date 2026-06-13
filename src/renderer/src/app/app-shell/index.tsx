@@ -5,6 +5,7 @@ export function AppShell({
   repositorySidebar,
   detailSidebar,
   repositorySidebarOpen,
+  scrollContainerRef,
   children,
 }: AppShellProps) {
   return (
@@ -22,7 +23,9 @@ export function AppShell({
           {detailSidebar}
         </aside>
       </div>
-      <main className={styles['app-shell__content']}>{children}</main>
+      <main ref={scrollContainerRef} className={styles['app-shell__content']}>
+        {children}
+      </main>
     </div>
   );
 }

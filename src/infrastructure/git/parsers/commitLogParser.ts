@@ -2,7 +2,7 @@ import type {
   CommitFileChange,
   CommitFileChangeStatus,
   UnpushedCommit,
-} from '../../../application/worktrees/ports/CommitReader';
+} from '../../../application/worktrees/commits';
 
 // Control-character separators embedded via git's `--format=%x1e/%x1f`. Git does NOT
 // strip these bytes from metadata (a crafted subject can contain them), so each record

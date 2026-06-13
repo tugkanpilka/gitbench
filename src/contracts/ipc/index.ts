@@ -8,7 +8,8 @@ export type {
   ListUnpushedCommitsResponse,
 } from './commits';
 export type { GetDiffRequest, GetDiffResponse } from './diff';
-export type { ErrorDto } from './errors';
+export { ERROR_CODES } from './errors';
+export type { ErrorCode, ErrorDto } from './errors';
 export type { PickRepositoryResponse } from './repository';
 export type { Result } from './result';
 export type { StartWatchRequest } from './watch';

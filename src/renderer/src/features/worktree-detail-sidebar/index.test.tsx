@@ -3,11 +3,13 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { CommitDto } from '../../../../contracts/ipc';
+import { toChangedFileItems } from '../../app/changedFileItems';
 import { MAIN_WORKTREE } from '../../test/fixtures';
 import { buildDiffModel } from '../diff-viewer/utils/diffModel';
 import { WorktreeDetailSidebar } from '.';
 
-const FILES = buildDiffModel(`diff --git a/src/a.ts b/src/a.ts
+const FILES = toChangedFileItems(
+  buildDiffModel(`diff --git a/src/a.ts b/src/a.ts
 new file mode 100644
 index 0000000..1111111
 --- /dev/null
@@ -28,7 +30,8 @@ index 1111111..0000000
 +++ /dev/null
 @@ -1 +0,0 @@
 -export const old = true;
-`).files;
+`).files
+);
 
 const UNPUSHED_COMMIT: CommitDto = {
   sha: 'c'.repeat(40),

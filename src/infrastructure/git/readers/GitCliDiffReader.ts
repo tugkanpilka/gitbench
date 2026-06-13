@@ -1,11 +1,11 @@
-import type { DiffReader } from '../../../application/worktrees/ports/DiffReader';
 import { GitCommandFailedError } from '../errors/GitCommandFailedError';
+import { mapWithConcurrency } from '../mapWithConcurrency';
 import { refResolves } from '../refResolves';
 import { runGit } from '../runGit';
 
 const UNTRACKED_DIFF_CONCURRENCY = 8;
 
-export class GitCliDiffReader implements DiffReader {
+export class GitCliDiffReader {
   async getUncommittedDiff(worktreePath: string): Promise<string> {
     await this.assertHeadExists(worktreePath);
     // `diff HEAD` covers staged + unstaged tracked paths. Untracked paths need
@@ -23,13 +23,11 @@ export class GitCliDiffReader implements DiffReader {
       return trackedDiff;
     }
 
-    const untrackedDiffs: string[] = [];
-    for (let offset = 0; offset < untrackedPaths.length; offset += UNTRACKED_DIFF_CONCURRENCY) {
-      const batch = untrackedPaths.slice(offset, offset + UNTRACKED_DIFF_CONCURRENCY);
-      untrackedDiffs.push(
-        ...(await Promise.all(batch.map((path) => this.getUntrackedFileDiff(worktreePath, path))))
-      );
-    }
+    const untrackedDiffs = await mapWithConcurrency(
+      untrackedPaths,
+      UNTRACKED_DIFF_CONCURRENCY,
+      (path) => this.getUntrackedFileDiff(worktreePath, path)
+    );
 
     return trackedDiff + untrackedDiffs.join('');
   }
