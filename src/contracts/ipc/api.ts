@@ -18,4 +18,6 @@ export interface DesktopApi {
   addRecentRepo(request: AddRecentRepoRequest): Promise<Result<null>>;
   /** Subscribe to the "repo changed, re-query now" signal. Returns an unsubscribe fn. */
   onRepoChanged(listener: () => void): () => void;
+  /** Subscribe to the OS native theme change signal. Returns an unsubscribe fn. */
+  onNativeThemeChanged(listener: () => void): () => void;
 }

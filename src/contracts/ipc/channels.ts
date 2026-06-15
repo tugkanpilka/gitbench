@@ -7,8 +7,9 @@ export const IPC_CHANNELS = {
   // Watch lifecycle: renderer -> main, request/response.
   startWatch: 'watch:start',
   stopWatch: 'watch:stop',
-  // Change signal: main -> renderer, push event with no payload ("re-query now").
+  // Change signals: main -> renderer, push events with no payload ("re-query now").
   repoChanged: 'repo:changed',
+  nativeThemeChanged: 'theme:nativeChanged',
   listRecentRepos: 'recentRepos:list',
   addRecentRepo: 'recentRepos:add',
 } as const;

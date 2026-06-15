@@ -44,6 +44,13 @@ const api: DesktopApi = {
       ipcRenderer.removeListener(IPC_CHANNELS.repoChanged, wrapped);
     };
   },
+  onNativeThemeChanged: (listener: () => void): (() => void) => {
+    const wrapped = (): void => listener();
+    ipcRenderer.on(IPC_CHANNELS.nativeThemeChanged, wrapped);
+    return () => {
+      ipcRenderer.removeListener(IPC_CHANNELS.nativeThemeChanged, wrapped);
+    };
+  },
 };
 
 contextBridge.exposeInMainWorld('api', api);

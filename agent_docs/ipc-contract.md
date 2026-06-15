@@ -166,8 +166,14 @@ Error mapping lives in `src/main/ipc/mappers/errorMapper.ts` (it imports `ERROR_
 
 ### `repo:changed` (push: main -> renderer)
 
-- This is the **only** main-initiated channel; every other channel is renderer-initiated request/response.
-- **No payload and not a `Result` envelope** — it is a debounced "something changed, re-query now" signal, not data. The renderer responds by re-invoking `worktrees:list`, `worktrees:summaries`, and the selected `diff:get` / `commits:unpushed` queries. Git stays the single source of truth; the watcher never computes data itself.
+- Push event — no payload, no `Result` envelope.
+- Debounced "something changed, re-query now" signal. The renderer re-invokes `worktrees:list`, `worktrees:summaries`, and the selected `diff:get` / `commits:unpushed` queries. Git stays the single source of truth.
+
+### `theme:nativeChanged` (push: main -> renderer)
+
+- Push event — no payload, no `Result` envelope.
+- Emitted by the main process whenever `nativeTheme.updated` fires (i.e. the OS light/dark appearance changes). `window.matchMedia('prefers-color-scheme')` change events are unreliable in Electron's renderer; this channel is the authoritative signal.
+- The renderer responds by re-evaluating the active `system/light/dark` preference and updating `data-theme` on `<html>` accordingly. No data is sent — the renderer reads `window.matchMedia` itself to determine the new OS preference.
 
 ## Preload
 
@@ -182,14 +188,15 @@ interface DesktopApi {
   listUnpushedCommits(worktreePath: string): Promise<Result<ListUnpushedCommitsResponse>>;
   startWatch(repoPath: string, worktreePaths: string[]): Promise<Result<null>>;
   stopWatch(): Promise<Result<null>>;
-  onRepoChanged(listener: () => void): () => void; // returns an unsubscribe fn
+  onRepoChanged(listener: () => void): () => void;        // returns an unsubscribe fn
+  onNativeThemeChanged(listener: () => void): () => void; // returns an unsubscribe fn
 }
 ```
 
-`onRepoChanged` is the one non-`Promise` member: it subscribes to the `repo:changed`
-push event via `ipcRenderer.on` and returns an unsubscribe function. The listener
-receives no arguments — the preload wrapper strips Electron's event object, which is
-not structured-clone-safe.
+`onRepoChanged` and `onNativeThemeChanged` are the two non-`Promise` members: they
+subscribe to push events via `ipcRenderer.on` and return an unsubscribe function.
+Listeners receive no arguments — the preload wrapper strips Electron's `IpcRendererEvent`,
+which is not structured-clone-safe.
 
 `contextIsolation: true` and `nodeIntegration: false` are non-negotiable.
 

@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { APP_PREFERENCES_STORAGE_KEY } from '../../shared/preferences/appPreferences';
+import { stubApi } from '../../test/fixtures';
 import { installMemoryStorage } from '../../test/installMemoryStorage';
 import { useAppPreferences } from './useAppPreferences';
 
@@ -38,6 +39,7 @@ function storedPreferences(): unknown {
 describe('useAppPreferences', () => {
   beforeEach(() => {
     installMemoryStorage();
+    stubApi();
     delete document.documentElement.dataset.theme;
   });
 
