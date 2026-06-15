@@ -34,6 +34,7 @@ Layer rules, import matrix, directory layout: `agent_docs/architecture.md`.
 5. Git is spawned only through `src/infrastructure/git/runGit.ts`, with argument arrays. Never interpolate a path into a shell string.
 6. `diffText === ""` is a valid success state ("clean worktree"), never an error.
 7. Worktrees render as a **flat list** — `git worktree list` returns sibling checkouts, not a hierarchy. Tree UI is reserved for changed files _within_ a worktree, if that view is ever added.
+8. JSX describes _what_ renders, not _how_ it is decided. No control-flow operators in markup for conditional rendering — no `&&`, ternary, or whole-component early-return to choose output. Use `<Switch>/<Match>` (first-match-wins) for mutually-exclusive states and `<Visibility>` for show/hide, so exclusivity is structural rather than maintained by hand-written guards. Primitives live in `src/renderer/src/shared/ui`. Rationale and worked example: `agent_docs/architecture.md`.
 
 ## Read this before touching that
 
@@ -42,6 +43,7 @@ Layer rules, import matrix, directory layout: `agent_docs/architecture.md`.
 | IPC channels, DTOs, error codes             | `agent_docs/ipc-contract.md` |
 | Anything that runs git or parses git output | `agent_docs/git-notes.md`    |
 | Layer boundaries, new modules, imports      | `agent_docs/architecture.md` |
+| Renderer markup / conditional rendering     | `agent_docs/architecture.md` |
 
 ## Open decisions — surface them, do not decide silently
 

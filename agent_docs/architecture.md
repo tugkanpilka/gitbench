@@ -166,6 +166,67 @@ src/
 3. **Result envelopes instead of cross-process exceptions.** Electron IPC does not preserve custom `Error` instances.
 4. **Empty diff is data.** `diffText === ""` is the successful clean-worktree state.
 5. **Contracts are explicit.** Channel names and transport shapes live together under `src/contracts/ipc`.
+6. **Declarative rendering in the renderer.** Conditional rendering uses `<Switch>/<Match>` and `<Visibility>`, not control-flow operators, so JSX reads as _what_ renders and exclusivity is structural. See [Renderer: declarative rendering](#renderer-declarative-rendering).
+
+## Renderer: declarative rendering
+
+Conditional rendering in JSX is expressed through named components, never control-flow
+operators (`&&`, ternary, or whole-component early-return that chooses output). This is a
+readability contract, and it rests on two principles:
+
+1. **Markup describes _what_ is on screen, not _how_ it is decided.** Operators embed
+   logic into the markup — the reader has to mentally execute it to know what renders.
+   Named components turn that logic into a vocabulary you read top to bottom.
+2. **Mutually-exclusive states must be structurally exclusive.** When exclusivity is
+   maintained by hand-written negative guards (`!error && !loading && !empty`), it is
+   fragile: add a state and every sibling guard must change, and the relationship between
+   branches is invisible. A first-match-wins `<Switch>` makes "exactly one of these, in
+   priority order" a structural guarantee instead of something reconstructed from guards.
+
+Primitives live in `src/renderer/src/shared/ui`:
+
+- `<Visibility isVisible>` — show/hide a single subtree. Use this, not a one-armed
+  `<Switch>`, for plain show/hide.
+- `<Switch>` / `<Match when>` — choose one of several. `Switch` renders only the first
+  `<Match>` whose `when` is true; `Match` is a marker and `Switch` owns the selection.
+  The last branch is the default (`when={true}`). Because selection is first-match-wins,
+  branches carry **no** mutual-exclusion guards.
+
+```tsx
+export function Switch({ children }: { children: ReactNode }) {
+  const branches = Children.toArray(children).filter(isValidElement) as ReactElement<MatchProps>[];
+  return branches.find((branch) => branch.props.when) ?? null;
+}
+```
+
+**Why the first-match-wins semantics matter.** The original `Workspace` chained four
+guarded `&&`s:
+
+```tsx
+{error && <Error />}
+{diffLoading && !error && <Loading />}
+{!hasDiff && !diffLoading && !error && <Placeholder />}
+{hasDiff && !error && <DiffView />}
+```
+
+A naive `<Switch>` that renders _all_ its children does not fix this — dropping the
+guards would render both `<Error />` and `<Loading />` when both flags are true (a silent
+behavior change). First-match-wins is precisely what lets the guards disappear without
+changing behavior:
+
+```tsx
+<Switch>
+  <Match when={!!error}><Error /></Match>
+  <Match when={diffLoading}><Loading /></Match>
+  <Match when={!hasDiff}><Placeholder /></Match>
+  <Match when={true}><DiffView /></Match>
+</Switch>
+```
+
+**Judgment, not dogma.** The rule serves readability; apply it that way. Where two
+branches are each a full subtree, a `<Switch>` with two `<Match>`es is the form — but the
+goal is always "the markup reads as a description of the screen", so prefer the shape
+that makes the states most legible.
 
 ## Testing strategy
 
