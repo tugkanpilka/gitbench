@@ -3,6 +3,7 @@ import type { RefCallback } from 'react';
 import 'react-diff-view/style/index.css';
 
 import { toggledSet } from '../../shared/collections/toggledSet';
+import { Match, Switch } from '../../shared/ui/switch';
 import { DiffFileSection } from './diff-file-section';
 import { useScrollToSection } from './hooks/useScrollToSection';
 import { useActiveFileScrollSpy } from './hooks/useActiveFileScrollSpy';
@@ -18,34 +19,34 @@ export function DiffView({
   scrollContainerRef,
   onActiveFileChange,
 }: DiffViewProps) {
-  if (clean) {
-    return (
-      <div className={styles['diff-view']}>
-        <div className={styles['diff-view__clean']}>Worktree is clean; no uncommitted changes.</div>
-      </div>
-    );
-  }
-
-  if (model.files.length === 0) {
-    return (
-      <div className={styles['diff-view']}>
-        <div className={styles['diff-view__empty']}>No diff to display.</div>
-      </div>
-    );
-  }
-
   // A new diff is a new logical instance: keying the content on model identity resets
   // the collapse/scroll state below without a synchronous reset effect. `instanceKey`
   // increments whenever the model reference changes (App rebuilds it per diff).
   return (
-    <DiffViewContent
-      key={instanceKey(model)}
-      model={model}
-      viewType={viewType}
-      navigationTarget={navigationTarget}
-      scrollContainerRef={scrollContainerRef}
-      onActiveFileChange={onActiveFileChange}
-    />
+    <Switch>
+      <Match when={clean}>
+        <div className={styles['diff-view']}>
+          <div className={styles['diff-view__clean']}>
+            Worktree is clean; no uncommitted changes.
+          </div>
+        </div>
+      </Match>
+      <Match when={model.files.length === 0}>
+        <div className={styles['diff-view']}>
+          <div className={styles['diff-view__empty']}>No diff to display.</div>
+        </div>
+      </Match>
+      <Match when={true}>
+        <DiffViewContent
+          key={instanceKey(model)}
+          model={model}
+          viewType={viewType}
+          navigationTarget={navigationTarget}
+          scrollContainerRef={scrollContainerRef}
+          onActiveFileChange={onActiveFileChange}
+        />
+      </Match>
+    </Switch>
   );
 }
 

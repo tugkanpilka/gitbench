@@ -1,5 +1,8 @@
 import { useMemo } from 'react';
 
+import { cx } from '../../../shared/ui/cx';
+import { Match, Switch } from '../../../shared/ui/switch';
+import { Visibility } from '../../../shared/ui/visibility';
 import type { ChangedFileItem } from '../changed-file-item';
 import { FileListProvider } from '../file-list-context';
 import { FileNavigationList } from '../file-navigation-list';
@@ -58,29 +61,35 @@ export function ChangedFilesSection({
         <h2 className={styles['worktree-files-section__label']}>Changes</h2>
         <span className={styles['worktree-file-group__count']}>{changedFiles.length}</span>
       </header>
-      {changedFiles.length === 0 ? (
-        <p className={styles['worktree-files-section__empty']}>No uncommitted changes.</p>
-      ) : (
-        groups.map((group) => (
-          <div key={group.key} className={styles['worktree-file-group']}>
-            {isGrouped && (
-              <div
-                className={`${styles['worktree-file-group__header']} ${styles[`worktree-file-group__header--${group.key}`]}`}
+      <Switch>
+        <Match when={changedFiles.length === 0}>
+          <p className={styles['worktree-files-section__empty']}>No uncommitted changes.</p>
+        </Match>
+        <Match when={true}>
+          {groups.map((group) => (
+            <div key={group.key} className={styles['worktree-file-group']}>
+              <Visibility isVisible={isGrouped}>
+                <div
+                  className={cx(
+                    styles['worktree-file-group__header'],
+                    styles[`worktree-file-group__header--${group.key}`]
+                  )}
+                >
+                  <span>{group.label}</span>
+                  <span className={styles['worktree-file-group__count']}>{group.files.length}</span>
+                </div>
+              </Visibility>
+              <FileListProvider
+                files={group.files}
+                activeFileId={activeFileId}
+                onSelectFile={onSelectFile}
               >
-                <span>{group.label}</span>
-                <span className={styles['worktree-file-group__count']}>{group.files.length}</span>
-              </div>
-            )}
-            <FileListProvider
-              files={group.files}
-              activeFileId={activeFileId}
-              onSelectFile={onSelectFile}
-            >
-              <FileNavigationList files={group.files} mode={fileListMode} />
-            </FileListProvider>
-          </div>
-        ))
-      )}
+                <FileNavigationList files={group.files} mode={fileListMode} />
+              </FileListProvider>
+            </div>
+          ))}
+        </Match>
+      </Switch>
     </section>
   );
 }

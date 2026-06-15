@@ -1,3 +1,5 @@
+import { cx } from '../../../shared/ui/cx';
+import { Match, Switch } from '../../../shared/ui/switch';
 import { DiffStat, diffStatLabel } from '../../../shared/ui/diff-stat';
 import { useFileListContext } from '../file-list-context';
 import { changedFileStatusBadge, directoryLabel } from '../file-status';
@@ -17,30 +19,32 @@ export function FileNavigationRow({ file, depth, showDirectory }: FileNavigation
     <li>
       <button
         type="button"
-        className={`${styles['file-navigation-row']} ${
-          showDirectory ? styles['file-navigation-row--flat'] : ''
-        }`}
+        className={cx(
+          styles['file-navigation-row'],
+          showDirectory && styles['file-navigation-row--flat']
+        )}
         aria-label={`${path}, ${diffStatLabel(file.additions, file.deletions)}`}
         aria-current={active ? 'location' : undefined}
         style={{ paddingLeft: treeRowIndent(depth) }}
         onClick={() => onSelectFile(file.id)}
       >
-        {showDirectory ? (
-          <FlatFileRowContent
-            status={changedFileStatusBadge(file.status)}
-            name={file.path.name}
-            nameTitle={path}
-            directory={directory}
-            trailing={
-              <DiffStat
-                additions={file.additions}
-                deletions={file.deletions}
-                className={styles['file-navigation-row__diff-stat']}
-              />
-            }
-          />
-        ) : (
-          <>
+        <Switch>
+          <Match when={showDirectory}>
+            <FlatFileRowContent
+              status={changedFileStatusBadge(file.status)}
+              name={file.path.name}
+              nameTitle={path}
+              directory={directory}
+              trailing={
+                <DiffStat
+                  additions={file.additions}
+                  deletions={file.deletions}
+                  className={styles['file-navigation-row__diff-stat']}
+                />
+              }
+            />
+          </Match>
+          <Match when={true}>
             <IndentGuides depth={depth} />
             <span className={styles['file-navigation-row__path']} title={path}>
               <FileIcon name={file.path.name} />
@@ -52,8 +56,8 @@ export function FileNavigationRow({ file, depth, showDirectory }: FileNavigation
               emphasis="muted"
               className={styles['file-navigation-row__diff-stat']}
             />
-          </>
-        )}
+          </Match>
+        </Switch>
       </button>
     </li>
   );

@@ -1,5 +1,6 @@
 import gitbenchIcon from '../../assets/gitbench-icon.svg';
 import { Button } from '../../shared/ui/button';
+import { Visibility } from '../../shared/ui/visibility';
 import type { WelcomeScreenProps } from './index.types';
 import styles from './index.module.scss';
 
@@ -38,11 +39,11 @@ export function WelcomeScreen({ loading, error, onOpenRepository }: WelcomeScree
           {loading ? 'Opening repository…' : 'Open Repository…'}
         </Button>
 
-        {error && (
+        <Visibility isVisible={!!error}>
           <div className={styles['welcome-card__error']} role="alert">
             {error}
           </div>
-        )}
+        </Visibility>
 
         <p className={styles['welcome-card__hint']}>
           Select a local Git repository to get started.
