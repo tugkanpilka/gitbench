@@ -16,15 +16,14 @@ import { useWorktreeBrowser } from '.';
 type BrowserApi = ReturnType<typeof useWorktreeBrowser>;
 
 function formatDiff(browser: BrowserApi): string {
-  return browser.diff === null
-    ? '(none)'
-    : `${browser.diff.worktreePath}:${browser.diff.diffText}`;
+  return browser.diff === null ? '(none)' : `${browser.diff.worktreePath}:${browser.diff.diffText}`;
 }
 
 // eslint-disable-next-line max-lines-per-function
 function BrowserStatus({ browser }: { browser: BrowserApi }) {
   const paths = browser.worktrees.map((wt) => wt.path).join(',') || '(empty)';
-  const sums = browser.summaries.map((s) => `${s.worktreePath}:${s.fileCount}`).join(',') || '(empty)';
+  const sums =
+    browser.summaries.map((s) => `${s.worktreePath}:${s.fileCount}`).join(',') || '(empty)';
   return (
     <>
       <output aria-label="Repository">{browser.repoPath ?? '(none)'}</output>
@@ -39,15 +38,24 @@ function BrowserStatus({ browser }: { browser: BrowserApi }) {
   );
 }
 
+// eslint-disable-next-line max-lines-per-function -- test harness; four buttons inflate JSX line count
 function BrowserHarness() {
   const browser = useWorktreeBrowser();
   return (
     <>
       <BrowserStatus browser={browser} />
-      <button type="button" onClick={() => void browser.pickRepository()}>Pick repository</button>
-      <button type="button" onClick={() => void browser.refreshRepository()}>Refresh repository</button>
-      <button type="button" onClick={() => void browser.selectWorktree(MAIN_WORKTREE.path)}>Select main</button>
-      <button type="button" onClick={() => void browser.selectWorktree(FEATURE_WORKTREE.path)}>Select feature</button>
+      <button type="button" onClick={() => void browser.pickRepository()}>
+        Pick repository
+      </button>
+      <button type="button" onClick={() => void browser.refreshRepository()}>
+        Refresh repository
+      </button>
+      <button type="button" onClick={() => void browser.selectWorktree(MAIN_WORKTREE.path)}>
+        Select main
+      </button>
+      <button type="button" onClick={() => void browser.selectWorktree(FEATURE_WORKTREE.path)}>
+        Select feature
+      </button>
     </>
   );
 }
@@ -118,7 +126,12 @@ function stubRefreshAddsWorktree(): void {
 
 function stubSignalCapture(): { getSignal: () => () => void } {
   let signal!: () => void;
-  stubApi({ onRepoChanged: vi.fn().mockImplementation((fn: () => void) => { signal = fn; return () => {}; }) });
+  stubApi({
+    onRepoChanged: vi.fn().mockImplementation((fn: () => void) => {
+      signal = fn;
+      return () => {};
+    }),
+  });
   return { getSignal: () => signal };
 }
 
@@ -146,18 +159,23 @@ describe('useWorktreeBrowser', () => {
     cleanup();
   });
 
+  // eslint-disable-next-line max-lines-per-function -- test body; two sequential act() steps are required to race diffs
   it('shows only the most recently selected worktree diff when requests race', async () => {
     const { featureDiff, mainDiff } = stubRacingFeatureMain();
     render(<BrowserHarness />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Select feature' }));
     fireEvent.click(screen.getByRole('button', { name: 'Select main' }));
-    await act(async () => { mainDiff.resolve(okResult({ diffText: 'main changes' })); });
+    await act(async () => {
+      mainDiff.resolve(okResult({ diffText: 'main changes' }));
+    });
 
     expect(screen.getByLabelText('Diff').textContent).toBe('/repo:main changes');
     expect(screen.getByLabelText('Diff loading').textContent).toBe('false');
 
-    await act(async () => { featureDiff.resolve(okResult({ diffText: 'stale feature changes' })); });
+    await act(async () => {
+      featureDiff.resolve(okResult({ diffText: 'stale feature changes' }));
+    });
 
     expect(screen.getByLabelText('Diff').textContent).toBe('/repo:main changes');
     expect(screen.getByLabelText('Selected').textContent).toBe('/repo');
@@ -170,27 +188,36 @@ describe('useWorktreeBrowser', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Select feature' }));
     fireEvent.click(screen.getByRole('button', { name: 'Select main' }));
-    await act(async () => { mainDiff.resolve(okResult({ diffText: 'main changes' })); });
+    await act(async () => {
+      mainDiff.resolve(okResult({ diffText: 'main changes' }));
+    });
 
-    await act(async () => { featureDiff.resolve(failResult('GIT_COMMAND_FAILED', 'Late failure.')); });
+    await act(async () => {
+      featureDiff.resolve(failResult('GIT_COMMAND_FAILED', 'Late failure.'));
+    });
 
     expect(screen.getByLabelText('Error').textContent).toBe('(none)');
     expect(screen.getByLabelText('Diff').textContent).toBe('/repo:main changes');
     expect(screen.getByLabelText('Diff loading').textContent).toBe('false');
   });
 
+  // eslint-disable-next-line max-lines-per-function -- test body; two sequential act() steps are required to race diffs
   it('ignores a stale result when the same worktree is re-selected before it resolves', async () => {
     const { firstDiff, secondDiff } = stubRacingMainMain();
     render(<BrowserHarness />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Select main' }));
     fireEvent.click(screen.getByRole('button', { name: 'Select main' }));
-    await act(async () => { secondDiff.resolve(okResult({ diffText: 'fresh main changes' })); });
+    await act(async () => {
+      secondDiff.resolve(okResult({ diffText: 'fresh main changes' }));
+    });
 
     expect(screen.getByLabelText('Diff').textContent).toBe('/repo:fresh main changes');
     expect(screen.getByLabelText('Diff loading').textContent).toBe('false');
 
-    await act(async () => { firstDiff.resolve(okResult({ diffText: 'stale main changes' })); });
+    await act(async () => {
+      firstDiff.resolve(okResult({ diffText: 'stale main changes' }));
+    });
 
     expect(screen.getByLabelText('Diff').textContent).toBe('/repo:fresh main changes');
     expect(screen.getByLabelText('Error').textContent).toBe('(none)');
@@ -228,6 +255,7 @@ describe('useWorktreeBrowser', () => {
     expect(window.api.listWorktrees).toHaveBeenCalledTimes(1);
   });
 
+  // eslint-disable-next-line max-lines-per-function -- test body; multiple sequential user interactions required
   it('opening a new repository resets the selection and discards the in-flight diff', async () => {
     const pendingDiff = stubTwoPicksWithPendingDiff();
     render(<BrowserHarness />);
@@ -241,7 +269,9 @@ describe('useWorktreeBrowser', () => {
     expect(screen.getByLabelText('Selected').textContent).toBe('(none)');
     expect(screen.getByLabelText('Diff loading').textContent).toBe('false');
 
-    await act(async () => { pendingDiff.resolve(okResult({ diffText: 'stale diff from the old repository' })); });
+    await act(async () => {
+      pendingDiff.resolve(okResult({ diffText: 'stale diff from the old repository' }));
+    });
 
     expect(screen.getByLabelText('Diff').textContent).toBe('(none)');
     expect(screen.getByLabelText('Error').textContent).toBe('(none)');
@@ -373,6 +403,7 @@ describe('useWorktreeBrowser', () => {
       expect(unsubscribe).toHaveBeenCalled();
     });
 
+    // eslint-disable-next-line max-lines-per-function -- test body; setup + signal + multiple assertions required
     it('silently reloads the worktree list and diff on a repo:changed signal', async () => {
       const { getSignal } = stubSignalCapture();
       render(<BrowserHarness />);
@@ -382,9 +413,13 @@ describe('useWorktreeBrowser', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Select feature' }));
       await waitFor(() => expect(screen.getByLabelText('Diff loading').textContent).toBe('false'));
       clearApiMocks();
-      await act(async () => { getSignal()(); });
+      await act(async () => {
+        getSignal()();
+      });
 
-      await waitFor(() => { expect(window.api.listWorktrees).toHaveBeenCalledWith('/repo'); });
+      await waitFor(() => {
+        expect(window.api.listWorktrees).toHaveBeenCalledWith('/repo');
+      });
       expect(window.api.getDiff).toHaveBeenCalledWith('/repo-feature');
       expect(window.api.listWorktreeSummaries).toHaveBeenCalledWith(['/repo', '/repo-feature']);
       expect(screen.getByLabelText('Loading').textContent).toBe('false');
@@ -394,7 +429,9 @@ describe('useWorktreeBrowser', () => {
       const { getSignal } = stubSignalCapture();
       render(<BrowserHarness />);
 
-      await act(async () => { getSignal()(); });
+      await act(async () => {
+        getSignal()();
+      });
 
       expect(window.api.listWorktrees).not.toHaveBeenCalled();
       expect(window.api.listWorktreeSummaries).not.toHaveBeenCalled();

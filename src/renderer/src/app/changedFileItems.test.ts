@@ -36,7 +36,6 @@ const EXPECTED_CHANGED_FILE_ITEMS = [
   },
 ];
 
- 
 describe('toChangedFileItems', () => {
   it('maps the diff viewer model into the neutral navigation model', () => {
     const items = toChangedFileItems(buildDiffModel(DIFF).files);

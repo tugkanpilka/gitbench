@@ -35,6 +35,7 @@ function WorktreeIdentityDiffStat({ diffStats }: Pick<IdentityProps, 'diffStats'
   );
 }
 
+// eslint-disable-next-line max-lines-per-function -- pure JSX identity block; already extracted DiffStat subcomponent
 function WorktreeIdentity({ worktree, diffStats }: IdentityProps) {
   const reference = worktree?.branch ?? 'Detached HEAD';
   const worktreePath = worktree?.path ?? '';
@@ -43,34 +44,69 @@ function WorktreeIdentity({ worktree, diffStats }: IdentityProps) {
   return (
     <div className={styles['worktree-detail-sidebar__identity']}>
       <div className={styles['worktree-detail-sidebar__title']}>
-        <span className={styles['worktree-detail-sidebar__name']} title={worktreePath}>{worktreeName}</span>
+        <span className={styles['worktree-detail-sidebar__name']} title={worktreePath}>
+          {worktreeName}
+        </span>
         <WorktreeIdentityDiffStat diffStats={diffStats} />
       </div>
-      <span className={styles['worktree-detail-sidebar__reference']} title={reference}>{reference}</span>
+      <span className={styles['worktree-detail-sidebar__reference']} title={reference}>
+        {reference}
+      </span>
     </div>
   );
 }
 
-type ToggleProps = { label: string; expanded: boolean; collapsed: boolean; onClick: () => void; iconClassName: string };
+type ToggleProps = {
+  label: string;
+  expanded: boolean;
+  collapsed: boolean;
+  onClick: () => void;
+  iconClassName: string;
+};
 
 function SidebarToggleButton({ label, expanded, collapsed, onClick, iconClassName }: ToggleProps) {
   return (
-    <button type="button" className={styles['worktree-detail-sidebar__back']} aria-label={label} aria-expanded={expanded} onClick={onClick}>
+    <button
+      type="button"
+      className={styles['worktree-detail-sidebar__back']}
+      aria-label={label}
+      aria-expanded={expanded}
+      onClick={onClick}
+    >
       <Chevron collapsed={collapsed} className={iconClassName} />
     </button>
   );
 }
 
-type DetailHeaderProps = Pick<WorktreeDetailSidebarProps, 'repositorySidebarOpen' | 'onToggleRepositorySidebar'> & { children?: ReactNode };
+type DetailHeaderProps = Pick<
+  WorktreeDetailSidebarProps,
+  'repositorySidebarOpen' | 'onToggleRepositorySidebar'
+> & { children?: ReactNode };
 
-function DetailHeader({ repositorySidebarOpen, onToggleRepositorySidebar, children }: DetailHeaderProps) {
-  const sidebarToggleLabel = repositorySidebarOpen ? 'Hide worktree sidebar' : 'Show worktree sidebar';
+// eslint-disable-next-line max-lines-per-function -- pure JSX header block; toggle label derivation + nested toolbar layout
+function DetailHeader({
+  repositorySidebarOpen,
+  onToggleRepositorySidebar,
+  children,
+}: DetailHeaderProps) {
+  const sidebarToggleLabel = repositorySidebarOpen
+    ? 'Hide worktree sidebar'
+    : 'Show worktree sidebar';
 
   return (
-    <header className={styles['worktree-detail-sidebar__header']} data-repository-sidebar-open={repositorySidebarOpen}>
+    <header
+      className={styles['worktree-detail-sidebar__header']}
+      data-repository-sidebar-open={repositorySidebarOpen}
+    >
       <div className={styles['worktree-detail-sidebar__toolbar']}>
         <div className={styles['worktree-detail-sidebar__toolbar-content']}>
-          <SidebarToggleButton label={sidebarToggleLabel} expanded={repositorySidebarOpen} collapsed={!repositorySidebarOpen} onClick={onToggleRepositorySidebar} iconClassName={styles['worktree-detail-sidebar__back-icon']} />
+          <SidebarToggleButton
+            label={sidebarToggleLabel}
+            expanded={repositorySidebarOpen}
+            collapsed={!repositorySidebarOpen}
+            onClick={onToggleRepositorySidebar}
+            iconClassName={styles['worktree-detail-sidebar__back-icon']}
+          />
           {children}
         </div>
       </div>
@@ -78,49 +114,135 @@ function DetailHeader({ repositorySidebarOpen, onToggleRepositorySidebar, childr
   );
 }
 
-type FlatGroupControlProps = { flatGroupMode: WorktreeDetailSidebarProps['flatGroupMode']; onChange: WorktreeDetailSidebarProps['onFlatGroupModeChange']; className: string; isVisible: boolean };
+type FlatGroupControlProps = {
+  flatGroupMode: WorktreeDetailSidebarProps['flatGroupMode'];
+  onChange: WorktreeDetailSidebarProps['onFlatGroupModeChange'];
+  className: string;
+  isVisible: boolean;
+};
 
-function FlatGroupControl({ flatGroupMode, onChange, className, isVisible }: FlatGroupControlProps) {
+// eslint-disable-next-line max-lines-per-function -- pure JSX Visibility+SegmentedControl wrapper; Prettier multi-line prop formatting inflates count
+function FlatGroupControl({
+  flatGroupMode,
+  onChange,
+  className,
+  isVisible,
+}: FlatGroupControlProps) {
   return (
     <Visibility isVisible={isVisible}>
-      <SegmentedControl className={className} density="compact" ariaLabel="Flat group view" items={FLAT_GROUP_MODE_ITEMS} value={flatGroupMode} onChange={onChange} />
+      <SegmentedControl
+        className={className}
+        density="compact"
+        ariaLabel="Flat group view"
+        items={FLAT_GROUP_MODE_ITEMS}
+        value={flatGroupMode}
+        onChange={onChange}
+      />
     </Visibility>
   );
 }
 
-type DetailFooterProps = Pick<WorktreeDetailSidebarProps, 'fileListMode' | 'flatGroupMode' | 'onFileListModeChange' | 'onFlatGroupModeChange'>;
+type DetailFooterProps = Pick<
+  WorktreeDetailSidebarProps,
+  'fileListMode' | 'flatGroupMode' | 'onFileListModeChange' | 'onFlatGroupModeChange'
+>;
 
-function DetailFooter({ fileListMode, flatGroupMode, onFileListModeChange, onFlatGroupModeChange }: DetailFooterProps) {
+// eslint-disable-next-line max-lines-per-function -- pure JSX footer with two SegmentedControls; Prettier multi-prop formatting inflates count
+function DetailFooter({
+  fileListMode,
+  flatGroupMode,
+  onFileListModeChange,
+  onFlatGroupModeChange,
+}: DetailFooterProps) {
   return (
     <footer className={styles['worktree-detail-sidebar__footer']}>
-      <FlatGroupControl flatGroupMode={flatGroupMode} onChange={onFlatGroupModeChange} className={styles['worktree-detail-sidebar__view-toggle']} isVisible={fileListMode === 'flat'} />
-      <SegmentedControl className={styles['worktree-detail-sidebar__view-toggle']} density="compact" ariaLabel="File list view" items={FILE_LIST_MODE_ITEMS} value={fileListMode} onChange={onFileListModeChange} />
+      <FlatGroupControl
+        flatGroupMode={flatGroupMode}
+        onChange={onFlatGroupModeChange}
+        className={styles['worktree-detail-sidebar__view-toggle']}
+        isVisible={fileListMode === 'flat'}
+      />
+      <SegmentedControl
+        className={styles['worktree-detail-sidebar__view-toggle']}
+        density="compact"
+        ariaLabel="File list view"
+        items={FILE_LIST_MODE_ITEMS}
+        value={fileListMode}
+        onChange={onFileListModeChange}
+      />
     </footer>
   );
 }
 
-type ContentProps = Pick<WorktreeDetailSidebarProps, 'worktree' | 'changedFiles' | 'unpushedCommits' | 'commitsTruncated' | 'diffLoading' | 'fileListMode' | 'flatGroupMode' | 'activeFileId' | 'onSelectFile'>;
+type ContentProps = Pick<
+  WorktreeDetailSidebarProps,
+  | 'worktree'
+  | 'changedFiles'
+  | 'unpushedCommits'
+  | 'commitsTruncated'
+  | 'diffLoading'
+  | 'fileListMode'
+  | 'flatGroupMode'
+  | 'activeFileId'
+  | 'onSelectFile'
+>;
 
-function ChangedFilesOrLoading({ diffLoading, changedFiles, fileListMode, flatGroupMode, activeFileId, onSelectFile }: Omit<ContentProps, 'worktree' | 'unpushedCommits' | 'commitsTruncated'>) {
+// eslint-disable-next-line max-lines-per-function -- Switch/Match loading state; multi-prop Prettier formatting inflates count
+function ChangedFilesOrLoading({
+  diffLoading,
+  changedFiles,
+  fileListMode,
+  flatGroupMode,
+  activeFileId,
+  onSelectFile,
+}: Omit<ContentProps, 'worktree' | 'unpushedCommits' | 'commitsTruncated'>) {
   return (
     <Switch>
       <Match when={diffLoading}>
         <p className={styles['worktree-detail-sidebar__loading']}>Loading changes…</p>
       </Match>
       <Match when={true}>
-        <ChangedFilesSection changedFiles={changedFiles} fileListMode={fileListMode} flatGroupMode={flatGroupMode} activeFileId={activeFileId} onSelectFile={onSelectFile} />
+        <ChangedFilesSection
+          changedFiles={changedFiles}
+          fileListMode={fileListMode}
+          flatGroupMode={flatGroupMode}
+          activeFileId={activeFileId}
+          onSelectFile={onSelectFile}
+        />
       </Match>
     </Switch>
   );
 }
 
-function WorktreeDetailContent({ worktree, changedFiles, unpushedCommits, commitsTruncated, diffLoading, fileListMode, flatGroupMode, activeFileId, onSelectFile }: ContentProps) {
+// eslint-disable-next-line max-lines-per-function -- Switch/Match worktree null state; multi-prop Prettier formatting inflates count
+function WorktreeDetailContent({
+  worktree,
+  changedFiles,
+  unpushedCommits,
+  commitsTruncated,
+  diffLoading,
+  fileListMode,
+  flatGroupMode,
+  activeFileId,
+  onSelectFile,
+}: ContentProps) {
   return (
     <Switch>
-      <Match when={worktree === null}><p className={styles['worktree-detail-sidebar__placeholder']}>Select a worktree to inspect its changes.</p></Match>
+      <Match when={worktree === null}>
+        <p className={styles['worktree-detail-sidebar__placeholder']}>
+          Select a worktree to inspect its changes.
+        </p>
+      </Match>
       <Match when={true}>
         <div className={styles['worktree-detail-sidebar__content']}>
-          <ChangedFilesOrLoading diffLoading={diffLoading} changedFiles={changedFiles} fileListMode={fileListMode} flatGroupMode={flatGroupMode} activeFileId={activeFileId} onSelectFile={onSelectFile} />
+          <ChangedFilesOrLoading
+            diffLoading={diffLoading}
+            changedFiles={changedFiles}
+            fileListMode={fileListMode}
+            flatGroupMode={flatGroupMode}
+            activeFileId={activeFileId}
+            onSelectFile={onSelectFile}
+          />
         </div>
         <Visibility isVisible={unpushedCommits.length > 0}>
           <UnpushedCommitsSection commits={unpushedCommits} truncated={commitsTruncated} />
@@ -130,16 +252,50 @@ function WorktreeDetailContent({ worktree, changedFiles, unpushedCommits, commit
   );
 }
 
-export function WorktreeDetailSidebar({ worktree, changedFiles, unpushedCommits, commitsTruncated, diffLoading, fileListMode, flatGroupMode, activeFileId, diffStats, repositorySidebarOpen, onSelectFile, onFileListModeChange, onFlatGroupModeChange, onToggleRepositorySidebar }: WorktreeDetailSidebarProps) {
+// eslint-disable-next-line max-lines-per-function -- top-level sidebar shell; decomposed into DetailHeader/Content/Footer subcomponents; prop-list alone spans many lines
+export function WorktreeDetailSidebar({
+  worktree,
+  changedFiles,
+  unpushedCommits,
+  commitsTruncated,
+  diffLoading,
+  fileListMode,
+  flatGroupMode,
+  activeFileId,
+  diffStats,
+  repositorySidebarOpen,
+  onSelectFile,
+  onFileListModeChange,
+  onFlatGroupModeChange,
+  onToggleRepositorySidebar,
+}: WorktreeDetailSidebarProps) {
   return (
     <div className={styles['worktree-detail-sidebar']}>
-      <DetailHeader repositorySidebarOpen={repositorySidebarOpen} onToggleRepositorySidebar={onToggleRepositorySidebar}>
+      <DetailHeader
+        repositorySidebarOpen={repositorySidebarOpen}
+        onToggleRepositorySidebar={onToggleRepositorySidebar}
+      >
         <Visibility isVisible={worktree !== null}>
           <WorktreeIdentity worktree={worktree} diffStats={diffStats} />
         </Visibility>
       </DetailHeader>
-      <WorktreeDetailContent worktree={worktree} changedFiles={changedFiles} unpushedCommits={unpushedCommits} commitsTruncated={commitsTruncated} diffLoading={diffLoading} fileListMode={fileListMode} flatGroupMode={flatGroupMode} activeFileId={activeFileId} onSelectFile={onSelectFile} />
-      <DetailFooter fileListMode={fileListMode} flatGroupMode={flatGroupMode} onFileListModeChange={onFileListModeChange} onFlatGroupModeChange={onFlatGroupModeChange} />
+      <WorktreeDetailContent
+        worktree={worktree}
+        changedFiles={changedFiles}
+        unpushedCommits={unpushedCommits}
+        commitsTruncated={commitsTruncated}
+        diffLoading={diffLoading}
+        fileListMode={fileListMode}
+        flatGroupMode={flatGroupMode}
+        activeFileId={activeFileId}
+        onSelectFile={onSelectFile}
+      />
+      <DetailFooter
+        fileListMode={fileListMode}
+        flatGroupMode={flatGroupMode}
+        onFileListModeChange={onFileListModeChange}
+        onFlatGroupModeChange={onFlatGroupModeChange}
+      />
     </div>
   );
 }

@@ -30,16 +30,39 @@ function useErrorSlot(): [string | null, ErrorSlot] {
   return [error, slot];
 }
 
-function usePickRepository(catalog: CatalogResource, details: DetailsResource): () => Promise<void> {
+function usePickRepository(
+  catalog: CatalogResource,
+  details: DetailsResource
+): () => Promise<void> {
   return useCallback(async () => {
     const opened = await catalog.openRepository();
-    if (opened !== null) { details.reset(); }
+    if (opened !== null) {
+      details.reset();
+    }
   }, [catalog, details]);
 }
 
 interface WatcherState {
   selectedPathRef: MutableRefObject<string | null>;
   onRepoChanged: () => void;
+}
+
+interface RepoChangedDeps {
+  catalog: CatalogResource;
+  details: DetailsResource;
+  repoPathRef: MutableRefObject<string | null>;
+  selectedPathRef: MutableRefObject<string | null>;
+}
+
+function useOnRepoChanged({ catalog, details, repoPathRef, selectedPathRef }: RepoChangedDeps): () => void {
+  return useCallback(() => {
+    if (repoPathRef.current !== null) {
+      void catalog.reloadWorktrees(repoPathRef.current);
+    }
+    if (selectedPathRef.current !== null) {
+      details.reloadDetails(selectedPathRef.current);
+    }
+  }, [catalog, details, repoPathRef, selectedPathRef]);
 }
 
 function useWatcherState(catalog: CatalogResource, details: DetailsResource): WatcherState {
@@ -49,23 +72,42 @@ function useWatcherState(catalog: CatalogResource, details: DetailsResource): Wa
     repoPathRef.current = catalog.repoPath;
     selectedPathRef.current = details.selectedPath;
   }, [catalog.repoPath, details.selectedPath]);
-  const onRepoChanged = useCallback(() => {
-    if (repoPathRef.current !== null) { void catalog.reloadWorktrees(repoPathRef.current); }
-    if (selectedPathRef.current !== null) { details.reloadDetails(selectedPathRef.current); }
-  }, [catalog, details]);
+  const onRepoChanged = useOnRepoChanged({ catalog, details, repoPathRef, selectedPathRef });
   return { selectedPathRef, onRepoChanged };
+}
+
+function useSelectWorktree(
+  details: DetailsResource,
+  selectedPathRef: MutableRefObject<string | null>
+): (path: string) => Promise<void> {
+  return useCallback(
+    async (path: string) => {
+      selectedPathRef.current = path;
+      await details.selectWorktree(path);
+    },
+    [details, selectedPathRef]
+  );
+}
+
+function useBrowserActions(catalog: CatalogResource, details: DetailsResource) {
+  const { selectedPathRef, onRepoChanged } = useWatcherState(catalog, details);
+  const worktreePaths = useMemo(() => catalog.worktrees.map((w) => w.path), [catalog.worktrees]);
+  useRepositoryWatcher({ repoPath: catalog.repoPath, worktreePaths, onRepoChanged });
+  const pickRepository = usePickRepository(catalog, details);
+  const selectWorktree = useSelectWorktree(details, selectedPathRef);
+  return { pickRepository, selectWorktree };
 }
 
 export function useWorktreeBrowser() {
   const [error, errorSlot] = useErrorSlot();
   const catalog = useRepositoryCatalog(errorSlot);
   const details = useSelectedWorktreeDetails(errorSlot);
-  const { selectedPathRef, onRepoChanged } = useWatcherState(catalog, details);
-  const worktreePaths = useMemo(() => catalog.worktrees.map((w) => w.path), [catalog.worktrees]);
-  useRepositoryWatcher({ repoPath: catalog.repoPath, worktreePaths, onRepoChanged });
-  const pickRepository = usePickRepository(catalog, details);
-  const selectWorktree = useCallback(async (path: string) => { selectedPathRef.current = path; await details.selectWorktree(path); }, [details, selectedPathRef]);
-  const { repoPath, worktrees, summaries, loading, refreshRepository } = catalog;
-  const { selectedPath, diff, commits, diffLoading } = details;
-  return { repoPath, worktrees, summaries, selectedPath, diff, commits, error, loading, diffLoading, pickRepository, refreshRepository, selectWorktree };
+  const { pickRepository, selectWorktree } = useBrowserActions(catalog, details);
+  return {
+    repoPath: catalog.repoPath, worktrees: catalog.worktrees, summaries: catalog.summaries,
+    loading: catalog.loading, refreshRepository: catalog.refreshRepository,
+    selectedPath: details.selectedPath, diff: details.diff,
+    commits: details.commits, diffLoading: details.diffLoading,
+    error, pickRepository, selectWorktree,
+  };
 }

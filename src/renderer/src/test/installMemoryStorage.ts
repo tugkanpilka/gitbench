@@ -1,6 +1,8 @@
 function buildMemoryStorage(values: Map<string, string>): Storage {
   return {
-    get length() { return values.size; },
+    get length() {
+      return values.size;
+    },
     clear: () => values.clear(),
     getItem: (key) => values.get(key) ?? null,
     key: (index) => [...values.keys()][index] ?? null,

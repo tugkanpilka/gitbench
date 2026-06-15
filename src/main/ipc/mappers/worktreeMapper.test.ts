@@ -13,7 +13,6 @@ function buildParsedWorktreeFixture(): ParsedWorktree {
   };
 }
 
- 
 describe('toWorktreeDto', () => {
   it('produces exactly the five contract fields and nothing else — reader entities never cross IPC (hard rule #4)', () => {
     const worktree = buildParsedWorktreeFixture();

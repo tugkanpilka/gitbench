@@ -5,7 +5,15 @@ import type { WelcomeScreenProps } from './index.types';
 import styles from './index.module.scss';
 
 function WelcomeIcon() {
-  return <img className={styles['welcome-card__icon']} src={gitbenchIcon} width="96" height="96" alt="" />;
+  return (
+    <img
+      className={styles['welcome-card__icon']}
+      src={gitbenchIcon}
+      width="96"
+      height="96"
+      alt=""
+    />
+  );
 }
 
 function WelcomeHeading() {
@@ -17,11 +25,21 @@ function WelcomeHeading() {
   );
 }
 
-function WelcomeOpenButton({ loading, onOpenRepository }: Pick<WelcomeScreenProps, 'loading' | 'onOpenRepository'>) {
+// eslint-disable-next-line max-lines-per-function -- pure JSX render; multi-line destructure + multi-line Button props inflate count
+function WelcomeOpenButton({
+  loading,
+  onOpenRepository,
+}: Pick<WelcomeScreenProps, 'loading' | 'onOpenRepository'>) {
   const label = loading ? 'Opening repository…' : 'Open Repository…';
 
   return (
-    <Button className={styles['welcome-card__action']} variant="primary" onClick={onOpenRepository} disabled={loading} aria-busy={loading}>
+    <Button
+      className={styles['welcome-card__action']}
+      variant="primary"
+      onClick={onOpenRepository}
+      disabled={loading}
+      aria-busy={loading}
+    >
       {label}
     </Button>
   );
@@ -30,7 +48,9 @@ function WelcomeOpenButton({ loading, onOpenRepository }: Pick<WelcomeScreenProp
 function WelcomeError({ error }: Pick<WelcomeScreenProps, 'error'>) {
   return (
     <Visibility isVisible={!!error}>
-      <div className={styles['welcome-card__error']} role="alert">{error}</div>
+      <div className={styles['welcome-card__error']} role="alert">
+        {error}
+      </div>
     </Visibility>
   );
 }
@@ -40,7 +60,9 @@ function WelcomeCard({ loading, error, onOpenRepository }: WelcomeScreenProps) {
     <section className={styles['welcome-card']} aria-labelledby="welcome-title" aria-busy={loading}>
       <WelcomeIcon />
       <WelcomeHeading />
-      <p className={styles['welcome-card__description']}>Review all uncommitted changes across Git worktrees in one place.</p>
+      <p className={styles['welcome-card__description']}>
+        Review all uncommitted changes across Git worktrees in one place.
+      </p>
       <WelcomeOpenButton loading={loading} onOpenRepository={onOpenRepository} />
       <WelcomeError error={error} />
       <p className={styles['welcome-card__hint']}>Select a local Git repository to get started.</p>

@@ -23,8 +23,12 @@ export function FileNavigationList({ files, mode }: FileNavigationListProps) {
   return (
     <Switch>
       <Match when={files.length === 0}>{null}</Match>
-      <Match when={mode === 'tree'}><FileTreeView tree={tree} depth={0} /></Match>
-      <Match when={true}><FlatFileList files={files} /></Match>
+      <Match when={mode === 'tree'}>
+        <FileTreeView tree={tree} depth={0} />
+      </Match>
+      <Match when={true}>
+        <FlatFileList files={files} />
+      </Match>
     </Switch>
   );
 }

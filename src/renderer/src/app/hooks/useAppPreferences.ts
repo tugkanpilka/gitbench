@@ -37,7 +37,10 @@ function makeFieldSetter<K extends keyof AppPreferences>(
 
 export function useAppPreferences(): AppPreferenceController {
   const [preferences, setPreferences] = useState(readAppPreferences);
-  useEffect(() => { applyTheme(preferences.theme); writeAppPreferences(preferences); }, [preferences]);
+  useEffect(() => {
+    applyTheme(preferences.theme);
+    writeAppPreferences(preferences);
+  }, [preferences]);
   useEffect(() => watchSystemTheme(() => applyTheme(preferences.theme)), [preferences.theme]);
   const toggleTheme = useCallback(() => {
     setPreferences((current) => ({ ...current, theme: cycleTheme(current.theme) }));

@@ -16,21 +16,31 @@ function summaryLabels(s: WorktreeSummaryDto): (string | null)[] {
   const nFiles = s.fileCount;
   const fileLabel = nFiles === 0 ? 'clean' : `${nFiles} changed ${nFiles === 1 ? 'file' : 'files'}`;
   const statLabel = nFiles > 0 ? diffStatLabel(s.additions, s.deletions) : null;
-  const conflictLabel = s.conflictCount > 0 ? `${s.conflictCount} ${s.conflictCount === 1 ? 'conflict' : 'conflicts'}` : null;
+  const conflictLabel =
+    s.conflictCount > 0
+      ? `${s.conflictCount} ${s.conflictCount === 1 ? 'conflict' : 'conflicts'}`
+      : null;
   const unpushedLabel = s.unpushedCount > 0 ? `${s.unpushedCount} unpushed` : null;
-  const behindLabel = s.behindCount !== null && s.behindCount > 0 ? `${s.behindCount} behind` : null;
+  const behindLabel =
+    s.behindCount !== null && s.behindCount > 0 ? `${s.behindCount} behind` : null;
   return [fileLabel, statLabel, conflictLabel, unpushedLabel, behindLabel];
 }
 
 interface AccessibleLabelOptions {
-  name: string; reference: string; shortSha: string;
-  isMain: boolean; isLocked: boolean; summary: WorktreeSummaryDto | null;
+  name: string;
+  reference: string;
+  shortSha: string;
+  isMain: boolean;
+  isLocked: boolean;
+  summary: WorktreeSummaryDto | null;
 }
 
 function buildWorktreeAccessibleLabel(opts: AccessibleLabelOptions): string {
   const statuses = [opts.isMain ? 'main worktree' : null, opts.isLocked ? 'locked' : null];
   const labels = opts.summary === null ? [] : summaryLabels(opts.summary);
-  return [opts.name, opts.reference, opts.shortSha, ...statuses, ...labels].filter(Boolean).join(', ');
+  return [opts.name, opts.reference, opts.shortSha, ...statuses, ...labels]
+    .filter(Boolean)
+    .join(', ');
 }
 
 function WorktreeCountBadges({ summary }: { summary: WorktreeSummaryDto }) {
@@ -49,11 +59,22 @@ function WorktreeCountBadges({ summary }: { summary: WorktreeSummaryDto }) {
   );
 }
 
-function WorktreeStatsBadges({ summary, selected }: { summary: WorktreeSummaryDto; selected: boolean }) {
+// eslint-disable-next-line max-lines-per-function -- pure JSX stats badges with three Visibility wrappers; inline type definition inflates count
+function WorktreeStatsBadges({
+  summary,
+  selected,
+}: {
+  summary: WorktreeSummaryDto;
+  selected: boolean;
+}) {
   return (
     <>
       <Visibility isVisible={summary.fileCount > 0}>
-        <DiffStat additions={summary.additions} deletions={summary.deletions} onSelection={selected} />
+        <DiffStat
+          additions={summary.additions}
+          deletions={summary.deletions}
+          onSelection={selected}
+        />
       </Visibility>
       <WorktreeCountBadges summary={summary} />
       <Visibility isVisible={summary.fileCount > 0}>
@@ -63,7 +84,16 @@ function WorktreeStatsBadges({ summary, selected }: { summary: WorktreeSummaryDt
   );
 }
 
-function WorktreeStats({ summary, selected, isLocked }: { summary: WorktreeSummaryDto | null; selected: boolean; isLocked: boolean }) {
+// eslint-disable-next-line max-lines-per-function -- pure JSX stats span with two Visibility wrappers; inline type definition inflates count
+function WorktreeStats({
+  summary,
+  selected,
+  isLocked,
+}: {
+  summary: WorktreeSummaryDto | null;
+  selected: boolean;
+  isLocked: boolean;
+}) {
   return (
     <span className={styles['worktree-row__stats']}>
       <Visibility isVisible={isLocked}>
@@ -87,14 +117,27 @@ function WorktreeRowLabel({ name, reference }: { name: string; reference: string
   );
 }
 
+// eslint-disable-next-line max-lines-per-function -- top-level worktree button; decomposed into WorktreeRowLabel/WorktreeStats; buildWorktreeAccessibleLabel call inflates count
 export function WorktreeRow({ worktree, selected, summary, onSelect }: WorktreeRowProps) {
   const name = nameFromPath(worktree.path);
   const shortSha = worktree.headSha.slice(0, 7);
   const reference = worktreeReference(worktree.branch, shortSha);
-  const label = buildWorktreeAccessibleLabel({ name, reference, shortSha, isMain: worktree.isMain, isLocked: worktree.isLocked, summary });
+  const label = buildWorktreeAccessibleLabel({
+    name,
+    reference,
+    shortSha,
+    isMain: worktree.isMain,
+    isLocked: worktree.isLocked,
+    summary,
+  });
   return (
-    <button type="button" className={styles['worktree-row']} aria-label={label}
-      aria-pressed={selected} title={label} onClick={() => onSelect(worktree.path)}
+    <button
+      type="button"
+      className={styles['worktree-row']}
+      aria-label={label}
+      aria-pressed={selected}
+      title={label}
+      onClick={() => onSelect(worktree.path)}
     >
       <WorktreeIcon className={styles['worktree-row__icon']} />
       <WorktreeRowLabel name={name} reference={reference} />

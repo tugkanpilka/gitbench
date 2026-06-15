@@ -39,8 +39,13 @@ function expandAncestorsForFile(current: Set<string>, directory: string): Set<st
   return next;
 }
 
-function useResetOnFilesChange(setCollapsed: (s: Set<string>) => void, files: ChangedFileItem[]): void {
-  useEffect(() => { setCollapsed(new Set()); }, [files, setCollapsed]);
+function useResetOnFilesChange(
+  setCollapsed: (s: Set<string>) => void,
+  files: ChangedFileItem[]
+): void {
+  useEffect(() => {
+    setCollapsed(new Set());
+  }, [files, setCollapsed]);
 }
 
 function useExpandActiveAncestors(
@@ -50,12 +55,17 @@ function useExpandActiveAncestors(
 ): void {
   useEffect(() => {
     const f = files.find((file) => file.id === activeFileId);
-    if (f === undefined) { return; }
+    if (f === undefined) {
+      return;
+    }
     setCollapsed((cur) => expandAncestorsForFile(cur, f.path.directory));
   }, [activeFileId, files, setCollapsed]);
 }
 
-function useCollapsedDirectories(files: ChangedFileItem[], activeFileId: string | null): [ReadonlySet<string>, (path: string) => void] {
+function useCollapsedDirectories(
+  files: ChangedFileItem[],
+  activeFileId: string | null
+): [ReadonlySet<string>, (path: string) => void] {
   const [collapsedDirectories, setCollapsedDirectories] = useState<Set<string>>(() => new Set());
   useResetOnFilesChange(setCollapsedDirectories, files);
   useExpandActiveAncestors(setCollapsedDirectories, files, activeFileId);

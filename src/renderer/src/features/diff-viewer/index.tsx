@@ -93,11 +93,21 @@ function makeSectionRefHandler(
   return handler;
 }
 
-function useSectionHandlers(sectionRefs: RefObject<Map<string, HTMLElement>>, setCollapsedFiles: Dispatch<SetStateAction<Set<string>>>): SectionHandlers {
+// eslint-disable-next-line max-lines-per-function -- two useCallback wrappers each occupy 3 lines; logic is already in extracted helpers
+function useSectionHandlers(
+  sectionRefs: RefObject<Map<string, HTMLElement>>,
+  setCollapsedFiles: Dispatch<SetStateAction<Set<string>>>
+): SectionHandlers {
   const toggleCache = useRef(new Map<string, () => void>());
   const refCache = useRef(new Map<string, RefCallback<HTMLElement>>());
-  const getToggleHandler = useCallback((id: string) => makeToggleHandler(id, toggleCache.current, setCollapsedFiles), [setCollapsedFiles]);
-  const getSectionRef = useCallback((id: string) => makeSectionRefHandler(id, refCache.current, sectionRefs), [sectionRefs]);
+  const getToggleHandler = useCallback(
+    (id: string) => makeToggleHandler(id, toggleCache.current, setCollapsedFiles),
+    [setCollapsedFiles]
+  );
+  const getSectionRef = useCallback(
+    (id: string) => makeSectionRefHandler(id, refCache.current, sectionRefs),
+    [sectionRefs]
+  );
   return { getToggleHandler, getSectionRef };
 }
 
@@ -123,25 +133,44 @@ function useNavigationTargetExpansion(
   if (navigationTarget !== null && navigationTarget.requestId !== handledRequestId) {
     setHandledRequestId(navigationTarget.requestId);
     setCollapsedFiles((current) =>
-      current.has(navigationTarget.fileId)
-        ? toggledSet(current, navigationTarget.fileId)
-        : current
+      current.has(navigationTarget.fileId) ? toggledSet(current, navigationTarget.fileId) : current
     );
   }
 }
 
-function DiffFileList({ model, viewType, collapsedFiles, getToggleHandler, getSectionRef }: DiffFileListProps) {
+// eslint-disable-next-line max-lines-per-function -- pure JSX render; multi-line DiffFileSection prop spread inflates count
+function DiffFileList({
+  model,
+  viewType,
+  collapsedFiles,
+  getToggleHandler,
+  getSectionRef,
+}: DiffFileListProps) {
   return (
     <div className={styles['diff-view']}>
       <h2 className={styles['diff-view__title']}>Uncommitted changes</h2>
       {model.files.map((file) => (
-        <DiffFileSection key={file.id} model={file} viewType={viewType} collapsed={collapsedFiles.has(file.id)} onToggle={getToggleHandler(file.id)} sectionRef={getSectionRef(file.id)} />
+        <DiffFileSection
+          key={file.id}
+          model={file}
+          viewType={viewType}
+          collapsed={collapsedFiles.has(file.id)}
+          onToggle={getToggleHandler(file.id)}
+          sectionRef={getSectionRef(file.id)}
+        />
       ))}
     </div>
   );
 }
 
-function DiffViewContent({ model, viewType, navigationTarget, scrollContainerRef, onActiveFileChange }: DiffViewContentProps) {
+// eslint-disable-next-line max-lines-per-function -- orchestrates five hooks; each hook call is a single responsibility already extracted
+function DiffViewContent({
+  model,
+  viewType,
+  navigationTarget,
+  scrollContainerRef,
+  onActiveFileChange,
+}: DiffViewContentProps) {
   const [collapsedFiles, setCollapsedFiles] = useState<Set<string>>(() => new Set());
   const sectionRefs = useRef(new Map<string, HTMLElement>());
   const scrollToSection = useScrollToSection(sectionRefs);
@@ -149,17 +178,38 @@ function DiffViewContent({ model, viewType, navigationTarget, scrollContainerRef
   useNavigationEffect(navigationTarget, scrollToSection, onActiveFileChange);
   useActiveFileScrollSpy({ scrollContainerRef, sectionRefs, model, onActiveFileChange });
   const handlers = useSectionHandlers(sectionRefs, setCollapsedFiles);
-  return <DiffFileList model={model} viewType={viewType} collapsedFiles={collapsedFiles} {...handlers} />;
+  return (
+    <DiffFileList model={model} viewType={viewType} collapsedFiles={collapsedFiles} {...handlers} />
+  );
 }
 
-export function DiffView({ model, clean, viewType, navigationTarget, scrollContainerRef, onActiveFileChange }: DiffViewProps) {
+// eslint-disable-next-line max-lines-per-function -- pure JSX render; Switch/Match branches and multi-line DiffViewContent props inflate count
+export function DiffView({
+  model,
+  clean,
+  viewType,
+  navigationTarget,
+  scrollContainerRef,
+  onActiveFileChange,
+}: DiffViewProps) {
   const contentKey = instanceKey(model);
   return (
     <Switch>
-      <Match when={clean}><CleanWorktree /></Match>
-      <Match when={model.files.length === 0}><EmptyDiff /></Match>
+      <Match when={clean}>
+        <CleanWorktree />
+      </Match>
+      <Match when={model.files.length === 0}>
+        <EmptyDiff />
+      </Match>
       <Match when={true}>
-        <DiffViewContent key={contentKey} model={model} viewType={viewType} navigationTarget={navigationTarget} scrollContainerRef={scrollContainerRef} onActiveFileChange={onActiveFileChange} />
+        <DiffViewContent
+          key={contentKey}
+          model={model}
+          viewType={viewType}
+          navigationTarget={navigationTarget}
+          scrollContainerRef={scrollContainerRef}
+          onActiveFileChange={onActiveFileChange}
+        />
       </Match>
     </Switch>
   );

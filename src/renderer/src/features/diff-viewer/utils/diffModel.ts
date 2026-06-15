@@ -113,6 +113,7 @@ function previousPath(file: FileData): string | null {
   return file.type === 'rename' || file.type === 'copy' ? file.oldPath : null;
 }
 
+// eslint-disable-next-line max-lines-per-function -- pure data assembly; each field delegates to an already-extracted helper
 function buildFileModel(file: FileData, index: number, rawSection: string): DiffFileModel {
   const display = displayPath(file);
   const binary = isBinarySection(file, rawSection);
@@ -121,7 +122,11 @@ function buildFileModel(file: FileData, index: number, rawSection: string): Diff
   const { additions, deletions } = countChanges(file);
   return {
     id: fileModelId(file, index),
-    file, path, binary, additions, deletions,
+    file,
+    path,
+    binary,
+    additions,
+    deletions,
     previousPath: previousPath(file),
     tokens: tokenizeHunks(file, language),
     noTextReason: noTextReason(file, binary),

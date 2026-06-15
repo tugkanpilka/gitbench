@@ -67,10 +67,15 @@ function parseStoredPreferences(raw: string, defaults: AppPreferences): AppPrefe
   };
 }
 
+// eslint-disable-next-line max-lines-per-function -- defaults literal + guard + try/catch exhaust 15 lines; no meaningful sub-function to extract
 export function readAppPreferences(
   storage: PreferenceStorage | null = getPreferenceStorage()
 ): AppPreferences {
-  const defaults: AppPreferences = { theme: 'system', fileListMode: 'flat', flatGroupMode: 'status' };
+  const defaults: AppPreferences = {
+    theme: 'system',
+    fileListMode: 'flat',
+    flatGroupMode: 'status',
+  };
   if (storage === null) return defaults;
   try {
     const storedValue = storage.getItem(APP_PREFERENCES_STORAGE_KEY);

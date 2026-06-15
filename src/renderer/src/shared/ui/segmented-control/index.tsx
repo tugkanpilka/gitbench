@@ -16,7 +16,9 @@ function nextEnabledIndex<T extends string>(
   return currentIndex;
 }
 
-function getRadioButtons(ref: RefObject<HTMLDivElement | null>): NodeListOf<HTMLButtonElement> | undefined {
+function getRadioButtons(
+  ref: RefObject<HTMLDivElement | null>
+): NodeListOf<HTMLButtonElement> | undefined {
   return ref.current?.querySelectorAll<HTMLButtonElement>('[role="radio"]');
 }
 
@@ -50,24 +52,34 @@ interface SegmentItemProps<T extends string> {
   onKeyDown: (event: KeyboardEvent<HTMLButtonElement>, index: number) => void;
 }
 
+// eslint-disable-next-line max-lines-per-function -- pure JSX render with multi-line prop spread; no extractable logic
 function SegmentItemButton<T extends string>(props: SegmentItemProps<T>) {
   const { item, selected, index, onChange, onKeyDown } = props;
   return (
     <button
-      type="button" role="radio"
+      type="button"
+      role="radio"
       className={styles['gb-segmented-control__item']}
-      aria-label={itemAriaLabel(item)} aria-checked={selected}
-      disabled={item.disabled} tabIndex={selected ? 0 : -1}
+      aria-label={itemAriaLabel(item)}
+      aria-checked={selected}
+      disabled={item.disabled}
+      tabIndex={selected ? 0 : -1}
       onClick={() => onChange(item.value)}
       onKeyDown={(e) => onKeyDown(e, index)}
-    >{item.label}</button>
+    >
+      {item.label}
+    </button>
   );
 }
 
 function SegmentIndicator({ style }: { style: { left: number; width: number } | null }) {
   return (
     <Visibility isVisible={style !== null}>
-      <span className={styles['gb-segmented-control__indicator']} aria-hidden="true" style={style ?? undefined} />
+      <span
+        className={styles['gb-segmented-control__indicator']}
+        aria-hidden="true"
+        style={style ?? undefined}
+      />
     </Visibility>
   );
 }
@@ -79,7 +91,13 @@ interface SegmentItemsProps<T extends string> {
   onKeyDown: (e: KeyboardEvent<HTMLButtonElement>, i: number) => void;
 }
 
-function SegmentItems<T extends string>({ items, value, onChange, onKeyDown }: SegmentItemsProps<T>) {
+// eslint-disable-next-line max-lines-per-function -- pure JSX render; multi-line signature caused by generic constraint
+function SegmentItems<T extends string>({
+  items,
+  value,
+  onChange,
+  onKeyDown,
+}: SegmentItemsProps<T>) {
   return items.map((item, index) => (
     <SegmentItemButton
       key={item.value}
@@ -99,8 +117,16 @@ interface StateOptions<T extends string> {
   onChange: (v: T) => void;
 }
 
-function useSegmentedControlState<T extends string>({ containerRef, items, value, onChange }: StateOptions<T>) {
-  const [indicatorStyle, setIndicatorStyle] = useState<{ left: number; width: number } | null>(null);
+// eslint-disable-next-line max-lines-per-function -- hook bundles state + layout effect + key handler; splitting would scatter coupled logic
+function useSegmentedControlState<T extends string>({
+  containerRef,
+  items,
+  value,
+  onChange,
+}: StateOptions<T>) {
+  const [indicatorStyle, setIndicatorStyle] = useState<{ left: number; width: number } | null>(
+    null
+  );
 
   useLayoutEffect(() => {
     setIndicatorStyle(resolveIndicatorStyle(containerRef, items, value));
@@ -126,14 +152,30 @@ function segmentedControlClasses(density: string, className?: string) {
   );
 }
 
-export function SegmentedControl<T extends string>(
-  { ariaLabel, items, value, onChange, className, density = 'comfortable' }: SegmentedControlProps<T>
-) {
+// eslint-disable-next-line max-lines-per-function -- pure JSX render; multi-line generic signature inflates count
+export function SegmentedControl<T extends string>({
+  ariaLabel,
+  items,
+  value,
+  onChange,
+  className,
+  density = 'comfortable',
+}: SegmentedControlProps<T>) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { indicatorStyle, handleKeyDown } = useSegmentedControlState({ containerRef, items, value, onChange });
+  const { indicatorStyle, handleKeyDown } = useSegmentedControlState({
+    containerRef,
+    items,
+    value,
+    onChange,
+  });
 
   return (
-    <div ref={containerRef} className={segmentedControlClasses(density, className)} role="radiogroup" aria-label={ariaLabel}>
+    <div
+      ref={containerRef}
+      className={segmentedControlClasses(density, className)}
+      role="radiogroup"
+      aria-label={ariaLabel}
+    >
       <SegmentIndicator style={indicatorStyle} />
       <SegmentItems items={items} value={value} onChange={onChange} onKeyDown={handleKeyDown} />
     </div>

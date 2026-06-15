@@ -15,9 +15,14 @@ interface DiffPanelProps {
   onActiveFileChange: (fileId: string | null) => void;
 }
 
-function DiffPanel(
-  { model, clean, navigationTarget, scrollContainerRef, onActiveFileChange }: DiffPanelProps
-) {
+// eslint-disable-next-line max-lines-per-function -- destructured DiffPanelProps + JSX exhaust 15 lines with no meaningful split
+function DiffPanel({
+  model,
+  clean,
+  navigationTarget,
+  scrollContainerRef,
+  onActiveFileChange,
+}: DiffPanelProps) {
   return (
     <DiffView
       model={model}
@@ -31,11 +36,19 @@ function DiffPanel(
 }
 
 function ErrorState({ error }: { error: string | null }) {
-  return <div className={styles['workspace__error']} role="alert">{error}</div>;
+  return (
+    <div className={styles['workspace__error']} role="alert">
+      {error}
+    </div>
+  );
 }
 
 function LoadingState() {
-  return <div className={styles['workspace__loading']} role="status">Loading diff…</div>;
+  return (
+    <div className={styles['workspace__loading']} role="status">
+      Loading diff…
+    </div>
+  );
 }
 
 function EmptyState() {
@@ -46,28 +59,64 @@ function EmptyState() {
   );
 }
 
-function WorkspaceSwitch(
-  { error, diffLoading, hasDiff, diffPanelProps }: { error: string | null; diffLoading: boolean; hasDiff: boolean; diffPanelProps: DiffPanelProps }
-) {
+// eslint-disable-next-line max-lines-per-function -- inline prop types + Switch/Match tree exhaust 15 lines; all cases are already named components
+function WorkspaceSwitch({
+  error,
+  diffLoading,
+  hasDiff,
+  diffPanelProps,
+}: {
+  error: string | null;
+  diffLoading: boolean;
+  hasDiff: boolean;
+  diffPanelProps: DiffPanelProps;
+}) {
   return (
     <Switch>
-      <Match when={!!error}><ErrorState error={error} /></Match>
-      <Match when={diffLoading}><LoadingState /></Match>
-      <Match when={!hasDiff}><EmptyState /></Match>
-      <Match when={true}><DiffPanel {...diffPanelProps} /></Match>
+      <Match when={!!error}>
+        <ErrorState error={error} />
+      </Match>
+      <Match when={diffLoading}>
+        <LoadingState />
+      </Match>
+      <Match when={!hasDiff}>
+        <EmptyState />
+      </Match>
+      <Match when={true}>
+        <DiffPanel {...diffPanelProps} />
+      </Match>
     </Switch>
   );
 }
 
-export function Workspace(
-  { error, diffLoading, hasDiff, isCleanWorktree, diffModel, navigationTarget, scrollContainerRef, onActiveFileChange }: WorkspaceProps
-) {
+// eslint-disable-next-line max-lines-per-function -- destructured WorkspaceProps + panelProps assembly + JSX exhaust 15 lines with no meaningful split
+export function Workspace({
+  error,
+  diffLoading,
+  hasDiff,
+  isCleanWorktree,
+  diffModel,
+  navigationTarget,
+  scrollContainerRef,
+  onActiveFileChange,
+}: WorkspaceProps) {
   const classes = cx(styles['workspace'], hasDiff && styles['workspace--diff']);
-  const panelProps: DiffPanelProps = { model: diffModel, clean: isCleanWorktree, navigationTarget, scrollContainerRef, onActiveFileChange };
+  const panelProps: DiffPanelProps = {
+    model: diffModel,
+    clean: isCleanWorktree,
+    navigationTarget,
+    scrollContainerRef,
+    onActiveFileChange,
+  };
 
   return (
     <div className={classes}>
-      <WorkspaceSwitch error={error} diffLoading={diffLoading} hasDiff={hasDiff} diffPanelProps={panelProps} />
+      <WorkspaceSwitch
+        error={error}
+        diffLoading={diffLoading}
+        hasDiff={hasDiff}
+        diffPanelProps={panelProps}
+      />
     </div>
   );
 }

@@ -79,12 +79,28 @@ function makeNavigationTarget(model: ReturnType<typeof buildDiffModel>) {
   return { fileId: model.files[0].id, requestId: 1 as const };
 }
 
-function renderInScrollRoot(model: ReturnType<typeof buildDiffModel>, onActiveFileChange: (fileId: string) => void) {
+function createScrollRoot(): HTMLDivElement {
   const scrollRoot = document.createElement('div');
   document.body.appendChild(scrollRoot);
+  return scrollRoot;
+}
+
+// eslint-disable-next-line max-lines-per-function -- test helper; multi-prop JSX render inflates line count
+function renderInScrollRoot(
+  model: ReturnType<typeof buildDiffModel>,
+  onActiveFileChange: (fileId: string) => void
+) {
+  const scrollRoot = createScrollRoot();
   const scrollContainerRef = { current: scrollRoot };
   render(
-    <DiffView model={model} clean={false} viewType="unified" navigationTarget={null} scrollContainerRef={scrollContainerRef} onActiveFileChange={onActiveFileChange} />,
+    <DiffView
+      model={model}
+      clean={false}
+      viewType="unified"
+      navigationTarget={null}
+      scrollContainerRef={scrollContainerRef}
+      onActiveFileChange={onActiveFileChange}
+    />,
     { container: scrollRoot }
   );
   return { scrollRoot };
@@ -161,12 +177,23 @@ describe('DiffView', () => {
     expect(screen.getByText('Worktree is clean; no uncommitted changes.')).toBeTruthy();
   });
 
+  // eslint-disable-next-line max-lines-per-function -- test body; rerender + assertions cannot be meaningfully split
   it('opens a collapsed file and scrolls to a requested sidebar target', () => {
-    const { model, onActiveFileChange, scrollContainerRef, toggle, scrollIntoView, rerender } = arrangeNavigationTest();
+    const { model, onActiveFileChange, scrollContainerRef, toggle, scrollIntoView, rerender } =
+      arrangeNavigationTest();
     fireEvent.click(toggle);
     expect(toggle.getAttribute('aria-expanded')).toBe('false');
     const navigationTarget = makeNavigationTarget(model);
-    rerender(<DiffView model={model} clean={false} viewType="unified" navigationTarget={navigationTarget} scrollContainerRef={scrollContainerRef} onActiveFileChange={onActiveFileChange} />);
+    rerender(
+      <DiffView
+        model={model}
+        clean={false}
+        viewType="unified"
+        navigationTarget={navigationTarget}
+        scrollContainerRef={scrollContainerRef}
+        onActiveFileChange={onActiveFileChange}
+      />
+    );
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
     expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
     expect(onActiveFileChange).toHaveBeenCalledWith(model.files[0].id);

@@ -27,7 +27,13 @@ function WorktreeItems({ worktrees, summaries, selectedPath, onSelect }: Worktre
   return (
     <ul className={styles['worktree-list']} aria-label="Worktrees">
       {worktrees.map((wt) => (
-        <WorktreeItem key={wt.path} worktree={wt} summaries={summaries} selectedPath={selectedPath} onSelect={onSelect} />
+        <WorktreeItem
+          key={wt.path}
+          worktree={wt}
+          summaries={summaries}
+          selectedPath={selectedPath}
+          onSelect={onSelect}
+        />
       ))}
     </ul>
   );
@@ -37,7 +43,9 @@ export function WorktreeList(props: WorktreeListProps) {
   return (
     <Switch>
       <Match when={props.worktrees.length === 0}>
-        <p className={styles['worktree-list__empty']}>No worktrees to display in this repository.</p>
+        <p className={styles['worktree-list__empty']}>
+          No worktrees to display in this repository.
+        </p>
       </Match>
       <Match when={true}>
         <WorktreeItems {...props} />

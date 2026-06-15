@@ -57,22 +57,33 @@ describe('useSelectedWorktreeDetails', () => {
       void result.current.selectWorktree('/repo-feature');
       void result.current.selectWorktree('/repo');
     });
-    await act(async () => { mainDiff.resolve(okResult({ diffText: 'main changes' })); });
-    await act(async () => { featureDiff.resolve(okResult({ diffText: 'stale feature changes' })); });
+    await act(async () => {
+      mainDiff.resolve(okResult({ diffText: 'main changes' }));
+    });
+    await act(async () => {
+      featureDiff.resolve(okResult({ diffText: 'stale feature changes' }));
+    });
 
     expect(result.current.diff).toEqual({ worktreePath: '/repo', diffText: 'main changes' });
   });
 
+  // eslint-disable-next-line max-lines-per-function -- test body; multiple sequential act() steps are required
   it('reset drops the selection and discards an in-flight diff', async () => {
     const pendingDiff = deferred<Result<{ diffText: string }>>();
     stubApi({ getDiff: vi.fn().mockReturnValue(pendingDiff.promise) });
     const { result } = renderHook(() => useSelectedWorktreeDetails(makeErrorSlot()));
 
-    act(() => { void result.current.selectWorktree('/repo-feature'); });
+    act(() => {
+      void result.current.selectWorktree('/repo-feature');
+    });
     expect(result.current.diffLoading).toBe(true);
 
-    act(() => { result.current.reset(); });
-    await act(async () => { pendingDiff.resolve(okResult({ diffText: 'stale diff' })); });
+    act(() => {
+      result.current.reset();
+    });
+    await act(async () => {
+      pendingDiff.resolve(okResult({ diffText: 'stale diff' }));
+    });
 
     expect(result.current.selectedPath).toBeNull();
     expect(result.current.diff).toBeNull();

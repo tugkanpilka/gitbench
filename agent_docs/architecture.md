@@ -36,15 +36,15 @@ Responsibilities table). Violations are architecture bugs even when the code wor
 
 ## Responsibilities
 
-| Layer          | Location             | Responsibility                                                               |
-| -------------- | -------------------- | ---------------------------------------------------------------------------- |
+| Layer          | Location             | Responsibility                                                                                                                                                                                                   |
+| -------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Domain         | `src/domain`         | Business entities and invariants. Pure TypeScript. **Currently absent** — the directory was removed with the behaviorless `Worktree` alias; recreate it only when a real worktree entity with invariants exists. |
-| Application    | `src/application`    | Application-level errors and the canonical commit-change types. Pure TypeScript. |
-| Infrastructure | `src/infrastructure` | Output adapters. The Git CLI implementation and parsing live here.           |
-| Contracts      | `src/contracts`      | IPC channels, request/response DTOs, `Result<T>`, and the preload API type.  |
-| Main           | `src/main`           | Electron lifecycle, composition root, IPC input adapters, DTO/error mapping. |
-| Preload        | `src/preload`        | The single `ipcRenderer` bridge exposing `window.api`.                       |
-| Renderer       | `src/renderer`       | React UI organized by feature. It communicates only through `window.api`.    |
+| Application    | `src/application`    | Application-level errors and the canonical commit-change types. Pure TypeScript.                                                                                                                                 |
+| Infrastructure | `src/infrastructure` | Output adapters. The Git CLI implementation and parsing live here.                                                                                                                                               |
+| Contracts      | `src/contracts`      | IPC channels, request/response DTOs, `Result<T>`, and the preload API type.                                                                                                                                      |
+| Main           | `src/main`           | Electron lifecycle, composition root, IPC input adapters, DTO/error mapping.                                                                                                                                     |
+| Preload        | `src/preload`        | The single `ipcRenderer` bridge exposing `window.api`.                                                                                                                                                           |
+| Renderer       | `src/renderer`       | React UI organized by feature. It communicates only through `window.api`.                                                                                                                                        |
 
 ## Directory layout
 
@@ -203,10 +203,18 @@ export function Switch({ children }: { children: ReactNode }) {
 guarded `&&`s:
 
 ```tsx
-{error && <Error />}
-{diffLoading && !error && <Loading />}
-{!hasDiff && !diffLoading && !error && <Placeholder />}
-{hasDiff && !error && <DiffView />}
+{
+  error && <Error />;
+}
+{
+  diffLoading && !error && <Loading />;
+}
+{
+  !hasDiff && !diffLoading && !error && <Placeholder />;
+}
+{
+  hasDiff && !error && <DiffView />;
+}
 ```
 
 A naive `<Switch>` that renders _all_ its children does not fix this — dropping the
@@ -216,10 +224,18 @@ changing behavior:
 
 ```tsx
 <Switch>
-  <Match when={!!error}><Error /></Match>
-  <Match when={diffLoading}><Loading /></Match>
-  <Match when={!hasDiff}><Placeholder /></Match>
-  <Match when={true}><DiffView /></Match>
+  <Match when={!!error}>
+    <Error />
+  </Match>
+  <Match when={diffLoading}>
+    <Loading />
+  </Match>
+  <Match when={!hasDiff}>
+    <Placeholder />
+  </Match>
+  <Match when={true}>
+    <DiffView />
+  </Match>
 </Switch>
 ```
 

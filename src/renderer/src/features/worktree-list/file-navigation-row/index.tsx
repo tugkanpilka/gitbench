@@ -11,7 +11,14 @@ import type { FileNavigationRowProps } from './index.types';
 import styles from '../index.module.scss';
 
 function TreeFileDiffStat({ file }: { file: ChangedFileItem }) {
-  return <DiffStat additions={file.additions} deletions={file.deletions} emphasis="muted" className={styles['file-navigation-row__diff-stat']} />;
+  return (
+    <DiffStat
+      additions={file.additions}
+      deletions={file.deletions}
+      emphasis="muted"
+      className={styles['file-navigation-row__diff-stat']}
+    />
+  );
 }
 
 function TreeModeContent({ file, depth }: { file: ChangedFileItem; depth: number }) {
@@ -29,27 +36,72 @@ function TreeModeContent({ file, depth }: { file: ChangedFileItem; depth: number
 }
 
 function FlatDiffStat({ file }: { file: ChangedFileItem }) {
-  return <DiffStat additions={file.additions} deletions={file.deletions} className={styles['file-navigation-row__diff-stat']} />;
-}
-
-function FlatModeContent({ file, path, directory }: { file: ChangedFileItem; path: string; directory: string }) {
   return (
-    <FlatFileRowContent status={changedFileStatusBadge(file.status)} name={file.path.name}
-      nameTitle={path} directory={directory} trailing={<FlatDiffStat file={file} />} />
+    <DiffStat
+      additions={file.additions}
+      deletions={file.deletions}
+      className={styles['file-navigation-row__diff-stat']}
+    />
   );
 }
 
-function RowButton({ file, depth, showDirectory, active, onSelectFile }: { file: ChangedFileItem; depth: number; showDirectory: boolean; active: boolean; onSelectFile: (id: string) => void }) {
+// eslint-disable-next-line max-lines-per-function -- pure JSX flat row content; inline type definition spans multiple lines inflating count
+function FlatModeContent({
+  file,
+  path,
+  directory,
+}: {
+  file: ChangedFileItem;
+  path: string;
+  directory: string;
+}) {
+  return (
+    <FlatFileRowContent
+      status={changedFileStatusBadge(file.status)}
+      name={file.path.name}
+      nameTitle={path}
+      directory={directory}
+      trailing={<FlatDiffStat file={file} />}
+    />
+  );
+}
+
+// eslint-disable-next-line max-lines-per-function -- pure JSX button with Switch/Match; inline type definition and multi-prop Prettier formatting inflate count
+function RowButton({
+  file,
+  depth,
+  showDirectory,
+  active,
+  onSelectFile,
+}: {
+  file: ChangedFileItem;
+  depth: number;
+  showDirectory: boolean;
+  active: boolean;
+  onSelectFile: (id: string) => void;
+}) {
   const path = `${file.path.directory}${file.path.name}`;
   const directory = directoryLabel(file.path.directory);
-  const className = cx(styles['file-navigation-row'], showDirectory && styles['file-navigation-row--flat']);
+  const className = cx(
+    styles['file-navigation-row'],
+    showDirectory && styles['file-navigation-row--flat']
+  );
   return (
-    <button type="button" className={className} aria-label={`${path}, ${diffStatLabel(file.additions, file.deletions)}`}
-      aria-current={active ? 'location' : undefined} style={{ paddingLeft: treeRowIndent(depth) }} onClick={() => onSelectFile(file.id)}
+    <button
+      type="button"
+      className={className}
+      aria-label={`${path}, ${diffStatLabel(file.additions, file.deletions)}`}
+      aria-current={active ? 'location' : undefined}
+      style={{ paddingLeft: treeRowIndent(depth) }}
+      onClick={() => onSelectFile(file.id)}
     >
       <Switch>
-        <Match when={showDirectory}><FlatModeContent file={file} path={path} directory={directory} /></Match>
-        <Match when={true}><TreeModeContent file={file} depth={depth} /></Match>
+        <Match when={showDirectory}>
+          <FlatModeContent file={file} path={path} directory={directory} />
+        </Match>
+        <Match when={true}>
+          <TreeModeContent file={file} depth={depth} />
+        </Match>
       </Switch>
     </button>
   );
@@ -60,7 +112,13 @@ export function FileNavigationRow({ file, depth, showDirectory }: FileNavigation
   const active = file.id === activeFileId;
   return (
     <li>
-      <RowButton file={file} depth={depth} showDirectory={showDirectory} active={active} onSelectFile={onSelectFile} />
+      <RowButton
+        file={file}
+        depth={depth}
+        showDirectory={showDirectory}
+        active={active}
+        onSelectFile={onSelectFile}
+      />
     </li>
   );
 }

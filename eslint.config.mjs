@@ -16,7 +16,18 @@ const asWarnings = (rules) =>
   );
 
 export default tseslint.config(
-  { ignores: ['node_modules', 'out', 'dist', 'coverage', 'build', 'claude-design', '.claude', 'ClaudeSetup'] },
+  {
+    ignores: [
+      'node_modules',
+      'out',
+      'dist',
+      'coverage',
+      'build',
+      'claude-design',
+      '.claude',
+      'ClaudeSetup',
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
@@ -48,7 +59,11 @@ export default tseslint.config(
       // ── Naming: no `I` prefix on interfaces (context comes from the folder)
       '@typescript-eslint/naming-convention': [
         'error',
-        { selector: 'interface', format: ['PascalCase'], custom: { regex: '^I[A-Z]', match: false } },
+        {
+          selector: 'interface',
+          format: ['PascalCase'],
+          custom: { regex: '^I[A-Z]', match: false },
+        },
         // Optionally also ban Dto/Service/Impl suffixes — left off because it
         // false-positives on legitimately-named types. Uncomment to enforce:
         // { selector: ['class', 'interface', 'typeAlias'], format: ['PascalCase'],

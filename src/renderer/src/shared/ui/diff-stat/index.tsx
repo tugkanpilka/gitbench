@@ -12,13 +12,17 @@ export function diffStatLabel(additions: number, deletions: number): string {
 
 function AddCount({ additions }: { additions: number }) {
   return (
-    <span className={styles['gb-diff-stat__add']} aria-hidden="true">+{additions}</span>
+    <span className={styles['gb-diff-stat__add']} aria-hidden="true">
+      +{additions}
+    </span>
   );
 }
 
 function DeleteCount({ deletions }: { deletions: number }) {
   return (
-    <span className={styles['gb-diff-stat__delete']} aria-hidden="true">−{deletions}</span>
+    <span className={styles['gb-diff-stat__delete']} aria-hidden="true">
+      −{deletions}
+    </span>
   );
 }
 
@@ -27,8 +31,12 @@ function DiffStatCounts({ additions, deletions }: { additions: number; deletions
   const showDeletions = deletions > 0 || additions === 0;
   return (
     <>
-      <Visibility isVisible={showAdditions}><AddCount additions={additions} /></Visibility>
-      <Visibility isVisible={showDeletions}><DeleteCount deletions={deletions} /></Visibility>
+      <Visibility isVisible={showAdditions}>
+        <AddCount additions={additions} />
+      </Visibility>
+      <Visibility isVisible={showDeletions}>
+        <DeleteCount deletions={deletions} />
+      </Visibility>
     </>
   );
 }
@@ -42,9 +50,15 @@ function diffStatClasses(onSelection: boolean, emphasis: string, className?: str
   );
 }
 
-export function DiffStat(
-  { additions, deletions, onSelection = false, emphasis = 'default', className, ...props }: DiffStatProps
-) {
+// eslint-disable-next-line max-lines-per-function -- pure JSX render; already decomposed into AddCount/DeleteCount/DiffStatCounts helpers
+export function DiffStat({
+  additions,
+  deletions,
+  onSelection = false,
+  emphasis = 'default',
+  className,
+  ...props
+}: DiffStatProps) {
   return (
     <span
       className={diffStatClasses(onSelection, emphasis, className)}

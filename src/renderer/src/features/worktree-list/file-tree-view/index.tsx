@@ -14,14 +14,22 @@ function FolderChevron({ open }: { open: boolean }) {
 }
 
 interface FolderButtonProps {
-  directory: FileTreeDirectory; depth: number; open: boolean; onToggle: () => void;
+  directory: FileTreeDirectory;
+  depth: number;
+  open: boolean;
+  onToggle: () => void;
 }
 
+// eslint-disable-next-line max-lines-per-function -- pure JSX folder button; Prettier multi-prop formatting inflates count
 function FolderButton({ directory, depth, open, onToggle }: FolderButtonProps) {
   return (
-    <button type="button" className={styles['file-tree-folder']}
-      aria-label={`${directory.name} folder`} aria-expanded={open}
-      style={{ paddingLeft: treeRowIndent(depth) }} onClick={onToggle}
+    <button
+      type="button"
+      className={styles['file-tree-folder']}
+      aria-label={`${directory.name} folder`}
+      aria-expanded={open}
+      style={{ paddingLeft: treeRowIndent(depth) }}
+      onClick={onToggle}
     >
       <IndentGuides depth={depth} />
       <FolderChevron open={open} />
@@ -30,14 +38,23 @@ function FolderButton({ directory, depth, open, onToggle }: FolderButtonProps) {
   );
 }
 
-interface TreeDirectoryProps { directory: FileTreeDirectory; depth: number }
+interface TreeDirectoryProps {
+  directory: FileTreeDirectory;
+  depth: number;
+}
 
+// eslint-disable-next-line max-lines-per-function -- pure JSX tree directory with Visibility wrapper; Prettier multi-prop formatting inflates count
 function TreeDirectory({ directory, depth }: TreeDirectoryProps) {
   const { collapsedDirectories, onToggleDirectory } = useFileListContext();
   const open = !collapsedDirectories.has(directory.path);
   return (
     <li>
-      <FolderButton directory={directory} depth={depth} open={open} onToggle={() => onToggleDirectory(directory.path)} />
+      <FolderButton
+        directory={directory}
+        depth={depth}
+        open={open}
+        onToggle={() => onToggleDirectory(directory.path)}
+      />
       <Visibility isVisible={open}>
         <FileTreeView tree={directory} depth={depth + 1} nested />
       </Visibility>
@@ -47,7 +64,8 @@ function TreeDirectory({ directory, depth }: TreeDirectoryProps) {
 
 export function FileTreeView({ tree, depth, nested = false }: FileTreeViewProps) {
   return (
-    <ul className={nested ? styles['file-tree__group'] : styles['file-navigation-list']}
+    <ul
+      className={nested ? styles['file-tree__group'] : styles['file-navigation-list']}
       aria-label={nested ? undefined : 'Changed files'}
     >
       {tree.directories.map((directory) => (

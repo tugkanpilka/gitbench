@@ -7,7 +7,7 @@ Audit date: 2026-06-13
 > Deletion is preferred over abstraction; obvious code over elegant code.
 >
 > Method: 8 module-group auditors fanned out across ~120 source files, every finding passed through an
-> adversarial verifier that defaulted to *refute*, then a synthesis pass. The project's intentional
+> adversarial verifier that defaulted to _refute_, then a synthesis pass. The project's intentional
 > constraints (git-CLI choice, `Result<T>` envelopes, pure domain/application layers, the deliberate
 > "design palette" of unused UI variants/tokens) were treated as ground truth and **not** counted against it.
 > 12 findings survived verification.
@@ -16,16 +16,16 @@ Audit date: 2026-06-13
 
 ## Module assessments at a glance
 
-| Module group | Verdict | Confirmed findings |
-| --- | --- | --- |
-| `main/ipc` (handlers, mappers, watchController) | **Exemplary** — thin adapters, tripwire tests, no business logic in the boundary | 0 |
-| `infrastructure/git` | **Strong** — `runGit` choke point, pure parsers, proven reuse | 1 (Low) |
-| `contracts` + `preload` | **Solid** — explicit IPC surface, one vestigial type copy | 1 (in top-10) |
-| `infrastructure/watch` + `bootstrap` | **Good** — port-isolated watcher, sound debounce; minor naming/identity-wrapper noise | 1 (Low) |
-| `domain` + `application` | **Over-abstracted at the thin end** — single-impl ports, forwarding factories, behaviorless entity | 2 |
-| `renderer/app` + `shared` | **Good with leaks** — clean shell/primitives, but cross-feature coupling + `:global` CSS | 3 |
-| `renderer/worktree-list` | **Acceptable pre-refactor baseline** — clean flat list; changed-files subtree leaks across features | 1 (Low) |
-| `renderer/diff-viewer` + sidebars | **Clean components, heavy hooks** — god-hook + effect-driven derived state | 5 |
+| Module group                                    | Verdict                                                                                             | Confirmed findings |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------ |
+| `main/ipc` (handlers, mappers, watchController) | **Exemplary** — thin adapters, tripwire tests, no business logic in the boundary                    | 0                  |
+| `infrastructure/git`                            | **Strong** — `runGit` choke point, pure parsers, proven reuse                                       | 1 (Low)            |
+| `contracts` + `preload`                         | **Solid** — explicit IPC surface, one vestigial type copy                                           | 1 (in top-10)      |
+| `infrastructure/watch` + `bootstrap`            | **Good** — port-isolated watcher, sound debounce; minor naming/identity-wrapper noise               | 1 (Low)            |
+| `domain` + `application`                        | **Over-abstracted at the thin end** — single-impl ports, forwarding factories, behaviorless entity  | 2                  |
+| `renderer/app` + `shared`                       | **Good with leaks** — clean shell/primitives, but cross-feature coupling + `:global` CSS            | 3                  |
+| `renderer/worktree-list`                        | **Acceptable pre-refactor baseline** — clean flat list; changed-files subtree leaks across features | 1 (Low)            |
+| `renderer/diff-viewer` + sidebars               | **Clean components, heavy hooks** — god-hook + effect-driven derived state                          | 5                  |
 
 ---
 
@@ -65,7 +65,7 @@ Ordered by severity. Each finding was independently verified; severities reflect
 - **Severity:** Medium
 - **File:** `src/application/worktrees/ports/` (`WorktreeReader`, `CommitReader`, `DiffReader`, `WorktreeSummaryReader`, `RepoWatcher`) and the use-case factory closures that only forward
 - **Issue:** Every port has exactly one implementation, and the use-case factories are pure forwarding closures — no validation, composition, or error handling. Abstraction depth without matching application complexity.
-- **Why this matters:** Ports earn their keep when multiple strategies exist or infrastructure must change without the application knowing. `CLAUDE.md` deliberately commits to git-CLI with no pluggable backends, and this is a viewer with almost no domain logic. The result is one-consumer indirection that adds reading burden ("interface contract vs. implementation?") and pass-through layers that violate "simplicity over extensibility" and "generic code only when reuse is proven." *Note: the infrastructure/application boundary itself is a legitimate hard rule — the issue is the port-plus-forwarding-wrapper ceremony, not the boundary.*
+- **Why this matters:** Ports earn their keep when multiple strategies exist or infrastructure must change without the application knowing. `CLAUDE.md` deliberately commits to git-CLI with no pluggable backends, and this is a viewer with almost no domain logic. The result is one-consumer indirection that adds reading burden ("interface contract vs. implementation?") and pass-through layers that violate "simplicity over extensibility" and "generic code only when reuse is proven." _Note: the infrastructure/application boundary itself is a legitimate hard rule — the issue is the port-plus-forwarding-wrapper ceremony, not the boundary._
 - **Minimal refactor direction:** Collapse the port + forwarding-factory pattern. Wire concrete readers into handlers (or behind one narrow interface) while preserving the infra/application boundary. Reintroduce a port the moment a second implementation (or a real test seam) actually exists.
 - **Expected improvement:** Removes 5 port files plus 5 forwarding factories; shorter call paths; intent reads as "this runs git," not "delegate to a port that delegates to a git reader."
 
@@ -164,30 +164,30 @@ domain/application, the design palette) are respected and were not counted again
 
 ## Top 10 highest-ROI refactors
 
-1. **Break the diff-viewer feature-boundary leak.** Stop sharing `DiffFileModel`/`directoryPathsForFile` across features; give `worktree-list` its own neutral file-navigation model. *Files:* `worktree-list/file-list-context.tsx`, `worktree-list/changed-files-section/index.tsx`, `diff-viewer/`. Eliminates the worst cross-feature coupling and unblocks the Phase-2 split.
-2. **Delete the single-implementation ports + forwarding use-case factories.** *Files:* `application/worktrees/ports/*`, the forwarding factory closures. Removes 5 one-consumer abstractions and pass-through indirection; main can depend on infrastructure readers directly without losing the boundaries that matter.
-3. **Split `useWorktreeBrowser` by state domain** into `useRepositoryCatalog` / `useSelectedWorktreeDetails` / `useRepositoryWatcher` behind the same facade. *File:* `worktree-browser/index.ts`. Makes state transitions and error handling explicit and independently testable.
-4. **Stop CSS reaching through private component class names.** Replace `:global(.gb-segmented-control__item)` / `:global(.gb-diff-stat)` with real props/variants on SegmentedControl and DiffStat. *Files:* `worktree-detail-sidebar/index.module.scss:160`, `worktree-list/index.module.scss:18-24`. Fixes a latent production bug, not just a smell.
-5. **Inject the scroll container into `useActiveFileScrollSpy`** instead of discovering it via DOM + `.app-shell__content`. *File:* `diff-viewer/hooks/useActiveFileScrollSpy.ts`. Turns it into a pure, testable, reusable scroll-tracker.
-6. **Remove effect-driven derived state in the diff render path.** Use a `key`-reset (or computed state) for the model-change reset; drop `pendingScrollId`-cleared-in-effect. *Files:* `diff-viewer/index.tsx:24-27`, `diff-viewer/hooks/useScrollToSection.ts`. Kills double renders and timing-dependent behavior.
-7. **Collapse the duplicated `CommitFileChange` / `CommitFileChangeStatus` types** into one canonical source and re-export. *Files:* `contracts/ipc/` (vestigial copy), `application/worktrees/ports/` (the imported-from copy). Removes a DTO/port drift trap.
-8. **Delete the `Worktree` domain entity or give it real invariants.** *File:* `domain/worktree/Worktree.ts`. Removes naming-only indirection over `WorktreeDto`.
-9. **Use `mapWithConcurrency` in `GitCliDiffReader`** instead of hand-rolled batching. *File:* `infrastructure/git/readers/GitCliDiffReader.ts:27-32`. Restores reader consistency and deletes error-prone concurrency code.
-10. **Watch-layer + grouping cleanup (cheap wins).** Rename `isWorkingTreePathIgnored` → any-segment semantics and document the path contract; delete the trivial `makeWatchRepository` identity wrapper; memoize/hoist `groupChangedFiles`. *Files:* `ChokidarRepoWatcher.ts:90-95`, `makeWatchRepository`, `worktree-list/changed-files-section/index.tsx`.
+1. **Break the diff-viewer feature-boundary leak.** Stop sharing `DiffFileModel`/`directoryPathsForFile` across features; give `worktree-list` its own neutral file-navigation model. _Files:_ `worktree-list/file-list-context.tsx`, `worktree-list/changed-files-section/index.tsx`, `diff-viewer/`. Eliminates the worst cross-feature coupling and unblocks the Phase-2 split.
+2. **Delete the single-implementation ports + forwarding use-case factories.** _Files:_ `application/worktrees/ports/*`, the forwarding factory closures. Removes 5 one-consumer abstractions and pass-through indirection; main can depend on infrastructure readers directly without losing the boundaries that matter.
+3. **Split `useWorktreeBrowser` by state domain** into `useRepositoryCatalog` / `useSelectedWorktreeDetails` / `useRepositoryWatcher` behind the same facade. _File:_ `worktree-browser/index.ts`. Makes state transitions and error handling explicit and independently testable.
+4. **Stop CSS reaching through private component class names.** Replace `:global(.gb-segmented-control__item)` / `:global(.gb-diff-stat)` with real props/variants on SegmentedControl and DiffStat. _Files:_ `worktree-detail-sidebar/index.module.scss:160`, `worktree-list/index.module.scss:18-24`. Fixes a latent production bug, not just a smell.
+5. **Inject the scroll container into `useActiveFileScrollSpy`** instead of discovering it via DOM + `.app-shell__content`. _File:_ `diff-viewer/hooks/useActiveFileScrollSpy.ts`. Turns it into a pure, testable, reusable scroll-tracker.
+6. **Remove effect-driven derived state in the diff render path.** Use a `key`-reset (or computed state) for the model-change reset; drop `pendingScrollId`-cleared-in-effect. _Files:_ `diff-viewer/index.tsx:24-27`, `diff-viewer/hooks/useScrollToSection.ts`. Kills double renders and timing-dependent behavior.
+7. **Collapse the duplicated `CommitFileChange` / `CommitFileChangeStatus` types** into one canonical source and re-export. _Files:_ `contracts/ipc/` (vestigial copy), `application/worktrees/ports/` (the imported-from copy). Removes a DTO/port drift trap.
+8. **Delete the `Worktree` domain entity or give it real invariants.** _File:_ `domain/worktree/Worktree.ts`. Removes naming-only indirection over `WorktreeDto`.
+9. **Use `mapWithConcurrency` in `GitCliDiffReader`** instead of hand-rolled batching. _File:_ `infrastructure/git/readers/GitCliDiffReader.ts:27-32`. Restores reader consistency and deletes error-prone concurrency code.
+10. **Watch-layer + grouping cleanup (cheap wins).** Rename `isWorkingTreePathIgnored` → any-segment semantics and document the path contract; delete the trivial `makeWatchRepository` identity wrapper; memoize/hoist `groupChangedFiles`. _Files:_ `ChokidarRepoWatcher.ts:90-95`, `makeWatchRepository`, `worktree-list/changed-files-section/index.tsx`.
 
 ---
 
 ## Files that should remain untouched
 
-| File / area | Why leave it alone |
-| --- | --- |
-| `src/main/ipc/` (handlers + mappers, incl. `worktreeMapper.test.ts`) | Thin adapters that delegate → map → return `Result`, with zero business logic. Tripwire tests prevent domain leakage. ~477 LOC, exemplary local reasoning. |
-| `src/infrastructure/git/runGit.ts` | The single git-spawning choke point using argument arrays — the security/consistency anchor for all git access. Does one thing, clearly. |
-| `src/infrastructure/git/` parsers + helpers (`refResolves`, `unpushedStrategy`, `mapWithConcurrency`) | Pure, well-separated parsing/concurrency with **proven** multi-reader reuse and integration tests. |
-| `src/preload/index.ts` | Single facade isolating `ipcRenderer` behind `window.api` per the hard rule; no logic beyond the bridge. |
-| `src/renderer/src/shared/ui/` (Button, Badge, DiffStat, SegmentedControl) | Genuine reusable primitives with real consumers. The unused variants/tokens are the **intentional design palette** — do not prune. |
-| `worktree-list/` flat list (`WorktreeList`, `WorktreeRow`) | Clean, focused rendering that honors the "worktrees are a flat list" rule. Nothing to abstract. |
-| `diff-viewer/index.tsx` (DiffView core body) | Clean with appropriate memoization/callback caching; only the model-reset effect (finding 3) needs attention — the component itself does not. |
+| File / area                                                                                           | Why leave it alone                                                                                                                                         |
+| ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/main/ipc/` (handlers + mappers, incl. `worktreeMapper.test.ts`)                                  | Thin adapters that delegate → map → return `Result`, with zero business logic. Tripwire tests prevent domain leakage. ~477 LOC, exemplary local reasoning. |
+| `src/infrastructure/git/runGit.ts`                                                                    | The single git-spawning choke point using argument arrays — the security/consistency anchor for all git access. Does one thing, clearly.                   |
+| `src/infrastructure/git/` parsers + helpers (`refResolves`, `unpushedStrategy`, `mapWithConcurrency`) | Pure, well-separated parsing/concurrency with **proven** multi-reader reuse and integration tests.                                                         |
+| `src/preload/index.ts`                                                                                | Single facade isolating `ipcRenderer` behind `window.api` per the hard rule; no logic beyond the bridge.                                                   |
+| `src/renderer/src/shared/ui/` (Button, Badge, DiffStat, SegmentedControl)                             | Genuine reusable primitives with real consumers. The unused variants/tokens are the **intentional design palette** — do not prune.                         |
+| `worktree-list/` flat list (`WorktreeList`, `WorktreeRow`)                                            | Clean, focused rendering that honors the "worktrees are a flat list" rule. Nothing to abstract.                                                            |
+| `diff-viewer/index.tsx` (DiffView core body)                                                          | Clean with appropriate memoization/callback caching; only the model-reset effect (finding 3) needs attention — the component itself does not.              |
 
 ---
 

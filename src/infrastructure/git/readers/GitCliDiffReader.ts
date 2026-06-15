@@ -44,10 +44,8 @@ export class GitCliDiffReader {
     trackedDiff: string,
     paths: string[]
   ): Promise<string> {
-    const untrackedDiffs = await mapWithConcurrency(
-      paths,
-      UNTRACKED_DIFF_CONCURRENCY,
-      (path) => this.getUntrackedFileDiff(worktreePath, path)
+    const untrackedDiffs = await mapWithConcurrency(paths, UNTRACKED_DIFF_CONCURRENCY, (path) =>
+      this.getUntrackedFileDiff(worktreePath, path)
     );
     return trackedDiff + untrackedDiffs.join('');
   }

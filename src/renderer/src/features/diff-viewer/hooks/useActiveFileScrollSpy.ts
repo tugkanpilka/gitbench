@@ -11,7 +11,11 @@ export interface ActiveFileScrollSpyOptions {
   onActiveFileChange: (fileId: string) => void;
 }
 
-function findActiveFileId(files: DiffModel['files'], sectionRefs: Map<string, HTMLElement>, threshold: number): string {
+function findActiveFileId(
+  files: DiffModel['files'],
+  sectionRefs: Map<string, HTMLElement>,
+  threshold: number
+): string {
   let activeFileId = files[0].id;
   for (const file of files) {
     const section = sectionRefs.get(file.id);
@@ -22,7 +26,10 @@ function findActiveFileId(files: DiffModel['files'], sectionRefs: Map<string, HT
   return activeFileId;
 }
 
-function makeScrollHandler(options: ActiveFileScrollSpyOptions, scrollRoot: HTMLElement): () => void {
+function makeScrollHandler(
+  options: ActiveFileScrollSpyOptions,
+  scrollRoot: HTMLElement
+): () => void {
   const { sectionRefs, model, onActiveFileChange } = options;
   return () => {
     const threshold = scrollRoot.scrollTop + ACTIVE_FILE_THRESHOLD;

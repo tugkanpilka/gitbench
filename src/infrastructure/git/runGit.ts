@@ -56,7 +56,12 @@ interface ExecCallbackContext {
   options: RunGitOptions;
 }
 
-function makeExecCallback({ resolve, reject, targetPath, options }: ExecCallbackContext): (error: ExecFileException | null, stdout: string, stderr: string) => void {
+function makeExecCallback({
+  resolve,
+  reject,
+  targetPath,
+  options,
+}: ExecCallbackContext): (error: ExecFileException | null, stdout: string, stderr: string) => void {
   return (error, stdout, stderr) => {
     if (!error || isAcceptedExit(error, stderr, options.acceptedExitCodes)) {
       resolve(stdout);

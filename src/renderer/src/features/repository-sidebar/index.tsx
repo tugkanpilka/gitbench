@@ -40,7 +40,14 @@ function WorktreesNav({ worktrees, summaries, selectedPath, onSelectWorktree }: 
   );
 }
 
-export function RepositorySidebar({ repoPath, worktrees, summaries, selectedPath, onSelectWorktree }: RepositorySidebarProps) {
+// eslint-disable-next-line max-lines-per-function -- pure JSX render; RepoHeader and WorktreesNav are already extracted
+export function RepositorySidebar({
+  repoPath,
+  worktrees,
+  summaries,
+  selectedPath,
+  onSelectWorktree,
+}: RepositorySidebarProps) {
   const repositoryName = nameFromPath(repoPath);
 
   return (

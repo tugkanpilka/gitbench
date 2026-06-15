@@ -70,16 +70,21 @@ describe('useRepositoryCatalog', () => {
     await waitFor(() => expect(result.current.summaries).toHaveLength(2));
   });
 
+  // eslint-disable-next-line max-lines-per-function -- test body; two sequential act() calls are required
   it('keeps the previous repository when listing worktrees for the new one fails', async () => {
     stubBrokenSecondRepo();
     const errorSlot = makeErrorSlot();
     const { result } = renderHook(() => useRepositoryCatalog(errorSlot));
 
-    await act(async () => { await result.current.openRepository(); });
+    await act(async () => {
+      await result.current.openRepository();
+    });
     expect(result.current.repoPath).toBe('/repo');
 
     let opened: string | null = '/unchanged';
-    await act(async () => { opened = await result.current.openRepository(); });
+    await act(async () => {
+      opened = await result.current.openRepository();
+    });
 
     expect(opened).toBeNull();
     expect(result.current.repoPath).toBe('/repo');
@@ -91,10 +96,14 @@ describe('useRepositoryCatalog', () => {
     const errorSlot = makeErrorSlot();
     const { result } = renderHook(() => useRepositoryCatalog(errorSlot));
 
-    await act(async () => { await result.current.openRepository(); });
+    await act(async () => {
+      await result.current.openRepository();
+    });
     expect(result.current.worktrees).toHaveLength(2);
 
-    await act(async () => { await result.current.refreshRepository(); });
+    await act(async () => {
+      await result.current.refreshRepository();
+    });
 
     expect(result.current.worktrees).toHaveLength(0);
     expect(result.current.loading).toBe(false);

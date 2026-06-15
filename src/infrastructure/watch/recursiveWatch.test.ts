@@ -3,7 +3,10 @@ import { describe, expect, it, vi } from 'vitest';
 import { startFSEventsWatch, type StopRecursiveWatch } from './recursiveWatch';
 
 interface WatchModule {
-  watch: (path: string, handler: (path: string) => void) => ReturnType<typeof vi.fn<StopRecursiveWatch>>;
+  watch: (
+    path: string,
+    handler: (path: string) => void
+  ) => ReturnType<typeof vi.fn<StopRecursiveWatch>>;
 }
 
 function makeWatchModule(): {

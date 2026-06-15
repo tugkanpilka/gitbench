@@ -55,17 +55,32 @@ interface WorktreeDiff {
 
 type DiffSetter = Dispatch<SetStateAction<DiffState | null>>;
 
-interface DiffResultCtx { path: string; text: string; signal: AbortSignal; setDiff: DiffSetter }
+interface DiffResultCtx {
+  path: string;
+  text: string;
+  signal: AbortSignal;
+  setDiff: DiffSetter;
+}
 function applyDiffResult({ path, text, signal, setDiff }: DiffResultCtx): void {
   if (!signal.aborted) {
-    startTransition(() => { setDiff((prev) => nextDiffState(prev, path, text)); });
+    startTransition(() => {
+      setDiff((prev) => nextDiffState(prev, path, text));
+    });
   }
 }
 
-interface DiffFailCtx { caught: unknown; showLoading: boolean; signal: AbortSignal; slot: ErrorSlot; setDiff: DiffSetter }
+interface DiffFailCtx {
+  caught: unknown;
+  showLoading: boolean;
+  signal: AbortSignal;
+  slot: ErrorSlot;
+  setDiff: DiffSetter;
+}
 function handleDiffFailure({ caught, showLoading, signal, slot, setDiff }: DiffFailCtx): void {
   if (!signal.aborted) {
-    if (showLoading) { setDiff(null); }
+    if (showLoading) {
+      setDiff(null);
+    }
     slot.set(describeError(caught));
   }
 }
@@ -73,21 +88,41 @@ function handleDiffFailure({ caught, showLoading, signal, slot, setDiff }: DiffF
 type LoadDiffFn = (worktreePath: string, showLoading: boolean) => Promise<void>;
 type LatestReq = ReturnType<typeof useLatestRequest>;
 
-interface LoadDiffDeps { req: LatestReq; setDiff: DiffSetter; setLoading: (v: boolean) => void; slot: ErrorSlot }
+interface LoadDiffDeps {
+  req: LatestReq;
+  setDiff: DiffSetter;
+  setLoading: (v: boolean) => void;
+  slot: ErrorSlot;
+}
 
-async function runLoadDiff(path: string, show: boolean, deps: LoadDiffDeps): Promise<void> {
-  const { req, setDiff, setLoading, slot } = deps;
-  const signal = req.begin();
-  if (show) { setDiff(null); setLoading(true); }
-  slot.clear();
+interface FetchDiffCtx {
+  path: string;
+  show: boolean;
+  signal: AbortSignal;
+  deps: LoadDiffDeps;
+}
+
+async function fetchAndApplyDiff({ path, show, signal, deps }: FetchDiffCtx): Promise<void> {
   try {
     const { diffText } = await desktopApi.getDiff(path);
-    applyDiffResult({ path, text: diffText, signal, setDiff });
+    applyDiffResult({ path, text: diffText, signal, setDiff: deps.setDiff });
   } catch (caught) {
-    handleDiffFailure({ caught, showLoading: show, signal, slot, setDiff });
+    handleDiffFailure({ caught, showLoading: show, signal, slot: deps.slot, setDiff: deps.setDiff });
   } finally {
-    if (!signal.aborted) { setLoading(false); }
+    if (!signal.aborted) {
+      deps.setLoading(false);
+    }
   }
+}
+
+async function runLoadDiff(path: string, show: boolean, deps: LoadDiffDeps): Promise<void> {
+  const signal = deps.req.begin();
+  if (show) {
+    deps.setDiff(null);
+    deps.setLoading(true);
+  }
+  deps.slot.clear();
+  await fetchAndApplyDiff({ path, show, signal, deps });
 }
 
 function useLoadDiff(deps: LoadDiffDeps): LoadDiffFn {
@@ -98,15 +133,25 @@ function useLoadDiff(deps: LoadDiffDeps): LoadDiffFn {
   );
 }
 
+function useResetDiff(
+  setDiff: DiffSetter,
+  setDiffLoading: (v: boolean) => void,
+  diffRequest: LatestReq
+): () => void {
+  return useCallback(() => {
+    setDiff(null);
+    setDiffLoading(false);
+    diffRequest.invalidate();
+  }, [diffRequest, setDiff, setDiffLoading]);
+}
+
 // `showLoading` true = user selection (clear + spinner); false = auto-refresh (keep view).
 function useWorktreeDiff(errorSlot: ErrorSlot): WorktreeDiff {
   const [diff, setDiff] = useState<DiffState | null>(null);
   const [diffLoading, setDiffLoading] = useState(false);
   const diffRequest = useLatestRequest();
   const loadDiff = useLoadDiff({ req: diffRequest, setDiff, setLoading: setDiffLoading, slot: errorSlot });
-  const resetDiff = useCallback(() => {
-    setDiff(null); setDiffLoading(false); diffRequest.invalidate();
-  }, [diffRequest]);
+  const resetDiff = useResetDiff(setDiff, setDiffLoading, diffRequest);
   return { diff, diffLoading, diffRequest, loadDiff, resetDiff };
 }
 
@@ -119,28 +164,42 @@ interface WorktreeCommits {
 
 type CommitsSetter = Dispatch<SetStateAction<CommitsState | null>>;
 
+// eslint-disable-next-line max-lines-per-function -- multi-line signature from prettier; body is already minimal
 function applyCommitsResult(
   response: CommitsState,
   signal: AbortSignal,
   setCommits: CommitsSetter
 ): void {
-  if (signal.aborted) { return; }
+  if (signal.aborted) {
+    return;
+  }
   startTransition(() => {
     setCommits((prev) =>
-      commitsChanged(prev, response) ? { commits: response.commits, truncated: response.truncated } : prev
+      commitsChanged(prev, response)
+        ? { commits: response.commits, truncated: response.truncated }
+        : prev
     );
   });
 }
 
-interface RunCommitsCtx { path: string; clear: boolean; req: LatestReq; setCommits: CommitsSetter }
+interface RunCommitsCtx {
+  path: string;
+  clear: boolean;
+  req: LatestReq;
+  setCommits: CommitsSetter;
+}
 async function runLoadCommits({ path, clear, req, setCommits }: RunCommitsCtx): Promise<void> {
   const signal = req.begin();
-  if (clear) { setCommits(null); }
+  if (clear) {
+    setCommits(null);
+  }
   try {
     const response = await desktopApi.listUnpushedCommits(path);
     applyCommitsResult(response, signal, setCommits);
   } catch {
-    if (!signal.aborted && clear) { setCommits(null); }
+    if (!signal.aborted && clear) {
+      setCommits(null);
+    }
   }
 }
 
@@ -149,11 +208,13 @@ function useWorktreeCommits(): WorktreeCommits {
   const [commits, setCommits] = useState<CommitsState | null>(null);
   const commitsRequest = useLatestRequest();
   const loadCommits = useCallback(
-    async (path: string, clear: boolean) => runLoadCommits({ path, clear, req: commitsRequest, setCommits }),
+    async (path: string, clear: boolean) =>
+      runLoadCommits({ path, clear, req: commitsRequest, setCommits }),
     [commitsRequest]
   );
   const resetCommits = useCallback(() => {
-    setCommits(null); commitsRequest.invalidate();
+    setCommits(null);
+    commitsRequest.invalidate();
   }, [commitsRequest]);
   return { commits, commitsRequest, loadCommits, resetCommits };
 }
@@ -176,16 +237,37 @@ interface ActionDeps {
   resetCommits(): void;
 }
 
+function useSelectWorktree(
+  setPath: ActionDeps['setPath'],
+  loadDiff: LoadDiffFn2,
+  loadCommits: LoadCommitsFn
+): ActionsResult['selectWorktree'] {
+  return useCallback(
+    async (path: string) => {
+      setPath(path);
+      await Promise.all([loadDiff(path, true), loadCommits(path, true)]);
+    },
+    [loadCommits, loadDiff, setPath]
+  );
+}
+
+function useReloadDetails(loadDiff: LoadDiffFn2, loadCommits: LoadCommitsFn): ActionsResult['reloadDetails'] {
+  return useCallback(
+    (path: string) => {
+      void loadDiff(path, false);
+      void loadCommits(path, false);
+    },
+    [loadCommits, loadDiff]
+  );
+}
+
 function useWorktreeActions({ setPath, loadDiff, loadCommits, resetDiff, resetCommits }: ActionDeps): ActionsResult {
-  const selectWorktree = useCallback(async (path: string) => {
-    setPath(path);
-    await Promise.all([loadDiff(path, true), loadCommits(path, true)]);
-  }, [loadCommits, loadDiff, setPath]);
-  const reloadDetails = useCallback((path: string) => {
-    void loadDiff(path, false); void loadCommits(path, false);
-  }, [loadCommits, loadDiff]);
+  const selectWorktree = useSelectWorktree(setPath, loadDiff, loadCommits);
+  const reloadDetails = useReloadDetails(loadDiff, loadCommits);
   const reset = useCallback(() => {
-    setPath(null); resetDiff(); resetCommits();
+    setPath(null);
+    resetDiff();
+    resetCommits();
   }, [resetCommits, resetDiff, setPath]);
   return { selectWorktree, reloadDetails, reset };
 }
@@ -194,6 +276,12 @@ export function useSelectedWorktreeDetails(errorSlot: ErrorSlot): SelectedWorktr
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const { diff, diffLoading, loadDiff, resetDiff } = useWorktreeDiff(errorSlot);
   const { commits, loadCommits, resetCommits } = useWorktreeCommits();
-  const actions = useWorktreeActions({ setPath: setSelectedPath, loadDiff, loadCommits, resetDiff, resetCommits });
+  const actions = useWorktreeActions({
+    setPath: setSelectedPath,
+    loadDiff,
+    loadCommits,
+    resetDiff,
+    resetCommits,
+  });
   return { selectedPath, diff, commits, diffLoading, ...actions };
 }

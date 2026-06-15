@@ -54,10 +54,7 @@ function makeWatcherRegistry(): { register: (s: StopFn) => void; stopAll: () => 
   };
 }
 
-function attachWatcher(
-  watcher: Promise<StopFn>,
-  register: (s: StopFn) => void
-): void {
+function attachWatcher(watcher: Promise<StopFn>, register: (s: StopFn) => void): void {
   void watcher.then(register).catch(() => {
     // Auto-refresh is best-effort. List/diff queries surface repository and
     // Git failures without taking down Electron's main process.

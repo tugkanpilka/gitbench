@@ -44,7 +44,11 @@ export class GitCliCommitReader {
     range: string[]
   ): Promise<UnpushedCommits> {
     // `-c core.quotePath=false` keeps non-ASCII paths literal instead of \xNN-escaped.
-    const stdout = await runGit(worktreePath, [...COMMIT_LOG_PREFIX_ARGS, ...range, ...COMMIT_LOG_SUFFIX_ARGS]);
+    const stdout = await runGit(worktreePath, [
+      ...COMMIT_LOG_PREFIX_ARGS,
+      ...range,
+      ...COMMIT_LOG_SUFFIX_ARGS,
+    ]);
     return truncateCommits(parseCommitLog(stdout));
   }
 }

@@ -29,12 +29,25 @@ function formatNavigationTarget(target: DiffNavigationTarget | null): string {
 
 type NavigationControls = ReturnType<typeof useDiffNavigation>;
 
-function NavigationButtons({ navigation, secondFileId }: { navigation: NavigationControls; secondFileId: string }) {
+// eslint-disable-next-line max-lines-per-function -- pure JSX button group, no meaningful split
+function NavigationButtons({
+  navigation,
+  secondFileId,
+}: {
+  navigation: NavigationControls;
+  secondFileId: string;
+}) {
   return (
     <>
-      <button type="button" onClick={() => navigation.selectFile(secondFileId)}>Select second file</button>
-      <button type="button" onClick={() => navigation.setActiveFileId(secondFileId)}>Scroll to second file</button>
-      <button type="button" onClick={() => navigation.setActiveFileId(null)}>Scroll past every file</button>
+      <button type="button" onClick={() => navigation.selectFile(secondFileId)}>
+        Select second file
+      </button>
+      <button type="button" onClick={() => navigation.setActiveFileId(secondFileId)}>
+        Scroll to second file
+      </button>
+      <button type="button" onClick={() => navigation.setActiveFileId(null)}>
+        Scroll past every file
+      </button>
     </>
   );
 }
@@ -45,7 +58,9 @@ function NavigationHarness({ model }: { model: DiffModel }) {
   return (
     <>
       <output aria-label="Active file">{navigation.activeFileId ?? '(none)'}</output>
-      <output aria-label="Navigation target">{formatNavigationTarget(navigation.navigationTarget)}</output>
+      <output aria-label="Navigation target">
+        {formatNavigationTarget(navigation.navigationTarget)}
+      </output>
       <NavigationButtons navigation={navigation} secondFileId={secondFileId} />
     </>
   );

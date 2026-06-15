@@ -22,7 +22,14 @@ function gitAvailable(): boolean {
   }
 }
 
-const GIT_IDENT_ARGS = ['-c', 'user.name=Test', '-c', 'user.email=test@example.com', '-c', 'commit.gpgsign=false'];
+const GIT_IDENT_ARGS = [
+  '-c',
+  'user.name=Test',
+  '-c',
+  'user.email=test@example.com',
+  '-c',
+  'commit.gpgsign=false',
+];
 
 function git(repoPath: string, ...args: string[]): void {
   execFileSync('git', ['-C', repoPath, ...GIT_IDENT_ARGS, ...args], { stdio: 'pipe' });
@@ -233,16 +240,32 @@ function addTwoCommitsAhead(repo: string): void {
   git(repo, 'commit', '-m', 'third');
 }
 
-function assertAheadCommitFiles(
-  result: { truncated: boolean; commits: { subject: string; files: { status: string; path: string; previousPath: string | null }[]; sha: string; shortSha: string }[] }
-): void {
+type AheadResult = {
+  truncated: boolean;
+  commits: {
+    subject: string;
+    files: { status: string; path: string; previousPath: string | null }[];
+    sha: string;
+    shortSha: string;
+  }[];
+};
+
+function assertThirdCommitFiles(commits: AheadResult['commits']): void {
+  expect(commits[0].files).toEqual([{ status: 'deleted', path: 'added.txt', previousPath: null }]);
+  expect(commits[0].sha).toMatch(/^[0-9a-f]{40}$/);
+  expect(commits[0].shortSha).toMatch(/^[0-9a-f]{7,}$/);
+}
+
+function assertSecondCommitFiles(commits: AheadResult['commits']): void {
+  expect(commits[1].files).toContainEqual({ status: 'modified', path: 'file.txt', previousPath: null });
+  expect(commits[1].files).toContainEqual({ status: 'added', path: 'added.txt', previousPath: null });
+}
+
+function assertAheadCommitFiles(result: AheadResult): void {
   expect(result.truncated).toBe(false);
   expect(result.commits.map((c) => c.subject)).toEqual(['third', 'second']);
-  expect(result.commits[0].files).toEqual([{ status: 'deleted', path: 'added.txt', previousPath: null }]);
-  expect(result.commits[1].files).toContainEqual({ status: 'modified', path: 'file.txt', previousPath: null });
-  expect(result.commits[1].files).toContainEqual({ status: 'added', path: 'added.txt', previousPath: null });
-  expect(result.commits[0].sha).toMatch(/^[0-9a-f]{40}$/);
-  expect(result.commits[0].shortSha).toMatch(/^[0-9a-f]{7,}$/);
+  assertThirdCommitFiles(result.commits);
+  assertSecondCommitFiles(result.commits);
 }
 
 // eslint-disable-next-line max-lines-per-function

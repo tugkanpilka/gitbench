@@ -69,7 +69,12 @@ function renderSidebar(opts: SidebarOptions = {}) {
 }
 
 function renderToggleTest(onToggleRepositorySidebar: () => void, repositorySidebarOpen: boolean) {
-  return render(<WorktreeDetailSidebar {...BASE_PROPS} {...{ onToggleRepositorySidebar, repositorySidebarOpen }} />);
+  return render(
+    <WorktreeDetailSidebar
+      {...BASE_PROPS}
+      {...{ onToggleRepositorySidebar, repositorySidebarOpen }}
+    />
+  );
 }
 
 // eslint-disable-next-line max-lines-per-function
@@ -138,13 +143,25 @@ describe('WorktreeDetailSidebar', () => {
     const onToggleRepositorySidebar = vi.fn();
     const { rerender } = renderToggleTest(onToggleRepositorySidebar, true);
     fireEvent.click(screen.getByRole('button', { name: 'Hide worktree sidebar' }));
-    rerender(<WorktreeDetailSidebar {...BASE_PROPS} onToggleRepositorySidebar={onToggleRepositorySidebar} repositorySidebarOpen={false} />);
+    rerender(
+      <WorktreeDetailSidebar
+        {...BASE_PROPS}
+        onToggleRepositorySidebar={onToggleRepositorySidebar}
+        repositorySidebarOpen={false}
+      />
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Show worktree sidebar' }));
     expect(onToggleRepositorySidebar).toHaveBeenCalledTimes(2);
   });
 
   it('renders a placeholder before a worktree is selected', () => {
-    renderSidebar({ worktree: null, changedFiles: [], unpushedCommits: [], activeFileId: null, diffStats: null });
+    renderSidebar({
+      worktree: null,
+      changedFiles: [],
+      unpushedCommits: [],
+      activeFileId: null,
+      diffStats: null,
+    });
     expect(screen.getByText('Select a worktree to inspect its changes.')).toBeTruthy();
     // The sidebar toggle must stay reachable even with no selection, so a closed
     // (inert) repository sidebar can always be reopened.

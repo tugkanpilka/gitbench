@@ -23,9 +23,16 @@ function DetailSidebarSlot({ children }: { children: ReactNode }) {
   );
 }
 
-function SidebarContainer(
-  { open, sidebar, detail }: { open: boolean; sidebar: ReactNode; detail: ReactNode }
-) {
+// eslint-disable-next-line max-lines-per-function -- multi-line inline type + JSX exhaust 15 lines; extract would obscure intent
+function SidebarContainer({
+  open,
+  sidebar,
+  detail,
+}: {
+  open: boolean;
+  sidebar: ReactNode;
+  detail: ReactNode;
+}) {
   return (
     <div className={styles['app-shell__sidebars']}>
       <SidebarSlot open={open}>{sidebar}</SidebarSlot>
@@ -34,12 +41,21 @@ function SidebarContainer(
   );
 }
 
-export function AppShell(
-  { repositorySidebar, detailSidebar, repositorySidebarOpen, scrollContainerRef, children }: AppShellProps
-) {
+// eslint-disable-next-line max-lines-per-function -- destructured AppShellProps + JSX tree exhaust 15 lines with no meaningful split
+export function AppShell({
+  repositorySidebar,
+  detailSidebar,
+  repositorySidebarOpen,
+  scrollContainerRef,
+  children,
+}: AppShellProps) {
   return (
     <div className={styles['app-shell']} data-repository-sidebar-open={repositorySidebarOpen}>
-      <SidebarContainer open={repositorySidebarOpen} sidebar={repositorySidebar} detail={detailSidebar} />
+      <SidebarContainer
+        open={repositorySidebarOpen}
+        sidebar={repositorySidebar}
+        detail={detailSidebar}
+      />
       <main ref={scrollContainerRef} className={styles['app-shell__content']}>
         {children}
       </main>

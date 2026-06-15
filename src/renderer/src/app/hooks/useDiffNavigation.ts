@@ -26,6 +26,7 @@ export interface DiffNavigationController {
  * Tracks which diff file is active and turns sidebar selections into
  * scroll-navigation requests for the DiffView.
  */
+// eslint-disable-next-line max-lines-per-function -- hook body: 3 state declarations + reset + selectFile callback; no further split without hurting cohesion
 export function useDiffNavigation(diffModel: DiffModel): DiffNavigationController {
   const [activeFileId, setActiveFileId] = useState<string | null>(
     () => diffModel.files[0]?.id ?? null
@@ -35,7 +36,10 @@ export function useDiffNavigation(diffModel: DiffModel): DiffNavigationControlle
 
   // diffModel identity changes whenever a new diff arrives (including switching
   // worktrees). useModelReset handles the render-time derived-state reset.
-  useModelReset(diffModel, (id) => { setActiveFileId(id); setNavigationTarget(null); });
+  useModelReset(diffModel, (id) => {
+    setActiveFileId(id);
+    setNavigationTarget(null);
+  });
 
   const selectFile = (fileId: string) => {
     navigationRequestId.current += 1;

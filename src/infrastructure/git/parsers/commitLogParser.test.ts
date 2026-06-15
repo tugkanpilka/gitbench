@@ -31,17 +31,14 @@ function singleCommitFixture(): string {
 }
 
 function renameAndCopyFixture(): string {
-  return record(
-    { ...BASE_META, subject: 'move things' },
-    ['R100\told/name.ts\tnew/name.ts', 'C075\tsource.ts\tcopy.ts']
-  );
+  return record({ ...BASE_META, subject: 'move things' }, [
+    'R100\told/name.ts\tnew/name.ts',
+    'C075\tsource.ts\tcopy.ts',
+  ]);
 }
 
 function phantomRecordFixture(): string {
-  return record(
-    { ...BASE_META, subject: `before${RS}after${US}field` },
-    ['M\ta.ts']
-  );
+  return record({ ...BASE_META, subject: `before${RS}after${US}field` }, ['M\ta.ts']);
 }
 
 function emptyCommitFixture(): string {
@@ -63,17 +60,11 @@ const SINGLE_COMMIT_EXPECTED = [
   },
 ];
 
+const SECOND_META = { sha: SHA_A, shortSha: 'aaaaaaa', author: 'Ada', date: '2026-06-12T10:30:00+03:00', subject: 'second' };
+const FIRST_META = { sha: SHA_B, shortSha: 'bbbbbbb', author: 'Ada', date: '2026-06-12T09:00:00+03:00', subject: 'first' };
+
 function twoCommitFixture(): string {
-  return (
-    record(
-      { sha: SHA_A, shortSha: 'aaaaaaa', author: 'Ada', date: '2026-06-12T10:30:00+03:00', subject: 'second' },
-      ['M\ta.ts']
-    ) +
-    record(
-      { sha: SHA_B, shortSha: 'bbbbbbb', author: 'Ada', date: '2026-06-12T09:00:00+03:00', subject: 'first' },
-      ['A\tb.ts']
-    )
-  );
+  return record(SECOND_META, ['M\ta.ts']) + record(FIRST_META, ['A\tb.ts']);
 }
 
 // eslint-disable-next-line max-lines-per-function

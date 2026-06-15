@@ -44,7 +44,10 @@ describe('fileTree', () => {
   });
 
   it('returns every ancestor path for a file directory', () => {
-    expect(directoryPathsForDirectory(FILES[0].path.directory)).toEqual(['src/', 'src/components/']);
+    expect(directoryPathsForDirectory(FILES[0].path.directory)).toEqual([
+      'src/',
+      'src/components/',
+    ]);
     expect(directoryPathsForDirectory(FILES[2].path.directory)).toEqual([]);
   });
 });

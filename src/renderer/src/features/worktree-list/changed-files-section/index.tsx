@@ -31,7 +31,12 @@ function groupChangedFiles(files: ChangedFileItem[]): FileGroup[] {
 function FileGroupHeader({ group, isGrouped }: { group: FileGroup; isGrouped: boolean }) {
   return (
     <Visibility isVisible={isGrouped}>
-      <div className={cx(styles['worktree-file-group__header'], styles[`worktree-file-group__header--${group.key}`])}>
+      <div
+        className={cx(
+          styles['worktree-file-group__header'],
+          styles[`worktree-file-group__header--${group.key}`]
+        )}
+      >
         <span>{group.label}</span>
         <span className={styles['worktree-file-group__count']}>{group.files.length}</span>
       </div>
@@ -40,11 +45,21 @@ function FileGroupHeader({ group, isGrouped }: { group: FileGroup; isGrouped: bo
 }
 
 interface FileGroupSectionProps {
-  group: FileGroup; isGrouped: boolean; fileListMode: FileListMode;
-  activeFileId: string | null; onSelectFile: (id: string) => void;
+  group: FileGroup;
+  isGrouped: boolean;
+  fileListMode: FileListMode;
+  activeFileId: string | null;
+  onSelectFile: (id: string) => void;
 }
 
-function FileGroupSection({ group, isGrouped, fileListMode, activeFileId, onSelectFile }: FileGroupSectionProps) {
+// eslint-disable-next-line max-lines-per-function -- pure JSX group section; Prettier multi-prop formatting inflates count
+function FileGroupSection({
+  group,
+  isGrouped,
+  fileListMode,
+  activeFileId,
+  onSelectFile,
+}: FileGroupSectionProps) {
   return (
     <div className={styles['worktree-file-group']}>
       <FileGroupHeader group={group} isGrouped={isGrouped} />
@@ -55,20 +70,41 @@ function FileGroupSection({ group, isGrouped, fileListMode, activeFileId, onSele
   );
 }
 
-interface FileGroupListProps { groups: FileGroup[]; isGrouped: boolean; fileListMode: FileListMode; activeFileId: string | null; onSelectFile: (id: string) => void }
+interface FileGroupListProps {
+  groups: FileGroup[];
+  isGrouped: boolean;
+  fileListMode: FileListMode;
+  activeFileId: string | null;
+  onSelectFile: (id: string) => void;
+}
 
-function FileGroupList({ groups, isGrouped, fileListMode, activeFileId, onSelectFile }: FileGroupListProps) {
+// eslint-disable-next-line max-lines-per-function -- pure JSX list of FileGroupSections; Prettier multi-prop formatting inflates count
+function FileGroupList({
+  groups,
+  isGrouped,
+  fileListMode,
+  activeFileId,
+  onSelectFile,
+}: FileGroupListProps) {
   return (
     <>
       {groups.map((group) => (
-        <FileGroupSection key={group.key} group={group} isGrouped={isGrouped}
-          fileListMode={fileListMode} activeFileId={activeFileId} onSelectFile={onSelectFile} />
+        <FileGroupSection
+          key={group.key}
+          group={group}
+          isGrouped={isGrouped}
+          fileListMode={fileListMode}
+          activeFileId={activeFileId}
+          onSelectFile={onSelectFile}
+        />
       ))}
     </>
   );
 }
 
-interface SectionHeaderProps { count: number }
+interface SectionHeaderProps {
+  count: number;
+}
 
 function SectionHeader({ count }: SectionHeaderProps) {
   return (
@@ -79,15 +115,28 @@ function SectionHeader({ count }: SectionHeaderProps) {
   );
 }
 
-function useFileGroups(changedFiles: ChangedFileItem[], fileListMode: FileListMode, flatGroupMode: ChangedFilesSectionProps['flatGroupMode']): { groups: FileGroup[]; isGrouped: boolean } {
+function useFileGroups(
+  changedFiles: ChangedFileItem[],
+  fileListMode: FileListMode,
+  flatGroupMode: ChangedFilesSectionProps['flatGroupMode']
+): { groups: FileGroup[]; isGrouped: boolean } {
   const statusGroups = useMemo(() => groupChangedFiles(changedFiles), [changedFiles]);
   const isGrouped = fileListMode === 'tree' || flatGroupMode === 'status';
-  const groups = isGrouped ? statusGroups : [{ key: 'all' as GroupKey, label: 'All Files', files: changedFiles }];
+  const groups = isGrouped
+    ? statusGroups
+    : [{ key: 'all' as GroupKey, label: 'All Files', files: changedFiles }];
   return { groups, isGrouped };
 }
 
 /** The "Changes" panel for the selected worktree: header, totals, and file navigation. */
-export function ChangedFilesSection({ changedFiles, fileListMode, flatGroupMode, activeFileId, onSelectFile }: ChangedFilesSectionProps) {
+// eslint-disable-next-line max-lines-per-function -- top-level section; decomposed into SectionHeader/FileGroupList; Prettier multi-prop formatting inflates count
+export function ChangedFilesSection({
+  changedFiles,
+  fileListMode,
+  flatGroupMode,
+  activeFileId,
+  onSelectFile,
+}: ChangedFilesSectionProps) {
   const { groups, isGrouped } = useFileGroups(changedFiles, fileListMode, flatGroupMode);
   const listProps = { groups, isGrouped, fileListMode, activeFileId, onSelectFile };
   return (
@@ -97,7 +146,9 @@ export function ChangedFilesSection({ changedFiles, fileListMode, flatGroupMode,
         <Match when={changedFiles.length === 0}>
           <p className={styles['worktree-files-section__empty']}>No uncommitted changes.</p>
         </Match>
-        <Match when={true}><FileGroupList {...listProps} /></Match>
+        <Match when={true}>
+          <FileGroupList {...listProps} />
+        </Match>
       </Switch>
     </section>
   );

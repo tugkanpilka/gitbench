@@ -54,7 +54,14 @@ function SunRays() {
 export const SunIcon = memo(function SunIcon({ className }: TIconProps) {
   return (
     <Icon className={className} size={SUN_SIZE} viewBox="0 0 14 14">
-      <circle cx="7" cy="7" r="3" fill="none" stroke="currentColor" strokeWidth={SUN_CIRCLE_STROKE} />
+      <circle
+        cx="7"
+        cy="7"
+        r="3"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={SUN_CIRCLE_STROKE}
+      />
       <SunRays />
     </Icon>
   );
