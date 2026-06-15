@@ -1,6 +1,7 @@
 import gitbenchIcon from '../../assets/gitbench-icon.svg';
 import { Button } from '../../shared/ui/button';
 import { Visibility } from '../../shared/ui/visibility';
+import { RecentRepoList } from './RecentRepoList';
 import type { WelcomeScreenProps } from './index.types';
 import styles from './index.module.scss';
 
@@ -55,26 +56,27 @@ function WelcomeError({ error }: Pick<WelcomeScreenProps, 'error'>) {
   );
 }
 
-function WelcomeCard({ loading, error, onOpenRepository }: WelcomeScreenProps) {
+function WelcomePanel({ loading, error, onOpenRepository }: Omit<WelcomeScreenProps, 'recentRepos'>) {
   return (
     <section className={styles['welcome-card']} aria-labelledby="welcome-title" aria-busy={loading}>
       <WelcomeIcon />
       <WelcomeHeading />
-      <p className={styles['welcome-card__description']}>
-        Review all uncommitted changes across Git worktrees in one place.
-      </p>
       <WelcomeOpenButton loading={loading} onOpenRepository={onOpenRepository} />
       <WelcomeError error={error} />
-      <p className={styles['welcome-card__hint']}>Select a local Git repository to get started.</p>
     </section>
   );
 }
 
-export function WelcomeScreen({ loading, error, onOpenRepository }: WelcomeScreenProps) {
+export function WelcomeScreen({ loading, error, onOpenRepository, recentRepos }: WelcomeScreenProps) {
   return (
     <main className={styles['welcome-screen']}>
       <div className={styles['welcome-screen__drag-region']} aria-hidden="true" />
-      <WelcomeCard loading={loading} error={error} onOpenRepository={onOpenRepository} />
+      <WelcomePanel loading={loading} error={error} onOpenRepository={onOpenRepository} />
+      <RecentRepoList
+        repos={recentRepos.items}
+        loading={recentRepos.loading}
+        onOpen={recentRepos.onOpen}
+      />
     </main>
   );
 }

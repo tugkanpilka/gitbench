@@ -3,8 +3,10 @@ import { contextBridge, ipcRenderer } from 'electron';
 
 import {
   IPC_CHANNELS,
+  type AddRecentRepoRequest,
   type DesktopApi,
   type GetDiffResponse,
+  type ListRecentReposResponse,
   type ListUnpushedCommitsResponse,
   type ListWorktreeSummariesResponse,
   type ListWorktreesResponse,
@@ -28,6 +30,10 @@ const api: DesktopApi = {
   startWatch: (repoPath: string, worktreePaths: string[]): Promise<Result<null>> =>
     ipcRenderer.invoke(IPC_CHANNELS.startWatch, { repoPath, worktreePaths }),
   stopWatch: (): Promise<Result<null>> => ipcRenderer.invoke(IPC_CHANNELS.stopWatch),
+  listRecentRepos: (): Promise<Result<ListRecentReposResponse>> =>
+    ipcRenderer.invoke(IPC_CHANNELS.listRecentRepos),
+  addRecentRepo: (request: AddRecentRepoRequest): Promise<Result<null>> =>
+    ipcRenderer.invoke(IPC_CHANNELS.addRecentRepo, request),
   onRepoChanged: (listener: () => void): (() => void) => {
     // Strip Electron's IpcRendererEvent — the renderer gets a bare "re-query" signal,
     // not a structured-clone-unsafe event object. Keep the wrapper reference so the

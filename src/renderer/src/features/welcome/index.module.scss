@@ -1,8 +1,7 @@
 .welcome-screen {
   display: grid;
+  grid-template-columns: 1fr 1fr;
   min-height: 100%;
-  padding: clamp(var(--gb-space-6), 5vw, 48px);
-  place-items: center;
   background: transparent;
   transition: background var(--gb-dur-theme) var(--gb-ease);
 }
@@ -16,16 +15,21 @@
   -webkit-app-region: drag;
 }
 
+/* ── Left panel ──────────────────────────────────────────── */
+
 .welcome-card {
   display: flex;
-  width: min(100%, 460px);
-  min-height: 420px;
-  padding: 42px;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: var(--gb-text);
+  padding: clamp(var(--gb-space-6), 5vw, 48px);
   text-align: center;
+  color: var(--gb-text);
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--gb-accent) 22%, var(--gb-bg)) 0%,
+    var(--gb-bg) 65%
+  );
 }
 
 .welcome-card__icon {
@@ -51,14 +55,6 @@
   color: var(--gb-faint);
 }
 
-.welcome-card__description {
-  max-width: 330px;
-  margin: var(--gb-space-7) 0 0;
-  font-size: var(--gb-text-md);
-  line-height: var(--gb-leading-ui);
-  color: var(--gb-dim);
-}
-
 .welcome-card__action {
   width: min(100%, 250px);
   min-height: 34px;
@@ -77,24 +73,148 @@
   background: var(--gb-del-bg);
 }
 
-.welcome-card__hint {
-  margin: var(--gb-space-5) 0 0;
+/* ── Right panel ─────────────────────────────────────────── */
+
+.recent-panel {
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--gb-border-soft);
+  overflow: hidden;
+}
+
+.recent-panel__header {
+  margin: 0;
+  padding: var(--gb-space-5) var(--gb-space-5) var(--gb-space-3);
   font-size: var(--gb-text-xs);
+  font-weight: var(--gb-weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--gb-faint);
 }
 
-@media (max-height: 560px) {
-  .welcome-card {
-    min-height: 0;
-    padding-block: var(--gb-space-7);
+.recent-panel__empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: var(--gb-space-7);
+  font-size: var(--gb-text-sm);
+  color: var(--gb-faint);
+  text-align: center;
+}
+
+.recent-panel__drag-hint {
+  margin: 0;
+  padding: var(--gb-space-4) var(--gb-space-5);
+  font-size: var(--gb-text-xs);
+  color: var(--gb-faint);
+  text-align: center;
+  border-top: 1px solid var(--gb-border-soft);
+}
+
+.recent-list {
+  flex: 1;
+  margin: 0;
+  padding: 0 var(--gb-space-2);
+  list-style: none;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.recent-list::-webkit-scrollbar {
+  display: none;
+}
+
+.recent-list__item {
+  display: contents;
+}
+
+.recent-row {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  align-items: center;
+  gap: var(--gb-space-3);
+  width: 100%;
+  padding: var(--gb-space-3) var(--gb-space-3);
+  border: none;
+  border-radius: var(--gb-radius-item);
+  background: transparent;
+  color: var(--gb-text);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--gb-dur-fast) var(--gb-ease);
+}
+
+.recent-row:hover {
+  background: var(--gb-hover);
+}
+
+.recent-row:active {
+  background: var(--gb-pressed);
+}
+
+.recent-row__icon {
+  display: block;
+  flex-shrink: 0;
+  border-radius: var(--gb-radius-sm);
+}
+
+.recent-row__info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gb-space-1);
+  min-width: 0;
+}
+
+.recent-row__name {
+  font-size: var(--gb-text-sm);
+  font-weight: var(--gb-weight-semibold);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-row__path {
+  font-size: var(--gb-text-xs);
+  color: var(--gb-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-row__meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--gb-space-1);
+  flex-shrink: 0;
+}
+
+.recent-row__time {
+  font-size: var(--gb-text-xs);
+  color: var(--gb-faint);
+  white-space: nowrap;
+}
+
+/* ── Narrow window ───────────────────────────────────────── */
+
+@media (max-width: 680px) {
+  .welcome-screen {
+    grid-template-columns: 1fr;
   }
 
+  .recent-panel {
+    display: none;
+  }
+}
+
+@media (max-height: 560px) {
   .welcome-card__icon {
     width: 72px;
     height: 72px;
   }
 
-  .welcome-card__description,
   .welcome-card__action {
     margin-top: var(--gb-space-5);
   }

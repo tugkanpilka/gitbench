@@ -1,6 +1,7 @@
 // The ONLY renderer code that sees Result envelopes — unwraps them into data or ApiError.
 import type {
   GetDiffResponse,
+  ListRecentReposResponse,
   ListUnpushedCommitsResponse,
   ListWorktreeSummariesResponse,
   ListWorktreesResponse,
@@ -37,6 +38,12 @@ export const desktopApi = {
   },
   async stopWatch(): Promise<null> {
     return unwrap(await window.api.stopWatch());
+  },
+  async listRecentRepos(): Promise<ListRecentReposResponse> {
+    return unwrap(await window.api.listRecentRepos());
+  },
+  async addRecentRepo(repoPath: string): Promise<null> {
+    return unwrap(await window.api.addRecentRepo({ repoPath }));
   },
   // Not a Result envelope — a direct subscription that returns its unsubscribe fn.
   onRepoChanged(listener: () => void): () => void {

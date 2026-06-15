@@ -58,6 +58,7 @@ index 0000000..1111111 100644
 +world
 `;
 
+// eslint-disable-next-line max-lines-per-function -- one stub line per API method; grows with the API surface
 export function stubApi(overrides: Partial<Window['api']> = {}): void {
   window.api = {
     pickRepo: vi.fn().mockResolvedValue(okResult<string | null>('/repo')),
@@ -69,6 +70,8 @@ export function stubApi(overrides: Partial<Window['api']> = {}): void {
     listUnpushedCommits: vi.fn().mockResolvedValue(okResult({ commits: [], truncated: false })),
     startWatch: vi.fn().mockResolvedValue(okResult(null)),
     stopWatch: vi.fn().mockResolvedValue(okResult(null)),
+    listRecentRepos: vi.fn().mockResolvedValue(okResult([])),
+    addRecentRepo: vi.fn().mockResolvedValue(okResult(null)),
     onRepoChanged: vi.fn().mockReturnValue(() => {}),
     ...overrides,
   };

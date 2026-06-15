@@ -114,8 +114,9 @@ describe('App', () => {
 
     clickOpenRepository();
 
-    expect(await screen.findByText('Select a local Git repository to get started.')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Open Repository…' })).toBeTruthy();
+    expect(
+      await screen.findByRole('button', { name: 'Open Repository…' })
+    ).toBeTruthy();
     expect(window.api.listWorktrees).not.toHaveBeenCalled();
   });
 

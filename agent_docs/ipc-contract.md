@@ -193,6 +193,36 @@ not structured-clone-safe.
 
 `contextIsolation: true` and `nodeIntegration: false` are non-negotiable.
 
+### `recentRepos:list`
+
+- Request: none
+- Response: `Result<RecentRepoDto[]>`
+- Returns up to 10 recently opened repositories, newest first. Each entry includes a live `worktreeCount` sourced from `git worktree list` — `null` when the repository is temporarily unreadable. Entries are never omitted for git failures; the full stored list is always returned.
+- Flow: IPC handler → `JsonFileRecentReposStore.list` → fan-out to `GitCliWorktreeReader.listWorktrees` per entry (capped concurrency 3) → `recentRepoMapper` → `RecentRepoDto[]`.
+- An empty array is a valid "no history yet" response, never an error.
+
+### `recentRepos:add`
+
+- Request: `AddRecentRepoRequest` with `{ repoPath: string }`
+- Response: `Result<null>`
+- Upserts `repoPath` to the front of the recent list and trims to 10 entries. Idempotent — an already-present path is moved to the front. Storage failures are swallowed; the response is always `ok: true`.
+- Flow: IPC handler → `JsonFileRecentReposStore.add`.
+- Called by `useRepositoryCatalog` inside `commitPickedRepo` after `listWorktrees` returns successfully. Also called when a recent repo is re-opened. Fire-and-forget from the renderer.
+
+```ts
+interface RecentRepoDto {
+  repoPath: string;
+  openedAt: string;      // ISO 8601 timestamp of last open
+  worktreeCount: number | null; // null when git call failed for this entry
+}
+
+interface AddRecentRepoRequest {
+  repoPath: string;
+}
+```
+
+Contract file: `src/contracts/ipc/recentRepos.ts`
+
 ## Adding a channel
 
 1. Design the channel name, request, response, and errors here first.

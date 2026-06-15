@@ -6,11 +6,20 @@ import { WelcomeScreen } from '.';
 
 afterEach(() => cleanup());
 
+const emptyRecentRepos = { items: [], loading: false, onOpen: () => undefined };
+
 // eslint-disable-next-line max-lines-per-function
 describe('WelcomeScreen', () => {
   it('exposes the working repository action', () => {
     const onOpenRepository = vi.fn();
-    render(<WelcomeScreen loading={false} error={null} onOpenRepository={onOpenRepository} />);
+    render(
+      <WelcomeScreen
+        loading={false}
+        error={null}
+        onOpenRepository={onOpenRepository}
+        recentRepos={emptyRecentRepos}
+      />
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Open Repository…' }));
 
@@ -18,13 +27,27 @@ describe('WelcomeScreen', () => {
   });
 
   it('keeps cloning out of the MVP welcome screen', () => {
-    render(<WelcomeScreen loading={false} error={null} onOpenRepository={() => undefined} />);
+    render(
+      <WelcomeScreen
+        loading={false}
+        error={null}
+        onOpenRepository={() => undefined}
+        recentRepos={emptyRecentRepos}
+      />
+    );
 
     expect(screen.queryByText(/clone/i)).toBeNull();
   });
 
   it('disables the action while opening', () => {
-    render(<WelcomeScreen loading error={null} onOpenRepository={() => undefined} />);
+    render(
+      <WelcomeScreen
+        loading
+        error={null}
+        onOpenRepository={() => undefined}
+        recentRepos={emptyRecentRepos}
+      />
+    );
 
     expect(
       screen.getByRole('button', { name: 'Opening repository…' }).hasAttribute('disabled')
@@ -37,6 +60,7 @@ describe('WelcomeScreen', () => {
         loading={false}
         error="Not a git repository."
         onOpenRepository={() => undefined}
+        recentRepos={emptyRecentRepos}
       />
     );
 

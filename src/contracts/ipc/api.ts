@@ -1,5 +1,6 @@
 import type { ListUnpushedCommitsResponse } from './commits';
 import type { GetDiffResponse } from './diff';
+import type { AddRecentRepoRequest, ListRecentReposResponse } from './recentRepos';
 import type { PickRepositoryResponse } from './repository';
 import type { Result } from './result';
 import type { ListWorktreeSummariesResponse } from './worktreeSummaries';
@@ -13,6 +14,8 @@ export interface DesktopApi {
   listUnpushedCommits(worktreePath: string): Promise<Result<ListUnpushedCommitsResponse>>;
   startWatch(repoPath: string, worktreePaths: string[]): Promise<Result<null>>;
   stopWatch(): Promise<Result<null>>;
+  listRecentRepos(): Promise<Result<ListRecentReposResponse>>;
+  addRecentRepo(request: AddRecentRepoRequest): Promise<Result<null>>;
   /** Subscribe to the "repo changed, re-query now" signal. Returns an unsubscribe fn. */
   onRepoChanged(listener: () => void): () => void;
 }

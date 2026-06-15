@@ -12,6 +12,7 @@ import type { WorktreeDto } from '../../../contracts/ipc';
 import { buildDiffModel, EMPTY_DIFF_MODEL } from '../features/diff-viewer/utils/diffModel';
 import { RepositorySidebar } from '../features/repository-sidebar';
 import { WelcomeScreen } from '../features/welcome';
+import { useRecentRepos } from '../features/welcome/hooks/useRecentRepos';
 import { useWorktreeBrowser } from '../features/worktree-browser';
 import { WorktreeDetailSidebar } from '../features/worktree-detail-sidebar';
 import { Match, Switch } from '../shared/ui/switch';
@@ -176,11 +177,17 @@ function OpenRepositoryView({ repoPath, browser, preferences }: OpenRepositoryVi
 }
 
 function WelcomeSlot({ browser }: { browser: BrowserController }) {
+  const recent = useRecentRepos();
   return (
     <WelcomeScreen
       loading={browser.loading}
       error={browser.error}
       onOpenRepository={browser.pickRepository}
+      recentRepos={{
+        items: recent.repos,
+        loading: recent.loading,
+        onOpen: browser.openRecentRepository,
+      }}
     />
   );
 }

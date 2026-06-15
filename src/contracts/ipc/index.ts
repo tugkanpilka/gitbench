@@ -19,3 +19,8 @@ export type {
   WorktreeSummaryDto,
 } from './worktreeSummaries';
 export type { ListWorktreesRequest, ListWorktreesResponse, WorktreeDto } from './worktrees';
+export type {
+  AddRecentRepoRequest,
+  ListRecentReposResponse,
+  RecentRepoDto,
+} from './recentRepos';
