@@ -2,6 +2,8 @@ import type { ReactNode } from 'react';
 
 import { nameFromPath } from '../../shared/path/nameFromPath';
 import { DiffStat } from '../../shared/ui/diff-stat';
+import { Match, Switch } from '../../shared/ui/switch';
+import { Visibility } from '../../shared/ui/visibility';
 import { Chevron, TreeListIcon, FlatListIcon } from '../../shared/ui/icons';
 import { SegmentedControl } from '../../shared/ui/segmented-control';
 import { ChangedFilesSection } from '../worktree-list/changed-files-section';
@@ -30,70 +32,43 @@ export function WorktreeDetailSidebar({
   onFlatGroupModeChange,
   onToggleRepositorySidebar,
 }: WorktreeDetailSidebarProps) {
-  if (worktree === null) {
-    return (
-      <div className={styles['worktree-detail-sidebar']}>
-        <DetailHeader
-          repositorySidebarOpen={repositorySidebarOpen}
-          onToggleRepositorySidebar={onToggleRepositorySidebar}
-        />
-        <p className={styles['worktree-detail-sidebar__placeholder']}>
-          Select a worktree to inspect its changes.
-        </p>
-        <DetailFooter
-          fileListMode={fileListMode}
-          flatGroupMode={flatGroupMode}
-          onFileListModeChange={onFileListModeChange}
-          onFlatGroupModeChange={onFlatGroupModeChange}
-        />
-      </div>
-    );
-  }
-
-  const reference = worktree.branch ?? 'Detached HEAD';
-
   return (
     <div className={styles['worktree-detail-sidebar']}>
       <DetailHeader
         repositorySidebarOpen={repositorySidebarOpen}
         onToggleRepositorySidebar={onToggleRepositorySidebar}
       >
-        <div className={styles['worktree-detail-sidebar__identity']}>
-          <div className={styles['worktree-detail-sidebar__title']}>
-            <span className={styles['worktree-detail-sidebar__name']} title={worktree.path}>
-              {nameFromPath(worktree.path)}
-            </span>
-            {diffStats !== null && (
-              <DiffStat
-                className={styles['worktree-detail-sidebar__diff-stat']}
-                additions={diffStats.additions}
-                deletions={diffStats.deletions}
-              />
-            )}
-          </div>
-          <span className={styles['worktree-detail-sidebar__reference']} title={reference}>
-            {reference}
-          </span>
-        </div>
+        <WorktreeIdentity worktree={worktree} diffStats={diffStats} />
       </DetailHeader>
 
-      <div className={styles['worktree-detail-sidebar__content']}>
-        {diffLoading ? (
-          <p className={styles['worktree-detail-sidebar__loading']}>Loading changes…</p>
-        ) : (
-          <ChangedFilesSection
-            changedFiles={changedFiles}
-            fileListMode={fileListMode}
-            flatGroupMode={flatGroupMode}
-            activeFileId={activeFileId}
-            onSelectFile={onSelectFile}
-          />
-        )}
-      </div>
-
-      {unpushedCommits.length > 0 && (
-        <UnpushedCommitsSection commits={unpushedCommits} truncated={commitsTruncated} />
-      )}
+      <Switch>
+        <Match when={worktree === null}>
+          <p className={styles['worktree-detail-sidebar__placeholder']}>
+            Select a worktree to inspect its changes.
+          </p>
+        </Match>
+        <Match when={true}>
+          <div className={styles['worktree-detail-sidebar__content']}>
+            <Switch>
+              <Match when={diffLoading}>
+                <p className={styles['worktree-detail-sidebar__loading']}>Loading changes…</p>
+              </Match>
+              <Match when={true}>
+                <ChangedFilesSection
+                  changedFiles={changedFiles}
+                  fileListMode={fileListMode}
+                  flatGroupMode={flatGroupMode}
+                  activeFileId={activeFileId}
+                  onSelectFile={onSelectFile}
+                />
+              </Match>
+            </Switch>
+          </div>
+          <Visibility isVisible={unpushedCommits.length > 0}>
+            <UnpushedCommitsSection commits={unpushedCommits} truncated={commitsTruncated} />
+          </Visibility>
+        </Match>
+      </Switch>
 
       <DetailFooter
         fileListMode={fileListMode}
@@ -101,6 +76,41 @@ export function WorktreeDetailSidebar({
         onFileListModeChange={onFileListModeChange}
         onFlatGroupModeChange={onFlatGroupModeChange}
       />
+    </div>
+  );
+}
+
+// The worktree's name + reference + diff stat, shown in the header only when a worktree
+// is selected. Returning null when absent keeps `worktree` non-null for the markup.
+function WorktreeIdentity({
+  worktree,
+  diffStats,
+}: Pick<WorktreeDetailSidebarProps, 'worktree' | 'diffStats'>) {
+  if (worktree === null) {
+    return null;
+  }
+
+  const reference = worktree.branch ?? 'Detached HEAD';
+  const diffStat =
+    diffStats === null ? null : (
+      <DiffStat
+        className={styles['worktree-detail-sidebar__diff-stat']}
+        additions={diffStats.additions}
+        deletions={diffStats.deletions}
+      />
+    );
+
+  return (
+    <div className={styles['worktree-detail-sidebar__identity']}>
+      <div className={styles['worktree-detail-sidebar__title']}>
+        <span className={styles['worktree-detail-sidebar__name']} title={worktree.path}>
+          {nameFromPath(worktree.path)}
+        </span>
+        {diffStat}
+      </div>
+      <span className={styles['worktree-detail-sidebar__reference']} title={reference}>
+        {reference}
+      </span>
     </div>
   );
 }
@@ -157,7 +167,7 @@ function DetailFooter({
 >) {
   return (
     <footer className={styles['worktree-detail-sidebar__footer']}>
-      {fileListMode === 'flat' && (
+      <Visibility isVisible={fileListMode === 'flat'}>
         <SegmentedControl
           className={styles['worktree-detail-sidebar__view-toggle']}
           density="compact"
@@ -166,7 +176,7 @@ function DetailFooter({
           value={flatGroupMode}
           onChange={onFlatGroupModeChange}
         />
-      )}
+      </Visibility>
       <SegmentedControl
         className={styles['worktree-detail-sidebar__view-toggle']}
         density="compact"

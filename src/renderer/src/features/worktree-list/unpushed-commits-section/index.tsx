@@ -6,6 +6,7 @@ import type {
 } from '../../../../../contracts/ipc';
 import { toggledSet } from '../../../shared/collections/toggledSet';
 import { cx } from '../../../shared/ui/cx';
+import { Visibility } from '../../../shared/ui/visibility';
 import { Chevron } from '../../../shared/ui/icons';
 import { splitPath } from '../../diff-viewer/utils/diffModel';
 import { commitFileStatusBadge, directoryLabel } from '../file-status';
@@ -62,6 +63,7 @@ function groupFilesByStatus(files: CommitFileChange[]): FileGroup[] {
 export function UnpushedCommitsSection({ commits, truncated }: UnpushedCommitsSectionProps) {
   const [expanded, setExpanded] = useState(false);
   const [expandedCommits, setExpandedCommits] = useState<Set<string>>(() => new Set());
+  const countLabel = truncated ? `${commits.length}+` : String(commits.length);
 
   return (
     <section className={styles['unpushed-commits']} aria-label="Unpushed commits">
@@ -72,14 +74,11 @@ export function UnpushedCommitsSection({ commits, truncated }: UnpushedCommitsSe
         aria-expanded={expanded}
       >
         <span className={styles['unpushed-commits__label']}>Unpushed</span>
-        <span className={styles['unpushed-commits__count']}>
-          {commits.length}
-          {truncated ? '+' : ''}
-        </span>
+        <span className={styles['unpushed-commits__count']}>{countLabel}</span>
         <Chevron collapsed={!expanded} className={styles['unpushed-commits__chevron']} />
       </button>
 
-      {expanded && (
+      <Visibility isVisible={expanded}>
         <div className={styles['unpushed-commits__content']}>
           <ul className={styles['unpushed-commits__list']}>
             {commits.map((commit) => (
@@ -92,13 +91,13 @@ export function UnpushedCommitsSection({ commits, truncated }: UnpushedCommitsSe
             ))}
           </ul>
 
-          {truncated && (
+          <Visibility isVisible={truncated}>
             <p className={styles['unpushed-commits__truncated']}>
               Showing the latest {commits.length} commits.
             </p>
-          )}
+          </Visibility>
         </div>
-      )}
+      </Visibility>
     </section>
   );
 }
@@ -127,7 +126,11 @@ function CommitItem({
         <span className={styles['commit__subject']}>{commit.subject}</span>
         <span className={styles['commit__file-count']}>{commit.files.length}</span>
       </button>
-      {expanded && groups.map((group) => <FileGroupView key={group.status} group={group} />)}
+      <Visibility isVisible={expanded}>
+        {groups.map((group) => (
+          <FileGroupView key={group.status} group={group} />
+        ))}
+      </Visibility>
     </li>
   );
 }

@@ -5,6 +5,7 @@ import { RepositorySidebar } from '../features/repository-sidebar';
 import { WelcomeScreen } from '../features/welcome';
 import { useWorktreeBrowser } from '../features/worktree-browser';
 import { WorktreeDetailSidebar } from '../features/worktree-detail-sidebar';
+import { Match, Switch } from '../shared/ui/switch';
 import { AppShell } from './app-shell';
 import { toChangedFileItems } from './changedFileItems';
 import { useAppPreferences } from './hooks/useAppPreferences';
@@ -47,63 +48,69 @@ export default function App() {
     });
   };
 
-  if (browser.repoPath === null) {
-    return (
-      <WelcomeScreen
-        loading={browser.loading}
-        error={browser.error}
-        onOpenRepository={browser.pickRepository}
-      />
+  // Narrowed here so `repoPath` is non-null inside the open-repository view; the Switch
+  // below selects between this and the welcome screen.
+  const repositoryView =
+    browser.repoPath === null ? null : (
+      <AppShell
+        repositorySidebarOpen={repositorySidebarOpen}
+        scrollContainerRef={scrollContainerRef}
+        repositorySidebar={
+          <RepositorySidebar
+            repoPath={browser.repoPath}
+            worktrees={browser.worktrees}
+            summaries={browser.summaries}
+            selectedPath={browser.selectedPath}
+            onSelectWorktree={selectWorktree}
+          />
+        }
+        detailSidebar={
+          <WorktreeDetailSidebar
+            worktree={selectedWorktree}
+            changedFiles={changedFiles}
+            unpushedCommits={browser.commits?.commits ?? []}
+            commitsTruncated={browser.commits?.truncated ?? false}
+            diffLoading={browser.diffLoading}
+            fileListMode={preferences.fileListMode}
+            flatGroupMode={preferences.flatGroupMode}
+            activeFileId={navigation.activeFileId}
+            diffStats={diffStats}
+            repositorySidebarOpen={repositorySidebarOpen}
+            onSelectFile={(fileId) => {
+              setRepositorySidebarOpen(false);
+              startTransition(() => {
+                navigation.selectFile(fileId);
+              });
+            }}
+            onFileListModeChange={preferences.setFileListMode}
+            onFlatGroupModeChange={preferences.setFlatGroupMode}
+            onToggleRepositorySidebar={() => setRepositorySidebarOpen((open) => !open)}
+          />
+        }
+      >
+        <Workspace
+          error={browser.error}
+          diffLoading={browser.diffLoading}
+          hasDiff={browser.diff !== null}
+          isCleanWorktree={isCleanWorktree}
+          diffModel={diffModel}
+          navigationTarget={navigation.navigationTarget}
+          scrollContainerRef={scrollContainerRef}
+          onActiveFileChange={navigation.setActiveFileId}
+        />
+      </AppShell>
     );
-  }
 
   return (
-    <AppShell
-      repositorySidebarOpen={repositorySidebarOpen}
-      scrollContainerRef={scrollContainerRef}
-      repositorySidebar={
-        <RepositorySidebar
-          repoPath={browser.repoPath}
-          worktrees={browser.worktrees}
-          summaries={browser.summaries}
-          selectedPath={browser.selectedPath}
-          onSelectWorktree={selectWorktree}
+    <Switch>
+      <Match when={browser.repoPath === null}>
+        <WelcomeScreen
+          loading={browser.loading}
+          error={browser.error}
+          onOpenRepository={browser.pickRepository}
         />
-      }
-      detailSidebar={
-        <WorktreeDetailSidebar
-          worktree={selectedWorktree}
-          changedFiles={changedFiles}
-          unpushedCommits={browser.commits?.commits ?? []}
-          commitsTruncated={browser.commits?.truncated ?? false}
-          diffLoading={browser.diffLoading}
-          fileListMode={preferences.fileListMode}
-          flatGroupMode={preferences.flatGroupMode}
-          activeFileId={navigation.activeFileId}
-          diffStats={diffStats}
-          repositorySidebarOpen={repositorySidebarOpen}
-          onSelectFile={(fileId) => {
-            setRepositorySidebarOpen(false);
-            startTransition(() => {
-              navigation.selectFile(fileId);
-            });
-          }}
-          onFileListModeChange={preferences.setFileListMode}
-          onFlatGroupModeChange={preferences.setFlatGroupMode}
-          onToggleRepositorySidebar={() => setRepositorySidebarOpen((open) => !open)}
-        />
-      }
-    >
-      <Workspace
-        error={browser.error}
-        diffLoading={browser.diffLoading}
-        hasDiff={browser.diff !== null}
-        isCleanWorktree={isCleanWorktree}
-        diffModel={diffModel}
-        navigationTarget={navigation.navigationTarget}
-        scrollContainerRef={scrollContainerRef}
-        onActiveFileChange={navigation.setActiveFileId}
-      />
-    </AppShell>
+      </Match>
+      <Match when={true}>{repositoryView}</Match>
+    </Switch>
   );
 }

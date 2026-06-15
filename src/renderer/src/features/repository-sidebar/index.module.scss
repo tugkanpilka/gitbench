@@ -21,7 +21,7 @@
 .repository-sidebar__section-header {
   display: flex;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: var(--gb-space-4);
   padding-left: 9px;
   padding-right: 9px;
 }
