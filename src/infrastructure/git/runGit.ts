@@ -14,6 +14,13 @@ const MAX_BUFFER_BYTES = 64 * 1024 * 1024;
 const GIT_NOT_REPO_PATTERN = 'not a git repository';
 const GIT_CANNOT_CHANGE_DIR_PATTERN = 'cannot change to';
 
+const GIT_ENV: NodeJS.ProcessEnv = {
+  ...process.env,
+  GIT_TERMINAL_PROMPT: '0', // never hang on a credential prompt
+  GIT_OPTIONAL_LOCKS: '0', // read-only commands must not take optional locks
+  LC_ALL: 'C', // stable English output — stderr is sniffed for classification below
+};
+
 interface RunGitOptions {
   /**
    * Git uses non-zero exit codes for some successful, data-bearing commands.
@@ -36,25 +43,32 @@ export function runGit(
     execFile(
       'git',
       ['-C', targetPath, ...args],
-      {
-        encoding: 'utf8',
-        maxBuffer: MAX_BUFFER_BYTES,
-        env: {
-          ...process.env,
-          GIT_TERMINAL_PROMPT: '0', // never hang on a credential prompt
-          GIT_OPTIONAL_LOCKS: '0', // read-only commands must not take optional locks
-          LC_ALL: 'C', // stable English output — stderr is sniffed for classification below
-        },
-      },
-      (error, stdout, stderr) => {
-        if (!error || isAcceptedExit(error, stderr, options.acceptedExitCodes)) {
-          resolve(stdout);
-          return;
-        }
-        reject(classify(error, stderr, targetPath));
-      }
+      { encoding: 'utf8', maxBuffer: MAX_BUFFER_BYTES, env: GIT_ENV },
+      makeExecCallback({ resolve, reject, targetPath, options })
     );
   });
+}
+
+interface ExecCallbackContext {
+  resolve: (value: string) => void;
+  reject: (reason: Error) => void;
+  targetPath: string;
+  options: RunGitOptions;
+}
+
+function makeExecCallback({
+  resolve,
+  reject,
+  targetPath,
+  options,
+}: ExecCallbackContext): (error: ExecFileException | null, stdout: string, stderr: string) => void {
+  return (error, stdout, stderr) => {
+    if (!error || isAcceptedExit(error, stderr, options.acceptedExitCodes)) {
+      resolve(stdout);
+      return;
+    }
+    reject(classify(error, stderr, targetPath));
+  };
 }
 
 function isAcceptedExit(

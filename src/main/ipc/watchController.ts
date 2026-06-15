@@ -15,24 +15,27 @@ export interface WatchController {
   stop(): Promise<void>;
 }
 
-export function createWatchController({
-  watcher,
-}: Pick<ApplicationServices, 'watcher'>): WatchController {
-  let active: RepoWatchHandle | null = null;
+export class DefaultWatchController implements WatchController {
+  private active: RepoWatchHandle | null = null;
 
-  async function stop(): Promise<void> {
-    const handle = active;
-    active = null;
+  constructor(private readonly watcher: ApplicationServices['watcher']) {}
+
+  async stop(): Promise<void> {
+    const handle = this.active;
+    this.active = null;
     if (handle) {
       await handle.stop();
     }
   }
 
-  return {
-    async start(target, onChange) {
-      await stop();
-      active = watcher.watch(target, onChange);
-    },
-    stop,
-  };
+  async start(target: RepoWatchTarget, onChange: () => void): Promise<void> {
+    await this.stop();
+    this.active = this.watcher.watch(target, onChange);
+  }
+}
+
+export function createWatchController({
+  watcher,
+}: Pick<ApplicationServices, 'watcher'>): WatchController {
+  return new DefaultWatchController(watcher);
 }

@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 
 import type { WorktreeDto, WorktreeSummaryDto } from '../../../../../contracts/ipc';
 import { desktopApi } from '../../../shared/api/desktopApi';
@@ -25,116 +26,251 @@ export interface RepositoryCatalog {
   reloadWorktrees(path: string): Promise<void>;
 }
 
-/**
- * Repository-catalog resource: the open repository path, its worktrees, the per-worktree
- * summaries, and the open/refresh/reload workflows. The shared error slot is injected so
- * repository and selected-worktree failures keep the exact cross-clearing behavior of the
- * original single-slot god-hook.
- */
-export function useRepositoryCatalog(errorSlot: ErrorSlot): RepositoryCatalog {
-  const [repoPath, setRepoPath] = useState<string | null>(null);
-  const [worktrees, setWorktrees] = useState<WorktreeDto[]>([]);
-  const [summaries, setSummaries] = useState<WorktreeSummaryDto[]>([]);
-  const [loading, setLoading] = useState(false);
-  const summariesRequest = useLatestRequest();
+// Fetches summary rows for the given worktrees; swallowed on failure (secondary data).
+async function fetchSummaryPage(paths: string[]): Promise<WorktreeSummaryDto[]> {
+  return desktopApi.listWorktreeSummaries(paths);
+}
 
-  // Summary data is secondary: rows remain selectable when a summary query fails.
+type SumSet = (s: WorktreeSummaryDto[]) => void;
+
+async function tryFetchSummaries(
+  paths: string[],
+  signal: AbortSignal,
+  setSummaries: SumSet
+): Promise<void> {
+  try {
+    const rows = await fetchSummaryPage(paths);
+    if (!signal.aborted) {
+      setSummaries(rows);
+    }
+  } catch {
+    // Keep the last known summaries on a quiet refresh failure.
+  }
+}
+
+async function runLoadSummaries(
+  worktrees: WorktreeDto[],
+  signal: AbortSignal,
+  setSummaries: SumSet
+): Promise<void> {
+  if (worktrees.length === 0) {
+    setSummaries([]);
+    return;
+  }
+  await tryFetchSummaries(
+    worktrees.map((w) => w.path),
+    signal,
+    setSummaries
+  );
+}
+
+interface SummaryResources {
+  summaries: WorktreeSummaryDto[];
+  loadSummaries(nextWorktrees: WorktreeDto[], clear: boolean): Promise<void>;
+  invalidateSummaries(): void;
+}
+
+function useSummaries(): SummaryResources {
+  const [summaries, setSummaries] = useState<WorktreeSummaryDto[]>([]);
+  const req = useLatestRequest();
   const loadSummaries = useCallback(
     async (nextWorktrees: WorktreeDto[], clear: boolean) => {
-      const signal = summariesRequest.begin();
+      const signal = req.begin();
       if (clear) {
         setSummaries([]);
       }
-      if (nextWorktrees.length === 0) {
-        setSummaries([]);
-        return;
-      }
-
-      try {
-        const response = await desktopApi.listWorktreeSummaries(
-          nextWorktrees.map((worktree) => worktree.path)
-        );
-        if (!signal.aborted) {
-          setSummaries(response);
-        }
-      } catch {
-        // Keep the last known summaries on a quiet refresh failure.
-      }
+      await runLoadSummaries(nextWorktrees, signal, setSummaries);
     },
-    [summariesRequest]
+    [req]
   );
+  return { summaries, loadSummaries, invalidateSummaries: req.invalidate };
+}
 
-  // Never throws: failures are reported via the error slot and signalled as null, so
-  // callers' own try/catch only ever sees errors from other desktopApi calls.
+interface WorktreeResources {
+  worktrees: WorktreeDto[];
+  setWorktrees: Dispatch<SetStateAction<WorktreeDto[]>>;
+  loadWorktrees(path: string): Promise<WorktreeDto[] | null>;
+}
+
+interface LoadWorktreeDeps {
+  errorSlot: ErrorSlot;
+  invalidateSummaries(): void;
+  setWorktrees: Dispatch<SetStateAction<WorktreeDto[]>>;
+}
+
+async function fetchWorktrees(path: string, deps: LoadWorktreeDeps): Promise<WorktreeDto[] | null> {
+  try {
+    return await desktopApi.listWorktrees(path);
+  } catch (caught) {
+    deps.setWorktrees([]);
+    deps.invalidateSummaries();
+    deps.errorSlot.set(describeError(caught));
+    return null;
+  }
+}
+
+function useWorktrees(errorSlot: ErrorSlot, invalidateSummaries: () => void): WorktreeResources {
+  const [worktrees, setWorktrees] = useState<WorktreeDto[]>([]);
   const loadWorktrees = useCallback(
-    async (path: string): Promise<WorktreeDto[] | null> => {
-      try {
-        return await desktopApi.listWorktrees(path);
-      } catch (caught) {
-        setWorktrees([]);
-        setSummaries([]);
-        summariesRequest.invalidate();
-        errorSlot.set(describeError(caught));
-        return null;
+    async (path: string) => fetchWorktrees(path, { errorSlot, invalidateSummaries, setWorktrees }),
+    [errorSlot, invalidateSummaries]
+  );
+  return { worktrees, setWorktrees, loadWorktrees };
+}
+
+type LoadFn = (path: string) => Promise<WorktreeDto[] | null>;
+type SummariesFn = (w: WorktreeDto[], clear: boolean) => Promise<void>;
+type WtSetter = Dispatch<SetStateAction<WorktreeDto[]>>;
+
+// eslint-disable-next-line max-lines-per-function -- multi-line signature from prettier; body is already minimal
+function useApplyReload(
+  loadWorktrees: LoadFn,
+  setWorktrees: WtSetter,
+  loadSummaries: SummariesFn
+): (path: string) => Promise<void> {
+  return useCallback(
+    async (path: string) => {
+      const next = await loadWorktrees(path);
+      if (next !== null) {
+        setWorktrees(next);
+        void loadSummaries(next, false);
       }
     },
-    [errorSlot, summariesRequest]
+    [loadSummaries, loadWorktrees, setWorktrees]
   );
+}
 
-  const refreshRepository = useCallback(async () => {
+interface RefreshDeps {
+  repoPath: string | null;
+  applyReload(path: string): Promise<void>;
+  errorSlot: ErrorSlot;
+  setLoading(v: boolean): void;
+}
+
+function useRefreshRepository(deps: RefreshDeps): () => Promise<void> {
+  const { repoPath, applyReload, errorSlot, setLoading } = deps;
+  return useCallback(async () => {
     if (repoPath === null) {
       return;
     }
     setLoading(true);
     errorSlot.clear();
     try {
-      const nextWorktrees = await loadWorktrees(repoPath);
-      if (nextWorktrees !== null) {
-        setWorktrees(nextWorktrees);
-        void loadSummaries(nextWorktrees, false);
-      }
+      await applyReload(repoPath);
     } finally {
       setLoading(false);
     }
-  }, [errorSlot, loadSummaries, loadWorktrees, repoPath]);
+  }, [applyReload, errorSlot, repoPath, setLoading]);
+}
 
-  const reloadWorktrees = useCallback(
-    async (path: string) => {
-      const nextWorktrees = await loadWorktrees(path);
-      if (nextWorktrees !== null) {
-        setWorktrees(nextWorktrees);
-        void loadSummaries(nextWorktrees, false);
-      }
-    },
-    [loadSummaries, loadWorktrees]
-  );
+interface OpenDeps {
+  errorSlot: ErrorSlot;
+  loadSummaries: SummariesFn;
+  loadWorktrees: LoadFn;
+  setWorktrees: WtSetter;
+  setRepoPath(p: string): void;
+  setLoading(v: boolean): void;
+}
 
-  const openRepository = useCallback(async (): Promise<string | null> => {
-    setLoading(true);
-    errorSlot.clear();
-    try {
-      const picked = await desktopApi.pickRepo();
-      if (picked === null) {
-        return null;
-      }
+async function commitPickedRepo(picked: string, deps: OpenDeps): Promise<string | null> {
+  const next = await deps.loadWorktrees(picked);
+  if (next === null) {
+    return null;
+  }
+  deps.setRepoPath(picked);
+  deps.setWorktrees(next);
+  void deps.loadSummaries(next, true);
+  return picked;
+}
 
-      const nextWorktrees = await loadWorktrees(picked);
-      if (nextWorktrees === null) {
-        return null;
-      }
-
-      setRepoPath(picked);
-      setWorktrees(nextWorktrees);
-      void loadSummaries(nextWorktrees, true);
-      return picked;
-    } catch (caught) {
-      errorSlot.set(describeError(caught));
+async function tryOpenRepo(deps: OpenDeps): Promise<string | null> {
+  try {
+    const picked = await desktopApi.pickRepo();
+    if (picked === null) {
       return null;
-    } finally {
-      setLoading(false);
     }
-  }, [errorSlot, loadSummaries, loadWorktrees]);
+    return await commitPickedRepo(picked, deps);
+  } catch (caught) {
+    deps.errorSlot.set(describeError(caught));
+    return null;
+  }
+}
 
+async function runOpenRepository(deps: OpenDeps): Promise<string | null> {
+  deps.setLoading(true);
+  deps.errorSlot.clear();
+  try {
+    return await tryOpenRepo(deps);
+  } finally {
+    deps.setLoading(false);
+  }
+}
+
+function useOpenRepository(deps: OpenDeps): () => Promise<string | null> {
+  const { errorSlot, loadSummaries, loadWorktrees, setWorktrees, setRepoPath, setLoading } = deps;
+  return useCallback(
+    () => runOpenRepository(deps),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [errorSlot, loadSummaries, loadWorktrees, setWorktrees, setRepoPath, setLoading]
+  );
+}
+
+/**
+ * Repository-catalog resource: the open repository path, its worktrees, the per-worktree
+ * summaries, and the open/refresh/reload workflows. The shared error slot is injected so
+ * repository and selected-worktree failures keep the exact cross-clearing behavior of the
+ * original single-slot god-hook.
+ */
+interface CatalogActionDeps {
+  errorSlot: ErrorSlot;
+  repoPath: string | null;
+  setLoading: (v: boolean) => void;
+  loadWorktrees: LoadFn;
+  setWorktrees: WtSetter;
+  setRepoPath: (p: string) => void;
+  loadSummaries: SummariesFn;
+}
+
+// eslint-disable-next-line max-lines-per-function -- prettier expands destructuring + object args; body already minimal
+function useCatalogActions(deps: CatalogActionDeps) {
+  const {
+    errorSlot,
+    repoPath,
+    setLoading,
+    loadWorktrees,
+    setWorktrees,
+    setRepoPath,
+    loadSummaries,
+  } = deps;
+  const applyReload = useApplyReload(loadWorktrees, setWorktrees, loadSummaries);
+  const refreshRepository = useRefreshRepository({ repoPath, applyReload, errorSlot, setLoading });
+  const reloadWorktrees = useCallback(async (path: string) => applyReload(path), [applyReload]);
+  const openRepository = useOpenRepository({
+    errorSlot,
+    loadSummaries,
+    loadWorktrees,
+    setWorktrees,
+    setRepoPath,
+    setLoading,
+  });
+  return { refreshRepository, reloadWorktrees, openRepository };
+}
+
+// eslint-disable-next-line max-lines-per-function -- prettier expands object args and return; body already minimal
+export function useRepositoryCatalog(errorSlot: ErrorSlot): RepositoryCatalog {
+  const [repoPath, setRepoPath] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const { summaries, loadSummaries, invalidateSummaries } = useSummaries();
+  const { worktrees, setWorktrees, loadWorktrees } = useWorktrees(errorSlot, invalidateSummaries);
+  const { refreshRepository, reloadWorktrees, openRepository } = useCatalogActions({
+    errorSlot,
+    repoPath,
+    setLoading,
+    loadWorktrees,
+    setWorktrees,
+    setRepoPath,
+    loadSummaries,
+  });
   return {
     repoPath,
     worktrees,

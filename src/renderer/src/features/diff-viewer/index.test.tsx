@@ -75,6 +75,50 @@ function renderDiffView(overrides: Partial<DiffViewProps> = {}) {
   );
 }
 
+function makeNavigationTarget(model: ReturnType<typeof buildDiffModel>) {
+  return { fileId: model.files[0].id, requestId: 1 as const };
+}
+
+function createScrollRoot(): HTMLDivElement {
+  const scrollRoot = document.createElement('div');
+  document.body.appendChild(scrollRoot);
+  return scrollRoot;
+}
+
+// eslint-disable-next-line max-lines-per-function -- test helper; multi-prop JSX render inflates line count
+function renderInScrollRoot(
+  model: ReturnType<typeof buildDiffModel>,
+  onActiveFileChange: (fileId: string) => void
+) {
+  const scrollRoot = createScrollRoot();
+  const scrollContainerRef = { current: scrollRoot };
+  render(
+    <DiffView
+      model={model}
+      clean={false}
+      viewType="unified"
+      navigationTarget={null}
+      scrollContainerRef={scrollContainerRef}
+      onActiveFileChange={onActiveFileChange}
+    />,
+    { container: scrollRoot }
+  );
+  return { scrollRoot };
+}
+
+function arrangeNavigationTest() {
+  const model = buildDiffModel(TEXT_DIFF);
+  const onActiveFileChange = vi.fn();
+  const scrollContainerRef = createRef<HTMLElement>();
+  const { rerender } = renderDiffView({ model, onActiveFileChange, scrollContainerRef });
+  const toggle = screen.getByRole('button', { name: /src\/a.ts/ });
+  const section = screen.getByRole('region', { name: 'src/a.ts' });
+  const scrollIntoView = vi.fn();
+  Object.defineProperty(section, 'scrollIntoView', { configurable: true, value: scrollIntoView });
+  return { model, onActiveFileChange, scrollContainerRef, toggle, scrollIntoView, rerender };
+}
+
+// eslint-disable-next-line max-lines-per-function
 describe('DiffView', () => {
   it('renders a syntax-highlighted unified diff', () => {
     const { container } = renderDiffView();
@@ -133,33 +177,23 @@ describe('DiffView', () => {
     expect(screen.getByText('Worktree is clean; no uncommitted changes.')).toBeTruthy();
   });
 
+  // eslint-disable-next-line max-lines-per-function -- test body; rerender + assertions cannot be meaningfully split
   it('opens a collapsed file and scrolls to a requested sidebar target', () => {
-    const model = buildDiffModel(TEXT_DIFF);
-    const onActiveFileChange = vi.fn();
-    const scrollContainerRef = createRef<HTMLElement>();
-    const { rerender } = renderDiffView({ model, onActiveFileChange, scrollContainerRef });
-    const toggle = screen.getByRole('button', { name: /src\/a.ts/ });
-    const section = screen.getByRole('region', { name: 'src/a.ts' });
-    const scrollIntoView = vi.fn();
-    Object.defineProperty(section, 'scrollIntoView', {
-      configurable: true,
-      value: scrollIntoView,
-    });
-
+    const { model, onActiveFileChange, scrollContainerRef, toggle, scrollIntoView, rerender } =
+      arrangeNavigationTest();
     fireEvent.click(toggle);
     expect(toggle.getAttribute('aria-expanded')).toBe('false');
-
+    const navigationTarget = makeNavigationTarget(model);
     rerender(
       <DiffView
         model={model}
         clean={false}
         viewType="unified"
-        navigationTarget={{ fileId: model.files[0].id, requestId: 1 }}
+        navigationTarget={navigationTarget}
         scrollContainerRef={scrollContainerRef}
         onActiveFileChange={onActiveFileChange}
       />
     );
-
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
     expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
     expect(onActiveFileChange).toHaveBeenCalledWith(model.files[0].id);
@@ -168,29 +202,13 @@ describe('DiffView', () => {
   it('reports the active file while the diff stream scrolls', () => {
     const model = buildDiffModel(MULTI_FILE_DIFF);
     const onActiveFileChange = vi.fn();
-    const scrollRoot = document.createElement('div');
-    document.body.appendChild(scrollRoot);
-    const scrollContainerRef = { current: scrollRoot };
-
-    render(
-      <DiffView
-        model={model}
-        clean={false}
-        viewType="unified"
-        navigationTarget={null}
-        scrollContainerRef={scrollContainerRef}
-        onActiveFileChange={onActiveFileChange}
-      />,
-      { container: scrollRoot }
-    );
+    const { scrollRoot } = renderInScrollRoot(model, onActiveFileChange);
     const sections = screen.getAllByRole('region');
     Object.defineProperty(sections[0], 'offsetTop', { configurable: true, value: 0 });
     Object.defineProperty(sections[1], 'offsetTop', { configurable: true, value: 500 });
     onActiveFileChange.mockClear();
-
     scrollRoot.scrollTop = 520;
     fireEvent.scroll(scrollRoot);
-
     expect(onActiveFileChange).toHaveBeenLastCalledWith(model.files[1].id);
   });
 });

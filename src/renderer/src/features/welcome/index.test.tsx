@@ -6,6 +6,7 @@ import { WelcomeScreen } from '.';
 
 afterEach(() => cleanup());
 
+// eslint-disable-next-line max-lines-per-function
 describe('WelcomeScreen', () => {
   it('exposes the working repository action', () => {
     const onOpenRepository = vi.fn();

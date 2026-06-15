@@ -1,5 +1,17 @@
 const CONFLICT_STATUSES = new Set(['DD', 'AU', 'UD', 'UA', 'DU', 'AA', 'UU']);
 
+function isUntrackedStatus(status: string): boolean {
+  return status === '??';
+}
+
+function isConflictStatus(status: string): boolean {
+  return CONFLICT_STATUSES.has(status) || status.includes('U');
+}
+
+function consumesExtraField(status: string): boolean {
+  return status.includes('R') || status.includes('C');
+}
+
 export interface WorktreeStatusSummary {
   fileCount: number;
   conflictCount: number;
@@ -11,38 +23,37 @@ export interface LineStats {
   deletions: number;
 }
 
+interface StatusAccumulator {
+  fileCount: number;
+  conflictCount: number;
+  untrackedPaths: string[];
+}
+
+function accumulateStatusField(acc: StatusAccumulator, field: string): boolean {
+  if (field.length < 4) return false;
+  const status = field.slice(0, 2);
+  acc.fileCount += 1;
+  if (isUntrackedStatus(status)) acc.untrackedPaths.push(field.slice(3));
+  if (isConflictStatus(status)) acc.conflictCount += 1;
+  return consumesExtraField(status);
+}
+
 /**
  * Parses `git status --porcelain=v1 -z --untracked-files=all`.
  * Rename/copy records carry a second NUL-delimited source path, which is skipped.
  */
 export function parseWorktreeStatus(stdout: string): WorktreeStatusSummary {
   const fields = stdout.split('\0');
-  const untrackedPaths: string[] = [];
-  let fileCount = 0;
-  let conflictCount = 0;
-
+  const acc: StatusAccumulator = { fileCount: 0, conflictCount: 0, untrackedPaths: [] };
   for (let index = 0; index < fields.length; index += 1) {
-    const field = fields[index];
-    if (field.length < 4) {
-      continue;
-    }
-
-    const status = field.slice(0, 2);
-    const path = field.slice(3);
-    fileCount += 1;
-
-    if (status === '??') {
-      untrackedPaths.push(path);
-    }
-    if (CONFLICT_STATUSES.has(status) || status.includes('U')) {
-      conflictCount += 1;
-    }
-    if (status.includes('R') || status.includes('C')) {
-      index += 1;
-    }
+    const skipNext = accumulateStatusField(acc, fields[index] ?? '');
+    if (skipNext) index += 1;
   }
+  return acc;
+}
 
-  return { fileCount, conflictCount, untrackedPaths };
+function parseNumstatColumn(value: string | undefined): number {
+  return value !== undefined && /^\d+$/.test(value) ? Number(value) : 0;
 }
 
 /** Sums the numeric columns from `git diff --numstat`; binary `-` columns count as zero. */
@@ -55,12 +66,8 @@ export function parseNumstat(stdout: string): LineStats {
       continue;
     }
     const [added, deleted] = line.split('\t');
-    if (added !== undefined && /^\d+$/.test(added)) {
-      additions += Number(added);
-    }
-    if (deleted !== undefined && /^\d+$/.test(deleted)) {
-      deletions += Number(deleted);
-    }
+    additions += parseNumstatColumn(added);
+    deletions += parseNumstatColumn(deleted);
   }
 
   return { additions, deletions };

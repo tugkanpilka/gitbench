@@ -4,6 +4,7 @@ import { ERROR_CODES, type ErrorDto } from '../../../contracts/ipc';
 import { GitCommandFailedError } from '../../../infrastructure/git/errors/GitCommandFailedError';
 import { GitNotInstalledError } from '../../../infrastructure/git/errors/GitNotInstalledError';
 
+// eslint-disable-next-line max-lines-per-function -- closed mapping table, cannot split meaningfully
 export function toErrorDto(error: unknown): ErrorDto {
   if (error instanceof GitNotInstalledError) {
     return { code: ERROR_CODES.GIT_NOT_INSTALLED, message: error.message };

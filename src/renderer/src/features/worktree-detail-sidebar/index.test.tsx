@@ -7,6 +7,7 @@ import { toChangedFileItems } from '../../app/changedFileItems';
 import { MAIN_WORKTREE } from '../../test/fixtures';
 import { buildDiffModel } from '../diff-viewer/utils/diffModel';
 import { WorktreeDetailSidebar } from '.';
+import type { WorktreeDetailSidebarProps } from './index.types';
 
 const FILES = toChangedFileItems(
   buildDiffModel(`diff --git a/src/a.ts b/src/a.ts
@@ -44,43 +45,42 @@ const UNPUSHED_COMMIT: CommitDto = {
 
 afterEach(() => cleanup());
 
-function renderSidebar({
-  mode = 'flat',
-  flatGroupMode = 'status',
-  onSelectFile = () => undefined,
-  repositorySidebarOpen = true,
-  onToggleRepositorySidebar = () => undefined,
-}: {
-  mode?: 'flat' | 'tree';
-  flatGroupMode?: 'status' | 'none';
-  onSelectFile?: (fileId: string) => void;
-  repositorySidebarOpen?: boolean;
-  onToggleRepositorySidebar?: () => void;
-} = {}) {
+const BASE_PROPS = {
+  worktree: MAIN_WORKTREE,
+  changedFiles: FILES,
+  unpushedCommits: [UNPUSHED_COMMIT],
+  commitsTruncated: false,
+  diffLoading: false,
+  fileListMode: 'flat' as const,
+  flatGroupMode: 'status' as const,
+  activeFileId: FILES[0].id,
+  diffStats: { additions: 2, deletions: 1 },
+  repositorySidebarOpen: true,
+  onSelectFile: () => undefined,
+  onFileListModeChange: () => undefined,
+  onFlatGroupModeChange: () => undefined,
+  onToggleRepositorySidebar: () => undefined,
+};
+
+type SidebarOptions = Partial<WorktreeDetailSidebarProps>;
+
+function renderSidebar(opts: SidebarOptions = {}) {
+  return render(<WorktreeDetailSidebar {...BASE_PROPS} {...opts} />);
+}
+
+function renderToggleTest(onToggleRepositorySidebar: () => void, repositorySidebarOpen: boolean) {
   return render(
     <WorktreeDetailSidebar
-      worktree={MAIN_WORKTREE}
-      changedFiles={FILES}
-      unpushedCommits={[UNPUSHED_COMMIT]}
-      commitsTruncated={false}
-      diffLoading={false}
-      fileListMode={mode}
-      flatGroupMode={flatGroupMode}
-      activeFileId={FILES[0].id}
-      diffStats={{ additions: 2, deletions: 1 }}
-      repositorySidebarOpen={repositorySidebarOpen}
-      onSelectFile={onSelectFile}
-      onFileListModeChange={() => undefined}
-      onFlatGroupModeChange={() => undefined}
-      onToggleRepositorySidebar={onToggleRepositorySidebar}
+      {...BASE_PROPS}
+      {...{ onToggleRepositorySidebar, repositorySidebarOpen }}
     />
   );
 }
 
+// eslint-disable-next-line max-lines-per-function
 describe('WorktreeDetailSidebar', () => {
   it('renders selected worktree identity and grouped changes', () => {
     renderSidebar();
-
     expect(screen.getByText('repo')).toBeTruthy();
     expect(screen.getByText('main')).toBeTruthy();
     expect(screen.getByLabelText('2 additions, 1 deletion')).toBeTruthy();
@@ -89,14 +89,14 @@ describe('WorktreeDetailSidebar', () => {
     expect(screen.getAllByText('Modified').length).toBeGreaterThan(0);
     expect(screen.getByText('Deleted')).toBeTruthy();
     expect(screen.getByLabelText('Unpushed commits')).toBeTruthy();
+  });
 
+  it('expands unpushed commit details on click', () => {
+    renderSidebar();
     fireEvent.click(screen.getByRole('button', { name: /Unpushed/ }));
-
     expect(screen.getByText('feat: add detail sidebar')).toBeTruthy();
     expect(screen.queryByText('commit-only.ts')).toBeNull();
-
     fireEvent.click(screen.getByRole('button', { name: /ccccccc.*feat: add detail sidebar/ }));
-
     expect(screen.getByText('commit-only.ts')).toBeTruthy();
   });
 
@@ -118,7 +118,7 @@ describe('WorktreeDetailSidebar', () => {
   });
 
   it('renders an ungrouped flat list when flatGroupMode is none', () => {
-    renderSidebar({ mode: 'flat', flatGroupMode: 'none' });
+    renderSidebar({ fileListMode: 'flat', flatGroupMode: 'none' });
 
     // Files still render and stay navigable…
     expect(screen.getByRole('button', { name: 'src/a.ts, 1 addition, 0 deletions' })).toBeTruthy();
@@ -129,7 +129,7 @@ describe('WorktreeDetailSidebar', () => {
   });
 
   it('supports folder navigation in tree mode', () => {
-    renderSidebar({ mode: 'tree' });
+    renderSidebar({ fileListMode: 'tree' });
 
     const folders = screen.getAllByRole('button', { name: 'src folder' });
     expect(folders[0].getAttribute('aria-expanded')).toBe('true');
@@ -141,70 +141,27 @@ describe('WorktreeDetailSidebar', () => {
 
   it('keeps the repository sidebar toggle visible in both states', () => {
     const onToggleRepositorySidebar = vi.fn();
-    const { rerender } = render(
-      <WorktreeDetailSidebar
-        worktree={MAIN_WORKTREE}
-        changedFiles={FILES}
-        unpushedCommits={[UNPUSHED_COMMIT]}
-        commitsTruncated={false}
-        diffLoading={false}
-        fileListMode="flat"
-        flatGroupMode="status"
-        activeFileId={FILES[0].id}
-        diffStats={{ additions: 2, deletions: 1 }}
-        repositorySidebarOpen={true}
-        onSelectFile={() => undefined}
-        onFileListModeChange={() => undefined}
-        onFlatGroupModeChange={() => undefined}
-        onToggleRepositorySidebar={onToggleRepositorySidebar}
-      />
-    );
-
+    const { rerender } = renderToggleTest(onToggleRepositorySidebar, true);
     fireEvent.click(screen.getByRole('button', { name: 'Hide worktree sidebar' }));
-
     rerender(
       <WorktreeDetailSidebar
-        worktree={MAIN_WORKTREE}
-        changedFiles={FILES}
-        unpushedCommits={[UNPUSHED_COMMIT]}
-        commitsTruncated={false}
-        diffLoading={false}
-        fileListMode="flat"
-        flatGroupMode="status"
-        activeFileId={FILES[0].id}
-        diffStats={{ additions: 2, deletions: 1 }}
-        repositorySidebarOpen={false}
-        onSelectFile={() => undefined}
-        onFileListModeChange={() => undefined}
-        onFlatGroupModeChange={() => undefined}
+        {...BASE_PROPS}
         onToggleRepositorySidebar={onToggleRepositorySidebar}
+        repositorySidebarOpen={false}
       />
     );
     fireEvent.click(screen.getByRole('button', { name: 'Show worktree sidebar' }));
-
     expect(onToggleRepositorySidebar).toHaveBeenCalledTimes(2);
   });
 
   it('renders a placeholder before a worktree is selected', () => {
-    render(
-      <WorktreeDetailSidebar
-        worktree={null}
-        changedFiles={[]}
-        unpushedCommits={[]}
-        commitsTruncated={false}
-        diffLoading={false}
-        fileListMode="flat"
-        flatGroupMode="status"
-        activeFileId={null}
-        diffStats={null}
-        repositorySidebarOpen={true}
-        onSelectFile={() => undefined}
-        onFileListModeChange={() => undefined}
-        onFlatGroupModeChange={() => undefined}
-        onToggleRepositorySidebar={() => undefined}
-      />
-    );
-
+    renderSidebar({
+      worktree: null,
+      changedFiles: [],
+      unpushedCommits: [],
+      activeFileId: null,
+      diffStats: null,
+    });
     expect(screen.getByText('Select a worktree to inspect its changes.')).toBeTruthy();
     // The sidebar toggle must stay reachable even with no selection, so a closed
     // (inert) repository sidebar can always be reopened.

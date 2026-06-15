@@ -56,6 +56,18 @@ export function getPreferenceStorage(): PreferenceStorage | null {
   }
 }
 
+function parseStoredPreferences(raw: string, defaults: AppPreferences): AppPreferences {
+  const parsed: unknown = JSON.parse(raw);
+  if (typeof parsed !== 'object' || parsed === null) return defaults;
+  const c = parsed as Partial<AppPreferences>;
+  return {
+    theme: isTheme(c.theme) ? c.theme : defaults.theme,
+    fileListMode: isFileListMode(c.fileListMode) ? c.fileListMode : defaults.fileListMode,
+    flatGroupMode: isFlatGroupMode(c.flatGroupMode) ? c.flatGroupMode : defaults.flatGroupMode,
+  };
+}
+
+// eslint-disable-next-line max-lines-per-function -- defaults literal + guard + try/catch exhaust 15 lines; no meaningful sub-function to extract
 export function readAppPreferences(
   storage: PreferenceStorage | null = getPreferenceStorage()
 ): AppPreferences {
@@ -64,32 +76,11 @@ export function readAppPreferences(
     fileListMode: 'flat',
     flatGroupMode: 'status',
   };
-
-  if (storage === null) {
-    return defaults;
-  }
-
+  if (storage === null) return defaults;
   try {
     const storedValue = storage.getItem(APP_PREFERENCES_STORAGE_KEY);
-    if (storedValue === null) {
-      return defaults;
-    }
-
-    const parsed: unknown = JSON.parse(storedValue);
-    if (typeof parsed !== 'object' || parsed === null) {
-      return defaults;
-    }
-
-    const candidate = parsed as Partial<AppPreferences>;
-    return {
-      theme: isTheme(candidate.theme) ? candidate.theme : defaults.theme,
-      fileListMode: isFileListMode(candidate.fileListMode)
-        ? candidate.fileListMode
-        : defaults.fileListMode,
-      flatGroupMode: isFlatGroupMode(candidate.flatGroupMode)
-        ? candidate.flatGroupMode
-        : defaults.flatGroupMode,
-    };
+    if (storedValue === null) return defaults;
+    return parseStoredPreferences(storedValue, defaults);
   } catch {
     return defaults;
   }

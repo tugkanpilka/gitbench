@@ -7,6 +7,30 @@ import { startRecursiveWatch, type StopRecursiveWatch } from './recursiveWatch';
 vi.mock('../git/runGit', () => ({ runGit: vi.fn() }));
 vi.mock('./recursiveWatch', () => ({ startRecursiveWatch: vi.fn() }));
 
+function makeStopFns(count: number): ReturnType<typeof vi.fn<StopRecursiveWatch>>[] {
+  return Array.from({ length: count }, () => vi.fn<StopRecursiveWatch>(async () => {}));
+}
+
+function arrangeMultipleWorktrees(): { stops: ReturnType<typeof vi.fn<StopRecursiveWatch>>[] } {
+  const stops = makeStopFns(3);
+  let stopIndex = 0;
+  vi.mocked(runGit).mockResolvedValue('/repo/.git\n');
+  vi.mocked(startRecursiveWatch).mockImplementation(async () => stops[stopIndex++]);
+  return { stops };
+}
+
+function arrangeGitDirResolutionFailure(): void {
+  // The shared git-dir resolution (rev-parse) fails; auto-refresh is best-effort
+  // and must not take down the main process (CLAUDE.md / git-notes.md).
+  vi.mocked(runGit).mockRejectedValue(new Error('not a git repository'));
+  vi.mocked(startRecursiveWatch).mockResolvedValue(vi.fn<StopRecursiveWatch>(async () => {}));
+}
+
+function watchedPaths(): string[] {
+  return vi.mocked(startRecursiveWatch).mock.calls.map(([path]) => path);
+}
+
+// eslint-disable-next-line max-lines-per-function
 describe('ChokidarRepoWatcher', () => {
   beforeEach(() => {
     vi.mocked(runGit).mockReset();
@@ -14,25 +38,14 @@ describe('ChokidarRepoWatcher', () => {
   });
 
   it('watches every unique worktree root plus the shared git directory', async () => {
-    const stops = Array.from({ length: 3 }, () => vi.fn<StopRecursiveWatch>(async () => {}));
-    let stopIndex = 0;
-    vi.mocked(runGit).mockResolvedValue('/repo/.git\n');
-    vi.mocked(startRecursiveWatch).mockImplementation(async () => stops[stopIndex++]);
-
+    const { stops } = arrangeMultipleWorktrees();
     const handle = new ChokidarRepoWatcher().watch(
-      {
-        repoPath: '/repo',
-        worktreePaths: ['/repo', '/linked', '/linked'],
-      },
+      { repoPath: '/repo', worktreePaths: ['/repo', '/linked', '/linked'] },
       () => {}
     );
 
     await vi.waitFor(() => expect(startRecursiveWatch).toHaveBeenCalledTimes(3));
-    expect(vi.mocked(startRecursiveWatch).mock.calls.map(([path]) => path)).toEqual([
-      '/repo',
-      '/linked',
-      '/repo/.git',
-    ]);
+    expect(watchedPaths()).toEqual(['/repo', '/linked', '/repo/.git']);
 
     await handle.stop();
     for (const stop of stops) {
@@ -41,24 +54,14 @@ describe('ChokidarRepoWatcher', () => {
   });
 
   it('keeps working-tree watchers and never throws when git-dir resolution fails', async () => {
-    const stop = vi.fn<StopRecursiveWatch>(async () => {});
-    // The shared git-dir resolution (rev-parse) fails; auto-refresh is best-effort
-    // and must not take down the main process (CLAUDE.md / git-notes.md).
-    vi.mocked(runGit).mockRejectedValue(new Error('not a git repository'));
-    vi.mocked(startRecursiveWatch).mockResolvedValue(stop);
-
+    arrangeGitDirResolutionFailure();
     const handle = new ChokidarRepoWatcher().watch(
       { repoPath: '/repo', worktreePaths: ['/repo', '/linked'] },
       () => {}
     );
 
     // The working trees are still watched even though the git dir could not resolve…
-    await vi.waitFor(() =>
-      expect(vi.mocked(startRecursiveWatch).mock.calls.map(([path]) => path)).toEqual([
-        '/repo',
-        '/linked',
-      ])
-    );
+    await vi.waitFor(() => expect(watchedPaths()).toEqual(['/repo', '/linked']));
 
     // …and the rejected resolution is swallowed, so stop() resolves cleanly.
     await expect(handle.stop()).resolves.toBeUndefined();

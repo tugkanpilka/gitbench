@@ -242,44 +242,37 @@ const LANGUAGE_BY_EXTENSION: Readonly<Record<string, string>> = {
   zshrc: 'bash',
 };
 
+const isDockerfile = (f: string) => /^(?:docker|container)file(?:\..+)?$/i.test(f);
+const isDotEnv = (f: string) => /^\.env(?:\..+)?$/.test(f);
+const isIgnoreFile = (f: string) =>
+  /^\.(?:babel|docker|eslint|git|helm|hg|npm|prettier|stylelint|vercel)ignore$/.test(f);
+
+type FilePredicate = (f: string) => boolean;
+const PREDICATE_LANGUAGES: Array<[FilePredicate, string]> = [
+  [isDockerfile, 'docker'],
+  [isDotEnv, 'bash'],
+  [isIgnoreFile, 'ignore'],
+];
+
 function languageForSpecialFilename(filename: string): string | null {
   const exactMatch = LANGUAGE_BY_FILENAME[filename];
   if (exactMatch !== undefined) {
     return exactMatch;
   }
-
-  if (/^(?:docker|container)file(?:\..+)?$/.test(filename)) {
-    return 'docker';
-  }
-  if (/^\.env(?:\..+)?$/.test(filename)) {
-    return 'bash';
-  }
-  if (
-    /^\.(?:babel|docker|eslint|git|helm|hg|npm|prettier|stylelint|vercel)ignore$/.test(filename)
-  ) {
-    return 'ignore';
-  }
-
-  return null;
+  const match = PREDICATE_LANGUAGES.find(([pred]) => pred(filename));
+  return match !== undefined ? match[1] : null;
 }
 
-export function languageFromPath(path: string): string | null {
-  const filename = path.split('/').at(-1)?.toLowerCase() ?? '';
-  if (filename === '') {
-    return null;
-  }
-
-  const specialFilenameLanguage = languageForSpecialFilename(filename);
-  if (specialFilenameLanguage !== null) {
-    return specialFilenameLanguage;
-  }
-
+function languageFromSuffix(filename: string): string | null {
   for (const [suffix, language] of Object.entries(LANGUAGE_BY_SUFFIX)) {
     if (filename.endsWith(suffix)) {
       return language;
     }
   }
+  return null;
+}
 
+function languageFromExtension(filename: string): string | null {
   const extension = filename.includes('.') ? (filename.split('.').at(-1) ?? '') : '';
   if (extension === '') {
     return null;
@@ -291,6 +284,19 @@ export function languageFromPath(path: string): string | null {
   }
 
   return refractor.registered(extension) ? extension : null;
+}
+
+export function languageFromPath(path: string): string | null {
+  const filename = path.split('/').at(-1)?.toLowerCase() ?? '';
+  if (filename === '') {
+    return null;
+  }
+
+  return (
+    languageForSpecialFilename(filename) ??
+    languageFromSuffix(filename) ??
+    languageFromExtension(filename)
+  );
 }
 
 export { refractor };

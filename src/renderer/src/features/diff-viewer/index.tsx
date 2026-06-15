@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { RefCallback } from 'react';
+import type { Dispatch, RefCallback, RefObject, SetStateAction } from 'react';
 import 'react-diff-view/style/index.css';
 
 import { toggledSet } from '../../shared/collections/toggledSet';
@@ -7,46 +7,38 @@ import { Match, Switch } from '../../shared/ui/switch';
 import { DiffFileSection } from './diff-file-section';
 import { useScrollToSection } from './hooks/useScrollToSection';
 import { useActiveFileScrollSpy } from './hooks/useActiveFileScrollSpy';
-import type { DiffViewProps } from './index.types';
+import type { DiffViewProps, DiffNavigationTarget } from './index.types';
 import type { DiffModel } from './utils/diffModel.types';
 import styles from './index.module.scss';
 
-export function DiffView({
-  model,
-  clean,
-  viewType,
-  navigationTarget,
-  scrollContainerRef,
-  onActiveFileChange,
-}: DiffViewProps) {
-  // A new diff is a new logical instance: keying the content on model identity resets
-  // the collapse/scroll state below without a synchronous reset effect. `instanceKey`
-  // increments whenever the model reference changes (App rebuilds it per diff).
+type DiffViewContentProps = Omit<DiffViewProps, 'clean'>;
+
+type SectionHandlers = {
+  getToggleHandler: (id: string) => () => void;
+  getSectionRef: (id: string) => RefCallback<HTMLElement>;
+};
+
+type DiffFileListProps = {
+  model: DiffModel;
+  viewType: DiffViewContentProps['viewType'];
+  collapsedFiles: Set<string>;
+  getToggleHandler: (id: string) => () => void;
+  getSectionRef: (id: string) => RefCallback<HTMLElement>;
+};
+
+function CleanWorktree() {
   return (
-    <Switch>
-      <Match when={clean}>
-        <div className={styles['diff-view']}>
-          <div className={styles['diff-view__clean']}>
-            Worktree is clean; no uncommitted changes.
-          </div>
-        </div>
-      </Match>
-      <Match when={model.files.length === 0}>
-        <div className={styles['diff-view']}>
-          <div className={styles['diff-view__empty']}>No diff to display.</div>
-        </div>
-      </Match>
-      <Match when={true}>
-        <DiffViewContent
-          key={instanceKey(model)}
-          model={model}
-          viewType={viewType}
-          navigationTarget={navigationTarget}
-          scrollContainerRef={scrollContainerRef}
-          onActiveFileChange={onActiveFileChange}
-        />
-      </Match>
-    </Switch>
+    <div className={styles['diff-view']}>
+      <div className={styles['diff-view__clean']}>Worktree is clean; no uncommitted changes.</div>
+    </div>
+  );
+}
+
+function EmptyDiff() {
+  return (
+    <div className={styles['diff-view']}>
+      <div className={styles['diff-view__empty']}>No diff to display.</div>
+    </div>
   );
 }
 
@@ -63,34 +55,67 @@ function instanceKey(model: DiffModel): number {
   return id;
 }
 
-type DiffViewContentProps = Omit<DiffViewProps, 'clean'>;
-
-function DiffViewContent({
-  model,
-  viewType,
-  navigationTarget,
-  scrollContainerRef,
-  onActiveFileChange,
-}: DiffViewContentProps) {
-  const [collapsedFiles, setCollapsedFiles] = useState<Set<string>>(() => new Set());
-  const sectionRefs = useRef(new Map<string, HTMLElement>());
-  const scrollToSection = useScrollToSection(sectionRefs);
-
-  // React to a new reveal-and-scroll command during render (not in an effect): expand the
-  // target file synchronously so it is open before the commit, comparing against the last
-  // handled requestId. Re-selecting the same file produces a new requestId, so it expands
-  // again after the user collapses it.
-  const [handledRequestId, setHandledRequestId] = useState<number | null>(null);
-  if (navigationTarget !== null && navigationTarget.requestId !== handledRequestId) {
-    setHandledRequestId(navigationTarget.requestId);
-    setCollapsedFiles((current) =>
-      current.has(navigationTarget.fileId) ? toggledSet(current, navigationTarget.fileId) : current
-    );
+function makeToggleHandler(
+  fileId: string,
+  cache: Map<string, () => void>,
+  setCollapsedFiles: Dispatch<SetStateAction<Set<string>>>
+): () => void {
+  let handler = cache.get(fileId);
+  if (handler === undefined) {
+    handler = () => setCollapsedFiles((current) => toggledSet(current, fileId));
+    cache.set(fileId, handler);
   }
+  return handler;
+}
 
-  // The scroll and the active-file notification are post-commit side effects: the section
-  // element stays mounted regardless of collapse state, so scrolling once the expansion
-  // has committed reveals it. No component state is set here.
+function applyElementRef(
+  element: HTMLElement | null,
+  fileId: string,
+  sectionRefs: RefObject<Map<string, HTMLElement>>
+): void {
+  if (element === null) {
+    sectionRefs.current.delete(fileId);
+  } else {
+    sectionRefs.current.set(fileId, element);
+  }
+}
+
+function makeSectionRefHandler(
+  fileId: string,
+  cache: Map<string, RefCallback<HTMLElement>>,
+  sectionRefs: RefObject<Map<string, HTMLElement>>
+): RefCallback<HTMLElement> {
+  let handler = cache.get(fileId);
+  if (handler === undefined) {
+    handler = (element) => applyElementRef(element, fileId, sectionRefs);
+    cache.set(fileId, handler);
+  }
+  return handler;
+}
+
+// eslint-disable-next-line max-lines-per-function -- two useCallback wrappers each occupy 3 lines; logic is already in extracted helpers
+function useSectionHandlers(
+  sectionRefs: RefObject<Map<string, HTMLElement>>,
+  setCollapsedFiles: Dispatch<SetStateAction<Set<string>>>
+): SectionHandlers {
+  const toggleCache = useRef(new Map<string, () => void>());
+  const refCache = useRef(new Map<string, RefCallback<HTMLElement>>());
+  const getToggleHandler = useCallback(
+    (id: string) => makeToggleHandler(id, toggleCache.current, setCollapsedFiles),
+    [setCollapsedFiles]
+  );
+  const getSectionRef = useCallback(
+    (id: string) => makeSectionRefHandler(id, refCache.current, sectionRefs),
+    [sectionRefs]
+  );
+  return { getToggleHandler, getSectionRef };
+}
+
+function useNavigationEffect(
+  navigationTarget: DiffNavigationTarget | null,
+  scrollToSection: (id: string) => void,
+  onActiveFileChange: (id: string) => void
+): void {
   useEffect(() => {
     if (navigationTarget === null) {
       return;
@@ -98,38 +123,29 @@ function DiffViewContent({
     scrollToSection(navigationTarget.fileId);
     onActiveFileChange(navigationTarget.fileId);
   }, [navigationTarget, onActiveFileChange, scrollToSection]);
+}
 
-  useActiveFileScrollSpy(scrollContainerRef, sectionRefs, model, onActiveFileChange);
+function useNavigationTargetExpansion(
+  navigationTarget: DiffNavigationTarget | null,
+  setCollapsedFiles: Dispatch<SetStateAction<Set<string>>>
+): void {
+  const [handledRequestId, setHandledRequestId] = useState<number | null>(null);
+  if (navigationTarget !== null && navigationTarget.requestId !== handledRequestId) {
+    setHandledRequestId(navigationTarget.requestId);
+    setCollapsedFiles((current) =>
+      current.has(navigationTarget.fileId) ? toggledSet(current, navigationTarget.fileId) : current
+    );
+  }
+}
 
-  // Cache one stable callback per file id so each memoized DiffFileSection keeps
-  // referentially-equal onToggle / sectionRef props across re-renders.
-  const toggleHandlers = useRef(new Map<string, () => void>());
-  const sectionRefHandlers = useRef(new Map<string, RefCallback<HTMLElement>>());
-
-  const getToggleHandler = useCallback((fileId: string) => {
-    let handler = toggleHandlers.current.get(fileId);
-    if (handler === undefined) {
-      handler = () => setCollapsedFiles((current) => toggledSet(current, fileId));
-      toggleHandlers.current.set(fileId, handler);
-    }
-    return handler;
-  }, []);
-
-  const getSectionRef = useCallback((fileId: string) => {
-    let handler = sectionRefHandlers.current.get(fileId);
-    if (handler === undefined) {
-      handler = (element) => {
-        if (element === null) {
-          sectionRefs.current.delete(fileId);
-        } else {
-          sectionRefs.current.set(fileId, element);
-        }
-      };
-      sectionRefHandlers.current.set(fileId, handler);
-    }
-    return handler;
-  }, []);
-
+// eslint-disable-next-line max-lines-per-function -- pure JSX render; multi-line DiffFileSection prop spread inflates count
+function DiffFileList({
+  model,
+  viewType,
+  collapsedFiles,
+  getToggleHandler,
+  getSectionRef,
+}: DiffFileListProps) {
   return (
     <div className={styles['diff-view']}>
       <h2 className={styles['diff-view__title']}>Uncommitted changes</h2>
@@ -144,5 +160,57 @@ function DiffViewContent({
         />
       ))}
     </div>
+  );
+}
+
+// eslint-disable-next-line max-lines-per-function -- orchestrates five hooks; each hook call is a single responsibility already extracted
+function DiffViewContent({
+  model,
+  viewType,
+  navigationTarget,
+  scrollContainerRef,
+  onActiveFileChange,
+}: DiffViewContentProps) {
+  const [collapsedFiles, setCollapsedFiles] = useState<Set<string>>(() => new Set());
+  const sectionRefs = useRef(new Map<string, HTMLElement>());
+  const scrollToSection = useScrollToSection(sectionRefs);
+  useNavigationTargetExpansion(navigationTarget, setCollapsedFiles);
+  useNavigationEffect(navigationTarget, scrollToSection, onActiveFileChange);
+  useActiveFileScrollSpy({ scrollContainerRef, sectionRefs, model, onActiveFileChange });
+  const handlers = useSectionHandlers(sectionRefs, setCollapsedFiles);
+  return (
+    <DiffFileList model={model} viewType={viewType} collapsedFiles={collapsedFiles} {...handlers} />
+  );
+}
+
+// eslint-disable-next-line max-lines-per-function -- pure JSX render; Switch/Match branches and multi-line DiffViewContent props inflate count
+export function DiffView({
+  model,
+  clean,
+  viewType,
+  navigationTarget,
+  scrollContainerRef,
+  onActiveFileChange,
+}: DiffViewProps) {
+  const contentKey = instanceKey(model);
+  return (
+    <Switch>
+      <Match when={clean}>
+        <CleanWorktree />
+      </Match>
+      <Match when={model.files.length === 0}>
+        <EmptyDiff />
+      </Match>
+      <Match when={true}>
+        <DiffViewContent
+          key={contentKey}
+          model={model}
+          viewType={viewType}
+          navigationTarget={navigationTarget}
+          scrollContainerRef={scrollContainerRef}
+          onActiveFileChange={onActiveFileChange}
+        />
+      </Match>
+    </Switch>
   );
 }

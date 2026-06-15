@@ -5,6 +5,17 @@ import { runGit } from '../runGit';
 
 const UNTRACKED_DIFF_CONCURRENCY = 8;
 
+const UNTRACKED_FILE_DIFF_ARGS = [
+  '--no-pager',
+  'diff',
+  '--no-index',
+  '--no-color',
+  '--no-ext-diff',
+  '--no-textconv',
+  '--',
+  '/dev/null',
+] as const;
+
 export class GitCliDiffReader {
   async getUncommittedDiff(worktreePath: string): Promise<string> {
     await this.assertHeadExists(worktreePath);
@@ -15,39 +26,32 @@ export class GitCliDiffReader {
       runGit(worktreePath, ['--no-pager', 'diff', '--no-color', 'HEAD']),
       runGit(worktreePath, ['ls-files', '--others', '--exclude-standard', '-z']),
     ]);
-    const untrackedPaths = untrackedPathsOutput
-      .split('\0')
-      .filter((path) => path.length > 0 && !path.endsWith('/'));
+    const paths = this.parseUntrackedPaths(untrackedPathsOutput);
 
-    if (untrackedPaths.length === 0) {
+    if (paths.length === 0) {
       return trackedDiff;
     }
 
-    const untrackedDiffs = await mapWithConcurrency(
-      untrackedPaths,
-      UNTRACKED_DIFF_CONCURRENCY,
-      (path) => this.getUntrackedFileDiff(worktreePath, path)
-    );
+    return this.mergeTrackedAndUntrackedDiffs(worktreePath, trackedDiff, paths);
+  }
 
+  private parseUntrackedPaths(output: string): string[] {
+    return output.split('\0').filter((path) => path.length > 0 && !path.endsWith('/'));
+  }
+
+  private async mergeTrackedAndUntrackedDiffs(
+    worktreePath: string,
+    trackedDiff: string,
+    paths: string[]
+  ): Promise<string> {
+    const untrackedDiffs = await mapWithConcurrency(paths, UNTRACKED_DIFF_CONCURRENCY, (path) =>
+      this.getUntrackedFileDiff(worktreePath, path)
+    );
     return trackedDiff + untrackedDiffs.join('');
   }
 
   private getUntrackedFileDiff(worktreePath: string, path: string): Promise<string> {
-    return runGit(
-      worktreePath,
-      [
-        '--no-pager',
-        'diff',
-        '--no-index',
-        '--no-color',
-        '--no-ext-diff',
-        '--no-textconv',
-        '--',
-        '/dev/null',
-        path,
-      ],
-      { acceptedExitCodes: [1] }
-    );
+    return runGit(worktreePath, [...UNTRACKED_FILE_DIFF_ARGS, path], { acceptedExitCodes: [1] });
   }
 
   /**

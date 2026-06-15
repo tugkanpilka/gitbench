@@ -26,6 +26,7 @@ async function openRepository(): Promise<HTMLElement> {
   });
 }
 
+// eslint-disable-next-line max-lines-per-function
 describe('App', () => {
   beforeEach(() => {
     installMemoryStorage();

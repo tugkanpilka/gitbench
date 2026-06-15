@@ -21,6 +21,7 @@ function registerAndGetListener(): (event: unknown, request: unknown) => Promise
   return call[1] as (event: unknown, request: unknown) => Promise<unknown>;
 }
 
+// eslint-disable-next-line max-lines-per-function
 describe('registerPickRepositoryHandler', () => {
   beforeEach(() => {
     ipcMainHandle.mockClear();

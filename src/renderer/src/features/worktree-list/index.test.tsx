@@ -24,17 +24,21 @@ const DETACHED_SUMMARY = {
 
 afterEach(() => cleanup());
 
+function renderTwoWorktreeList(selectedPath: string | null = '/repo-detached') {
+  return render(
+    <WorktreeList
+      worktrees={[MAIN_WORKTREE, DETACHED_WORKTREE]}
+      summaries={[MAIN_WORKTREE_SUMMARY, DETACHED_SUMMARY]}
+      selectedPath={selectedPath}
+      onSelect={() => undefined}
+    />
+  );
+}
+
+// eslint-disable-next-line max-lines-per-function
 describe('WorktreeList', () => {
   it('renders a flat list and marks the selected worktree', () => {
-    render(
-      <WorktreeList
-        worktrees={[MAIN_WORKTREE, DETACHED_WORKTREE]}
-        summaries={[MAIN_WORKTREE_SUMMARY, DETACHED_SUMMARY]}
-        selectedPath="/repo-detached"
-        onSelect={() => undefined}
-      />
-    );
-
+    renderTwoWorktreeList();
     expect(screen.getByText('repo')).toBeTruthy();
     expect(screen.getByText('repo-detached')).toBeTruthy();
     expect(screen.getByText('↑2')).toBeTruthy();
@@ -43,7 +47,6 @@ describe('WorktreeList', () => {
     expect(screen.getByText('+12')).toBeTruthy();
     expect(screen.getByText('−4')).toBeTruthy();
     expect(screen.getByText('3')).toBeTruthy();
-
     const selected = screen.getByRole('button', { name: /repo-detached/ });
     expect(selected.getAttribute('aria-pressed')).toBe('true');
     expect(screen.getAllByRole('button')).toHaveLength(2);

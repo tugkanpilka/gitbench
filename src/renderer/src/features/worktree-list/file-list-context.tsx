@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import { toggledSet } from '../../shared/collections/toggledSet';
@@ -27,47 +27,66 @@ export type FileListProviderProps = {
   children: ReactNode;
 };
 
+function expandAncestorsForFile(current: Set<string>, directory: string): Set<string> {
+  const activeDirectoryPaths = directoryPathsForDirectory(directory);
+  if (!activeDirectoryPaths.some((path) => current.has(path))) {
+    return current;
+  }
+  const next = new Set(current);
+  for (const path of activeDirectoryPaths) {
+    next.delete(path);
+  }
+  return next;
+}
+
+function useResetOnFilesChange(
+  setCollapsed: (s: Set<string>) => void,
+  files: ChangedFileItem[]
+): void {
+  useEffect(() => {
+    setCollapsed(new Set());
+  }, [files, setCollapsed]);
+}
+
+function useExpandActiveAncestors(
+  setCollapsed: (updater: (cur: Set<string>) => Set<string>) => void,
+  files: ChangedFileItem[],
+  activeFileId: string | null
+): void {
+  useEffect(() => {
+    const f = files.find((file) => file.id === activeFileId);
+    if (f === undefined) {
+      return;
+    }
+    setCollapsed((cur) => expandAncestorsForFile(cur, f.path.directory));
+  }, [activeFileId, files, setCollapsed]);
+}
+
+function useCollapsedDirectories(
+  files: ChangedFileItem[],
+  activeFileId: string | null
+): [ReadonlySet<string>, (path: string) => void] {
+  const [collapsedDirectories, setCollapsedDirectories] = useState<Set<string>>(() => new Set());
+  useResetOnFilesChange(setCollapsedDirectories, files);
+  useExpandActiveAncestors(setCollapsedDirectories, files, activeFileId);
+  const onToggleDirectory = useCallback(
+    (path: string) => setCollapsedDirectories((current) => toggledSet(current, path)),
+    []
+  );
+  return [collapsedDirectories, onToggleDirectory];
+}
+
 export function FileListProvider({
   files,
   activeFileId,
   onSelectFile,
   children,
 }: FileListProviderProps) {
-  const [collapsedDirectories, setCollapsedDirectories] = useState<Set<string>>(() => new Set());
-
-  useEffect(() => {
-    setCollapsedDirectories(new Set());
-  }, [files]);
-
-  // Expand every collapsed ancestor of the active file so it stays visible.
-  useEffect(() => {
-    const activeFile = files.find((file) => file.id === activeFileId);
-    if (activeFile === undefined) {
-      return;
-    }
-
-    const activeDirectoryPaths = directoryPathsForDirectory(activeFile.path.directory);
-    setCollapsedDirectories((current) => {
-      if (!activeDirectoryPaths.some((path) => current.has(path))) {
-        return current;
-      }
-
-      const next = new Set(current);
-      for (const path of activeDirectoryPaths) {
-        next.delete(path);
-      }
-      return next;
-    });
-  }, [activeFileId, files]);
+  const [collapsedDirectories, onToggleDirectory] = useCollapsedDirectories(files, activeFileId);
 
   const value = useMemo<FileListContextValue>(
-    () => ({
-      activeFileId,
-      collapsedDirectories,
-      onSelectFile,
-      onToggleDirectory: (path) => setCollapsedDirectories((current) => toggledSet(current, path)),
-    }),
-    [activeFileId, collapsedDirectories, onSelectFile]
+    () => ({ activeFileId, collapsedDirectories, onSelectFile, onToggleDirectory }),
+    [activeFileId, collapsedDirectories, onSelectFile, onToggleDirectory]
   );
 
   return <FileListContext.Provider value={value}>{children}</FileListContext.Provider>;

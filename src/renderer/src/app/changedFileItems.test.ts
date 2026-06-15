@@ -19,26 +19,28 @@ index 1111111..0000000
 -export const old = true;
 `;
 
+const EXPECTED_CHANGED_FILE_ITEMS = [
+  {
+    id: expect.any(String),
+    path: { directory: 'src/', name: 'a.ts' },
+    status: 'add',
+    additions: 1,
+    deletions: 0,
+  },
+  {
+    id: expect.any(String),
+    path: { directory: '', name: 'old.ts' },
+    status: 'delete',
+    additions: 0,
+    deletions: 1,
+  },
+];
+
 describe('toChangedFileItems', () => {
   it('maps the diff viewer model into the neutral navigation model', () => {
     const items = toChangedFileItems(buildDiffModel(DIFF).files);
 
-    expect(items).toEqual([
-      {
-        id: expect.any(String),
-        path: { directory: 'src/', name: 'a.ts' },
-        status: 'add',
-        additions: 1,
-        deletions: 0,
-      },
-      {
-        id: expect.any(String),
-        path: { directory: '', name: 'old.ts' },
-        status: 'delete',
-        additions: 0,
-        deletions: 1,
-      },
-    ]);
+    expect(items).toEqual(EXPECTED_CHANGED_FILE_ITEMS);
   });
 
   it('preserves the diff file ids so navigation targets stay aligned', () => {

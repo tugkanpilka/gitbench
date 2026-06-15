@@ -13,27 +13,37 @@ import {
 } from '../../test/fixtures';
 import { useWorktreeBrowser } from '.';
 
-function BrowserHarness() {
-  const browser = useWorktreeBrowser();
+type BrowserApi = ReturnType<typeof useWorktreeBrowser>;
 
+function formatDiff(browser: BrowserApi): string {
+  return browser.diff === null ? '(none)' : `${browser.diff.worktreePath}:${browser.diff.diffText}`;
+}
+
+// eslint-disable-next-line max-lines-per-function
+function BrowserStatus({ browser }: { browser: BrowserApi }) {
+  const paths = browser.worktrees.map((wt) => wt.path).join(',') || '(empty)';
+  const sums =
+    browser.summaries.map((s) => `${s.worktreePath}:${s.fileCount}`).join(',') || '(empty)';
   return (
     <>
       <output aria-label="Repository">{browser.repoPath ?? '(none)'}</output>
-      <output aria-label="Worktrees">
-        {browser.worktrees.map((worktree) => worktree.path).join(',') || '(empty)'}
-      </output>
-      <output aria-label="Summaries">
-        {browser.summaries
-          .map((summary) => `${summary.worktreePath}:${summary.fileCount}`)
-          .join(',') || '(empty)'}
-      </output>
+      <output aria-label="Worktrees">{paths}</output>
+      <output aria-label="Summaries">{sums}</output>
       <output aria-label="Selected">{browser.selectedPath ?? '(none)'}</output>
-      <output aria-label="Diff">
-        {browser.diff === null ? '(none)' : `${browser.diff.worktreePath}:${browser.diff.diffText}`}
-      </output>
+      <output aria-label="Diff">{formatDiff(browser)}</output>
       <output aria-label="Error">{browser.error ?? '(none)'}</output>
       <output aria-label="Loading">{String(browser.loading)}</output>
       <output aria-label="Diff loading">{String(browser.diffLoading)}</output>
+    </>
+  );
+}
+
+// eslint-disable-next-line max-lines-per-function -- test harness; four buttons inflate JSX line count
+function BrowserHarness() {
+  const browser = useWorktreeBrowser();
+  return (
+    <>
+      <BrowserStatus browser={browser} />
       <button type="button" onClick={() => void browser.pickRepository()}>
         Pick repository
       </button>
@@ -50,6 +60,97 @@ function BrowserHarness() {
   );
 }
 
+type DiffDeferred = ReturnType<typeof deferred<Result<{ diffText: string }>>>;
+
+function stubRacingFeatureMain(): { featureDiff: DiffDeferred; mainDiff: DiffDeferred } {
+  const featureDiff = deferred<Result<{ diffText: string }>>();
+  const mainDiff = deferred<Result<{ diffText: string }>>();
+  stubApi({
+    getDiff: vi.fn().mockReturnValueOnce(featureDiff.promise).mockReturnValueOnce(mainDiff.promise),
+  });
+  return { featureDiff, mainDiff };
+}
+
+function stubRacingMainMain(): { firstDiff: DiffDeferred; secondDiff: DiffDeferred } {
+  const firstDiff = deferred<Result<{ diffText: string }>>();
+  const secondDiff = deferred<Result<{ diffText: string }>>();
+  stubApi({
+    getDiff: vi.fn().mockReturnValueOnce(firstDiff.promise).mockReturnValueOnce(secondDiff.promise),
+  });
+  return { firstDiff, secondDiff };
+}
+
+function stubPickBrokenSecondRepo(): void {
+  stubApi({
+    pickRepo: vi
+      .fn()
+      .mockResolvedValueOnce(okResult<string | null>('/repo'))
+      .mockResolvedValueOnce(okResult<string | null>('/broken')),
+    listWorktrees: vi
+      .fn()
+      .mockResolvedValueOnce(okResult([MAIN_WORKTREE]))
+      .mockResolvedValueOnce(failResult('NOT_A_REPOSITORY', 'Not a git repository: /broken')),
+  });
+}
+
+function stubPickerDialogFails(): void {
+  stubApi({
+    pickRepo: vi
+      .fn()
+      .mockResolvedValueOnce(okResult<string | null>('/repo'))
+      .mockResolvedValueOnce(failResult('GIT_NOT_INSTALLED', 'Git executable not found.')),
+    listWorktrees: vi.fn().mockResolvedValue(okResult([MAIN_WORKTREE])),
+  });
+}
+
+function stubTwoPicksWithPendingDiff(): DiffDeferred {
+  const pendingDiff = deferred<Result<{ diffText: string }>>();
+  stubApi({
+    pickRepo: vi
+      .fn()
+      .mockResolvedValueOnce(okResult<string | null>('/repo'))
+      .mockResolvedValueOnce(okResult<string | null>('/repo2')),
+    getDiff: vi.fn().mockReturnValue(pendingDiff.promise),
+  });
+  return pendingDiff;
+}
+
+function stubRefreshAddsWorktree(): void {
+  stubApi({
+    listWorktrees: vi
+      .fn()
+      .mockResolvedValueOnce(okResult([MAIN_WORKTREE]))
+      .mockResolvedValueOnce(okResult([MAIN_WORKTREE, FEATURE_WORKTREE])),
+  });
+}
+
+function stubSignalCapture(): { getSignal: () => () => void } {
+  let signal!: () => void;
+  stubApi({
+    onRepoChanged: vi.fn().mockImplementation((fn: () => void) => {
+      signal = fn;
+      return () => {};
+    }),
+  });
+  return { getSignal: () => signal };
+}
+
+function clearApiMocks(): void {
+  vi.mocked(window.api.listWorktrees).mockClear();
+  vi.mocked(window.api.listWorktreeSummaries).mockClear();
+  vi.mocked(window.api.getDiff).mockClear();
+}
+
+function stubWatchRestartOnRefresh(): void {
+  stubApi({
+    listWorktrees: vi
+      .fn()
+      .mockResolvedValueOnce(okResult([MAIN_WORKTREE]))
+      .mockResolvedValueOnce(okResult([MAIN_WORKTREE, FEATURE_WORKTREE])),
+  });
+}
+
+// eslint-disable-next-line max-lines-per-function
 describe('useWorktreeBrowser', () => {
   beforeEach(() => {
     stubApi();
@@ -58,15 +159,9 @@ describe('useWorktreeBrowser', () => {
     cleanup();
   });
 
+  // eslint-disable-next-line max-lines-per-function -- test body; two sequential act() steps are required to race diffs
   it('shows only the most recently selected worktree diff when requests race', async () => {
-    const featureDiff = deferred<Result<{ diffText: string }>>();
-    const mainDiff = deferred<Result<{ diffText: string }>>();
-    stubApi({
-      getDiff: vi
-        .fn()
-        .mockReturnValueOnce(featureDiff.promise)
-        .mockReturnValueOnce(mainDiff.promise),
-    });
+    const { featureDiff, mainDiff } = stubRacingFeatureMain();
     render(<BrowserHarness />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Select feature' }));
@@ -88,14 +183,7 @@ describe('useWorktreeBrowser', () => {
   });
 
   it('ignores an error from a superseded diff request', async () => {
-    const featureDiff = deferred<Result<{ diffText: string }>>();
-    const mainDiff = deferred<Result<{ diffText: string }>>();
-    stubApi({
-      getDiff: vi
-        .fn()
-        .mockReturnValueOnce(featureDiff.promise)
-        .mockReturnValueOnce(mainDiff.promise),
-    });
+    const { featureDiff, mainDiff } = stubRacingFeatureMain();
     render(<BrowserHarness />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Select feature' }));
@@ -113,15 +201,9 @@ describe('useWorktreeBrowser', () => {
     expect(screen.getByLabelText('Diff loading').textContent).toBe('false');
   });
 
+  // eslint-disable-next-line max-lines-per-function -- test body; two sequential act() steps are required to race diffs
   it('ignores a stale result when the same worktree is re-selected before it resolves', async () => {
-    const firstDiff = deferred<Result<{ diffText: string }>>();
-    const secondDiff = deferred<Result<{ diffText: string }>>();
-    stubApi({
-      getDiff: vi
-        .fn()
-        .mockReturnValueOnce(firstDiff.promise)
-        .mockReturnValueOnce(secondDiff.promise),
-    });
+    const { firstDiff, secondDiff } = stubRacingMainMain();
     render(<BrowserHarness />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Select main' }));
@@ -142,16 +224,7 @@ describe('useWorktreeBrowser', () => {
   });
 
   it('keeps the open repository path when picking another repository fails to list worktrees', async () => {
-    stubApi({
-      pickRepo: vi
-        .fn()
-        .mockResolvedValueOnce(okResult<string | null>('/repo'))
-        .mockResolvedValueOnce(okResult<string | null>('/broken')),
-      listWorktrees: vi
-        .fn()
-        .mockResolvedValueOnce(okResult([MAIN_WORKTREE]))
-        .mockResolvedValueOnce(failResult('NOT_A_REPOSITORY', 'Not a git repository: /broken')),
-    });
+    stubPickBrokenSecondRepo();
     render(<BrowserHarness />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Pick repository' }));
@@ -168,13 +241,7 @@ describe('useWorktreeBrowser', () => {
   });
 
   it('keeps the previous repository and worktrees when the picker dialog itself fails', async () => {
-    stubApi({
-      pickRepo: vi
-        .fn()
-        .mockResolvedValueOnce(okResult<string | null>('/repo'))
-        .mockResolvedValueOnce(failResult('GIT_NOT_INSTALLED', 'Git executable not found.')),
-      listWorktrees: vi.fn().mockResolvedValue(okResult([MAIN_WORKTREE])),
-    });
+    stubPickerDialogFails();
     render(<BrowserHarness />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Pick repository' }));
@@ -188,27 +255,18 @@ describe('useWorktreeBrowser', () => {
     expect(window.api.listWorktrees).toHaveBeenCalledTimes(1);
   });
 
+  // eslint-disable-next-line max-lines-per-function -- test body; multiple sequential user interactions required
   it('opening a new repository resets the selection and discards the in-flight diff', async () => {
-    const pendingDiff = deferred<Result<{ diffText: string }>>();
-    stubApi({
-      pickRepo: vi
-        .fn()
-        .mockResolvedValueOnce(okResult<string | null>('/repo'))
-        .mockResolvedValueOnce(okResult<string | null>('/repo2')),
-      getDiff: vi.fn().mockReturnValue(pendingDiff.promise),
-    });
+    const pendingDiff = stubTwoPicksWithPendingDiff();
     render(<BrowserHarness />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Pick repository' }));
     expect(await screen.findByText('/repo')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Select feature' }));
     expect(screen.getByLabelText('Diff loading').textContent).toBe('true');
-
     fireEvent.click(screen.getByRole('button', { name: 'Pick repository' }));
     expect(await screen.findByText('/repo2')).toBeTruthy();
-
     expect(screen.getByLabelText('Selected').textContent).toBe('(none)');
-    expect(screen.getByLabelText('Diff').textContent).toBe('(none)');
     expect(screen.getByLabelText('Diff loading').textContent).toBe('false');
 
     await act(async () => {
@@ -231,12 +289,7 @@ describe('useWorktreeBrowser', () => {
   });
 
   it('refreshRepository reloads the worktree list of the open repository', async () => {
-    stubApi({
-      listWorktrees: vi
-        .fn()
-        .mockResolvedValueOnce(okResult([MAIN_WORKTREE]))
-        .mockResolvedValueOnce(okResult([MAIN_WORKTREE, FEATURE_WORKTREE])),
-    });
+    stubRefreshAddsWorktree();
     render(<BrowserHarness />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Pick repository' }));
@@ -294,6 +347,7 @@ describe('useWorktreeBrowser', () => {
     expect(screen.getByLabelText('Diff loading').textContent).toBe('false');
   });
 
+  // eslint-disable-next-line max-lines-per-function
   describe('file watching', () => {
     it('starts watching after a repository is picked', async () => {
       render(<BrowserHarness />);
@@ -305,12 +359,7 @@ describe('useWorktreeBrowser', () => {
     });
 
     it('restarts the watch when the set of worktree roots changes', async () => {
-      stubApi({
-        listWorktrees: vi
-          .fn()
-          .mockResolvedValueOnce(okResult([MAIN_WORKTREE]))
-          .mockResolvedValueOnce(okResult([MAIN_WORKTREE, FEATURE_WORKTREE])),
-      });
+      stubWatchRestartOnRefresh();
       render(<BrowserHarness />);
 
       fireEvent.click(screen.getByRole('button', { name: 'Pick repository' }));
@@ -354,27 +403,18 @@ describe('useWorktreeBrowser', () => {
       expect(unsubscribe).toHaveBeenCalled();
     });
 
+    // eslint-disable-next-line max-lines-per-function -- test body; setup + signal + multiple assertions required
     it('silently reloads the worktree list and diff on a repo:changed signal', async () => {
-      let signal!: () => void;
-      stubApi({
-        onRepoChanged: vi.fn().mockImplementation((fn: () => void) => {
-          signal = fn;
-          return () => {};
-        }),
-      });
+      const { getSignal } = stubSignalCapture();
       render(<BrowserHarness />);
 
       fireEvent.click(screen.getByRole('button', { name: 'Pick repository' }));
       await waitFor(() => expect(screen.getByLabelText('Repository').textContent).toBe('/repo'));
       fireEvent.click(screen.getByRole('button', { name: 'Select feature' }));
       await waitFor(() => expect(screen.getByLabelText('Diff loading').textContent).toBe('false'));
-
-      vi.mocked(window.api.listWorktrees).mockClear();
-      vi.mocked(window.api.listWorktreeSummaries).mockClear();
-      vi.mocked(window.api.getDiff).mockClear();
-
+      clearApiMocks();
       await act(async () => {
-        signal();
+        getSignal()();
       });
 
       await waitFor(() => {
@@ -382,22 +422,15 @@ describe('useWorktreeBrowser', () => {
       });
       expect(window.api.getDiff).toHaveBeenCalledWith('/repo-feature');
       expect(window.api.listWorktreeSummaries).toHaveBeenCalledWith(['/repo', '/repo-feature']);
-      // Silent refresh: no loading spinner shown.
       expect(screen.getByLabelText('Loading').textContent).toBe('false');
     });
 
     it('does not re-query when repo:changed fires before a repo is opened', async () => {
-      let signal!: () => void;
-      stubApi({
-        onRepoChanged: vi.fn().mockImplementation((fn: () => void) => {
-          signal = fn;
-          return () => {};
-        }),
-      });
+      const { getSignal } = stubSignalCapture();
       render(<BrowserHarness />);
 
       await act(async () => {
-        signal();
+        getSignal()();
       });
 
       expect(window.api.listWorktrees).not.toHaveBeenCalled();

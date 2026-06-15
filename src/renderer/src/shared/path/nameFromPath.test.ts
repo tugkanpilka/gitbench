@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { nameFromPath } from './nameFromPath';
 
+// eslint-disable-next-line max-lines-per-function
 describe('nameFromPath', () => {
   it('returns the last segment of a POSIX path', () => {
     expect(nameFromPath('/Users/dev/gitbench')).toBe('gitbench');

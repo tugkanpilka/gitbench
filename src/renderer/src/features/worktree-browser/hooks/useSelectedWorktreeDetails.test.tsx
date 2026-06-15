@@ -7,6 +7,17 @@ import { deferred, failResult, okResult, stubApi } from '../../../test/fixtures'
 import type { ErrorSlot } from './useRepositoryCatalog';
 import { useSelectedWorktreeDetails } from './useSelectedWorktreeDetails';
 
+type DiffDeferred = ReturnType<typeof deferred<Result<{ diffText: string }>>>;
+
+function stubRacingDiffs(): { featureDiff: DiffDeferred; mainDiff: DiffDeferred } {
+  const featureDiff = deferred<Result<{ diffText: string }>>();
+  const mainDiff = deferred<Result<{ diffText: string }>>();
+  stubApi({
+    getDiff: vi.fn().mockReturnValueOnce(featureDiff.promise).mockReturnValueOnce(mainDiff.promise),
+  });
+  return { featureDiff, mainDiff };
+}
+
 function makeErrorSlot(): ErrorSlot & { message: string | null } {
   const slot = {
     message: null as string | null,
@@ -20,6 +31,7 @@ function makeErrorSlot(): ErrorSlot & { message: string | null } {
   return slot;
 }
 
+// eslint-disable-next-line max-lines-per-function
 describe('useSelectedWorktreeDetails', () => {
   beforeEach(() => stubApi());
   afterEach(() => vi.restoreAllMocks());
@@ -38,14 +50,7 @@ describe('useSelectedWorktreeDetails', () => {
   });
 
   it('keeps only the latest selection when diff requests resolve out of order', async () => {
-    const featureDiff = deferred<Result<{ diffText: string }>>();
-    const mainDiff = deferred<Result<{ diffText: string }>>();
-    stubApi({
-      getDiff: vi
-        .fn()
-        .mockReturnValueOnce(featureDiff.promise)
-        .mockReturnValueOnce(mainDiff.promise),
-    });
+    const { featureDiff, mainDiff } = stubRacingDiffs();
     const { result } = renderHook(() => useSelectedWorktreeDetails(makeErrorSlot()));
 
     act(() => {
@@ -62,6 +67,7 @@ describe('useSelectedWorktreeDetails', () => {
     expect(result.current.diff).toEqual({ worktreePath: '/repo', diffText: 'main changes' });
   });
 
+  // eslint-disable-next-line max-lines-per-function -- test body; multiple sequential act() steps are required
   it('reset drops the selection and discards an in-flight diff', async () => {
     const pendingDiff = deferred<Result<{ diffText: string }>>();
     stubApi({ getDiff: vi.fn().mockReturnValue(pendingDiff.promise) });

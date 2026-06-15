@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 
-import { BrowserWindow, shell } from 'electron';
+import { BrowserWindow, shell, type BrowserWindowConstructorOptions } from 'electron';
 
 const WINDOW_WIDTH = 1280;
 const WINDOW_HEIGHT = 800;
@@ -21,9 +21,9 @@ export function isExternalUrlSafe(url: string): boolean {
   }
 }
 
-export function createWindow(): BrowserWindow {
-  const isMac = process.platform === 'darwin';
-  const window = new BrowserWindow({
+// eslint-disable-next-line max-lines-per-function -- flat BrowserWindow options object, one property per line; cannot split meaningfully
+function buildWindowOptions(isMac: boolean): BrowserWindowConstructorOptions {
+  return {
     width: WINDOW_WIDTH,
     height: WINDOW_HEIGHT,
     minWidth: WINDOW_MIN_WIDTH,
@@ -48,8 +48,11 @@ export function createWindow(): BrowserWindow {
       // remains contextIsolation + nodeIntegration:false (CLAUDE.md hard rule 1).
       sandbox: false,
     },
-  });
+  };
+}
 
+// eslint-disable-next-line max-lines-per-function -- sequential lifecycle steps (show, open-handler, navigate-guard, load) that belong together
+function wireWindowLifecycle(window: BrowserWindow, rendererUrl: string | undefined): void {
   window.on('ready-to-show', () => window.show());
 
   window.webContents.setWindowOpenHandler(({ url }) => {
@@ -59,7 +62,6 @@ export function createWindow(): BrowserWindow {
     return { action: 'deny' };
   });
 
-  const rendererUrl = process.env['ELECTRON_RENDERER_URL'];
   const indexFile = join(__dirname, '../renderer/index.html');
   const appOrigin = rendererUrl ?? `file://${indexFile}`;
 
@@ -74,6 +76,11 @@ export function createWindow(): BrowserWindow {
   } else {
     window.loadFile(indexFile);
   }
+}
 
-  return window;
+export function createWindow(): BrowserWindow {
+  const isMac = process.platform === 'darwin';
+  const win = new BrowserWindow(buildWindowOptions(isMac));
+  wireWindowLifecycle(win, process.env['ELECTRON_RENDERER_URL']);
+  return win;
 }

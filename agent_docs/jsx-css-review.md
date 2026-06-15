@@ -12,7 +12,7 @@ Declarative-render kuralı `CLAUDE.md` Hard rule #8 + `agent_docs/architecture.m
 
 - **Tamamlandı (Tema A — declarative render):** primitive'ler (`shared/ui/switch`, `shared/ui/visibility`, + testleri); #1, #2, #5 (App, Workspace, DiffView, welcome, worktree-detail-sidebar, worktree-list, unpushed-commits-section, changed-files-section).
 - **Tamamlandı (Tema B/C):** #6 (`countLabel`); #7 (ölü `worktree-list-container` kaldırıldı); #3 (`cx` — `file-navigation-row` + `changed-files-section`); #4 (`file-icon` → CSS Modules sınıfı: `--gb-space-3` + `--gb-text-lg`, inline yalnızca dinamik `color`); #9 (segmented-control `0.2s` → `var(--gb-dur-slow)` — ek olarak artık `prefers-reduced-motion`'a saygı duyuyor); #8'in birebir+semantik-güvenli kısmı (`repository-sidebar` `8px` → `--gb-space-4`, `unpushed-commits` `0 16px` → `0 var(--gb-space-6)`).
-- **Bilinçli bırakıldı (token uydurmamak için):** #10 ve #8'in geri kalanı. Token paleti **semantiktir**; literallerin çoğunun temiz karşılığı yok — yükseklikler (`44/40/88/420px`) token'sız; `badge` `9px`/`segmented` `5px` radius'ları yalnızca *değer* olarak `radius-menu`/`radius-row`'a uyuyor ama kavramsal yanlış (bağlamak istenmeyen kuplaj kurar); `9px`/`5px` padding'leri token'sız ev değerleri. Bunlar gerçek one-off'lar; tokenize etmek isteniyorsa önce **token-sistemi kararı** (ör. badge/control için yeni radius token'ı) gerekir — bu bir kod temizliği değil.
+- **Bilinçli bırakıldı (token uydurmamak için):** #10 ve #8'in geri kalanı. Token paleti **semantiktir**; literallerin çoğunun temiz karşılığı yok — yükseklikler (`44/40/88/420px`) token'sız; `badge` `9px`/`segmented` `5px` radius'ları yalnızca _değer_ olarak `radius-menu`/`radius-row`'a uyuyor ama kavramsal yanlış (bağlamak istenmeyen kuplaj kurar); `9px`/`5px` padding'leri token'sız ev değerleri. Bunlar gerçek one-off'lar; tokenize etmek isteniyorsa önce **token-sistemi kararı** (ör. badge/control için yeni radius token'ı) gerekir — bu bir kod temizliği değil.
 - **Durum:** typecheck temiz, 236/236 test geçti.
 
 ---
@@ -23,34 +23,35 @@ Declarative-render kuralı `CLAUDE.md` Hard rule #8 + `agent_docs/architecture.m
 
 ### Düzeltme: "dayatma" yanlış eksendi — opinionated reviewer'ın damak tadı zaten önerilen kuraldır
 
-> Bu altbölüm, ikinci geçişin ilk halindeki bir hatayı düzeltir. Önceki versiyon #1/#2'yi *"dokümanda yok, o yüzden geçersiz dayatma"* diye çerçevelemişti. Bu yanlıştı.
+> Bu altbölüm, ikinci geçişin ilk halindeki bir hatayı düzeltir. Önceki versiyon #1/#2'yi _"dokümanda yok, o yüzden geçersiz dayatma"_ diye çerçevelemişti. Bu yanlıştı.
 
 `jsx-css-reviewer` ajanı, tanımı gereği belirli bir damak tadına (declarative rendering, compound components, ince JSX) kalibre edilmiştir. Bir bulguyu `<Switch>/<Match>` üzerinden işaretlediğinde **uydurma bir kural icat etmiyor** — kendi açıkça tanımlı standardını uyguluyor; ajanı çalıştırmanın bütün değeri de bu. **Opinionated bir reviewer'ın her bulgusu, etkin olarak önerilen bir yeni kuraldır** ve yeni kurallar bir kod tabanının çıtasını yükseltmenin meşru yoludur. Dolayısıyla "mevcut kural mı / dayatma mı" yanlış bir eksendi.
 
-Geçerli kalan ayrım farklı: **"benimsenmiş mi / önerilmiş mi"** — ve şiddet etiketi bu *statüyü* yansıtmalı.
+Geçerli kalan ayrım farklı: **"benimsenmiş mi / önerilmiş mi"** — ve şiddet etiketi bu _statüyü_ yansıtmalı.
 
 **Karar (2026-06-14, bakımcı):** Bu declarative-render konvansiyonu artık **zorunlu (bağlayıcı) bir kuraldır.** Statü netleştiğine göre:
 
 - #1, #2 ve #5 **Must-Fix** statüsündedir — etiket meşrudur; "önerilmiş/koşullu" değil.
-- Karar verilmiş bir kural **"Open decisions"a gitmez** (orası kararı *bekleyenler* içindir; bunu önermem hatalıydı). Bağlayıcı bir kuralın yeri **Hard rules**'tur: kural `CLAUDE.md`'nin "Hard rules" listesine (veya `agent_docs/architecture.md`'ye) yazılır, kod ikinci sırada gelir.
+- Karar verilmiş bir kural **"Open decisions"a gitmez** (orası kararı _bekleyenler_ içindir; bunu önermem hatalıydı). Bağlayıcı bir kuralın yeri **Hard rules**'tur: kural `CLAUDE.md`'nin "Hard rules" listesine (veya `agent_docs/architecture.md`'ye) yazılır, kod ikinci sırada gelir.
 
 Yani soru artık "geçerli mi / onaylandı mı" değil; karar verildi. Sıra **kuralı dokümana yazıp tüm dosyalara uygulamakta.**
 
 ### İç tutarsızlık: kural eşit uygulanmamış → tutarlı uygulama lehine argüman
 
-İlk geçiş `App.tsx` ve `DiffView`'deki whole-component early-return'leri işaretlerken, **aynı kalıbı taşıyan `worktree-list/index.tsx:10` early-return'ünü (`if (worktrees.length === 0)`) atlamış.** Bunu önceki versiyonda *"demek ki kural sadece damak tadı, indir"* diye yorumlamıştım — bu da yanlış yöndü. Kural zorunlu olduğuna göre doğru okuma şu: **kural her yere tutarlı uygulanmalı ve `worktree-list:10` da kapsama girer** (finding #2'ye eklendi). Eksik uygulama, kuralı geçersiz kılmaz; uygulamanın eksik olduğunu gösterir.
+İlk geçiş `App.tsx` ve `DiffView`'deki whole-component early-return'leri işaretlerken, **aynı kalıbı taşıyan `worktree-list/index.tsx:10` early-return'ünü (`if (worktrees.length === 0)`) atlamış.** Bunu önceki versiyonda _"demek ki kural sadece damak tadı, indir"_ diye yorumlamıştım — bu da yanlış yöndü. Kural zorunlu olduğuna göre doğru okuma şu: **kural her yere tutarlı uygulanmalı ve `worktree-list:10` da kapsama girer** (finding #2'ye eklendi). Eksik uygulama, kuralı geçersiz kılmaz; uygulamanın eksik olduğunu gösterir.
 
 Ayrı bir not — teklif bedelsiz değil: `file-navigation-row:28`'deki `showDirectory ? (…büyük JSX…) : (…büyük JSX…)` örneği, `<Match>` kalıbının iki dolu JSX dalında ternary'den daha hantal kalabildiğini gösteriyor. Bu, kuralı reddetme gerekçesi değil; benimseme kararında bakımcının tartması gereken gerçek bir ödünleşim (ör. "basit göster/gizle için `<Visibility>`, ama dolu iki-dal için ternary kabul").
 
 ### Kök-neden sentezi: 10 bulgu → 3 tema
 
-| Tema | Bulgular | Kök neden | Şiddet (yeniden kalibre) | Eylem |
-|------|----------|-----------|--------------------------|-------|
-| **A. JSX durum-dallanması (declarative render)** | #1, #2, #5 (+ `worktree-list:10`) | Kural vardı ama yazılı değildi; her dosya idiomatic React | **Must-Fix — zorunlu (bağlayıcı) kural** | Kuralı `CLAUDE.md` "Hard rules"a yaz; sonra first-match-wins `Switch/Match/Visibility` primitive'lerini ekleyip **tüm** dosyalara uygula |
-| **B. Mevcut konvansiyonlar düzensiz uygulanmış** | #3 (`cx`), #4 (inline style), #6 (türetilmiş değer), #8/#9/#10 (token) | Drift — proje zaten bu kurallara sahip ama bazı noktalarda kaçmış | **Gerçek (objektif) tutarsızlık** | Şimdi düzelt; karar gerektirmez, düşük risk |
-| **C. Ölü / tören artefaktları** | #7 (`worktree-list-container` class'ı + kullanılmayan SCSS) | Geride kalmış kalıntı | **Gerçek (objektif)** | Sil |
+| Tema                                             | Bulgular                                                               | Kök neden                                                         | Şiddet (yeniden kalibre)                 | Eylem                                                                                                                                    |
+| ------------------------------------------------ | ---------------------------------------------------------------------- | ----------------------------------------------------------------- | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| **A. JSX durum-dallanması (declarative render)** | #1, #2, #5 (+ `worktree-list:10`)                                      | Kural vardı ama yazılı değildi; her dosya idiomatic React         | **Must-Fix — zorunlu (bağlayıcı) kural** | Kuralı `CLAUDE.md` "Hard rules"a yaz; sonra first-match-wins `Switch/Match/Visibility` primitive'lerini ekleyip **tüm** dosyalara uygula |
+| **B. Mevcut konvansiyonlar düzensiz uygulanmış** | #3 (`cx`), #4 (inline style), #6 (türetilmiş değer), #8/#9/#10 (token) | Drift — proje zaten bu kurallara sahip ama bazı noktalarda kaçmış | **Gerçek (objektif) tutarsızlık**        | Şimdi düzelt; karar gerektirmez, düşük risk                                                                                              |
+| **C. Ölü / tören artefaktları**                  | #7 (`worktree-list-container` class'ı + kullanılmayan SCSS)            | Geride kalmış kalıntı                                             | **Gerçek (objektif)**                    | Sil                                                                                                                                      |
 
-**Tema B ve C neden objektif?** Çünkü bunlar projenin *gerçekten benimsediği* konvansiyonlara karşı ölçülüyor; bu kanıtlanabilir:
+**Tema B ve C neden objektif?** Çünkü bunlar projenin _gerçekten benimsediği_ konvansiyonlara karşı ölçülüyor; bu kanıtlanabilir:
+
 - `cx`, 7 ayrı dosyada import ediliyor — sınıf birleştirmenin ev standardı bu; `file-navigation-row` ve `changed-files-section`'daki template-literal **gerçek sapma**.
 - SCSS'te **87 ayrı token, 377 kullanım** — token kullanımı baskın standart; literal `px`/`radius`/`0.2s` değerleri **gerçek sapma**.
 - `worktree-list-container` sınıfı **hiçbir SCSS dosyasında tanımlı değil** (doğrulandı) — net ölü kod.
@@ -58,9 +59,9 @@ Ayrı bir not — teklif bedelsiz değil: `file-navigation-row:28`'deki `showDir
 ### Sonuç — önerilen sıra
 
 1. **Şimdi yap (Tema B + C, risksiz, kararsız):** #3, #4, #6, #7 ve token sapmaları (#8–#10). Bunlar mevcut ev stilini geri sağlar; PR küçük ve tartışmasız.
-2. **Kuralı yaz, sonra uygula (Tema A) — zorunlu kural:** declarative-render kuralını `CLAUDE.md` "Hard rules"a ekle (ör. *"JSX'te koşullu render `&&`/ternary/whole-component early-return ile değil, `<Switch>/<Match>/<Visibility>` ile yapılır"*). Sonra `worktree-list:10` dâhil **tüm** dosyalara uygula. Primitive `src/renderer/src/shared/ui/` altında **first-match-wins** olmalı (bkz. #1) — guard'sız, son dal `when={true}`.
+2. **Kuralı yaz, sonra uygula (Tema A) — zorunlu kural:** declarative-render kuralını `CLAUDE.md` "Hard rules"a ekle (ör. _"JSX'te koşullu render `&&`/ternary/whole-component early-return ile değil, `<Switch>/<Match>/<Visibility>` ile yapılır"_). Sonra `worktree-list:10` dâhil **tüm** dosyalara uygula. Primitive `src/renderer/src/shared/ui/` altında **first-match-wins** olmalı (bkz. #1) — guard'sız, son dal `when={true}`.
 
-Bu ikinci geçişin özü: ilk geçiş "10 bulgulu düz bir liste"ydi; bir adım ileri taşındığında bu liste **"şimdi yapılacak 4 objektif temizlik + 1 zorunlu (bağlayıcı) kural"a** indirgenir. Kilit nokta — bulguları geçersiz saymak değil, her birini doğru *statüye* yerleştirmek; statü netleşince (bakımcı kararı: zorunlu kural) şiddet de netleşti: **Tema A = Must-Fix**.
+Bu ikinci geçişin özü: ilk geçiş "10 bulgulu düz bir liste"ydi; bir adım ileri taşındığında bu liste **"şimdi yapılacak 4 objektif temizlik + 1 zorunlu (bağlayıcı) kural"a** indirgenir. Kilit nokta — bulguları geçersiz saymak değil, her birini doğru _statüye_ yerleştirmek; statü netleşince (bakımcı kararı: zorunlu kural) şiddet de netleşti: **Tema A = Must-Fix**.
 
 ---
 
@@ -73,11 +74,12 @@ Genel mimari sağlam: bileşenler tek bir sorumluluk taşıyor, `clsx` (`cx`) ku
 ## Must-Fix (Engelleme Seviyesi)
 
 ### 1. Koşullu render için `&&` ve üçlü operatör yaygın kullanımı
+
 `src/renderer/src/app/workspace/index.tsx:20–44`  
 `src/renderer/src/features/worktree-detail-sidebar/index.tsx:81–95`  
 `src/renderer/src/features/welcome/index.tsx:41–43`  
 `src/renderer/src/features/worktree-list/unpushed-commits-section/index.tsx:82–101`  
-`src/renderer/src/features/worktree-list/file-navigation-row/index.tsx:28–56` *(eklendi — bkz. aşağıdaki "Kapsam düzeltmesi")*
+`src/renderer/src/features/worktree-list/file-navigation-row/index.tsx:28–56` _(eklendi — bkz. aşağıdaki "Kapsam düzeltmesi")_
 
 **Ne:** JSX içinde doğrudan `&&` ve `? :` operatörleriyle yapılan koşullu render. Önerilen kural, çok dallı render için `<Switch>/<Match>`, göster/gizle için `<Visibility>` bileşenlerini kullanmaktır.
 
@@ -162,9 +164,10 @@ Doğrulama: `error && diffLoading` aynı anda true olduğunda — eski kodda yal
 ---
 
 ### 2. Erken return ile koşullu render
+
 `src/renderer/src/app/App.tsx:50–58`  
 `src/renderer/src/features/worktree-detail-sidebar/index.tsx:33–51`  
-`src/renderer/src/features/worktree-list/index.tsx:10–14` *(eklendi — bkz. aşağıdaki "Kapsam düzeltmesi")*
+`src/renderer/src/features/worktree-list/index.tsx:10–14` _(eklendi — bkz. aşağıdaki "Kapsam düzeltmesi")_
 
 **Ne:** `if (browser.repoPath === null) { return <WelcomeScreen … />; }` kalıbı. Önerilen kural: whole-component early-return "ne render edilecek" kararı için kullanılmaz — bildirimsel kal.
 
@@ -223,6 +226,7 @@ export function WorktreeList({ worktrees, … }: WorktreeListProps) {
 ## Should-Fix (Düzeltilmeli)
 
 ### 3. Koşullu class string birleştirme — `cx` kullanılmıyor
+
 `src/renderer/src/features/worktree-list/file-navigation-row/index.tsx:21–23`  
 `src/renderer/src/features/worktree-list/changed-files-section/index.tsx:68–71`
 
@@ -259,6 +263,7 @@ className={cx(
 ---
 
 ### 4. Inline `style` ile sihirli sayı kullanımı
+
 `src/renderer/src/features/worktree-list/file-icon/index.tsx:7`
 
 **Ne:** `const ICON_LAYOUT: CSSProperties = { flex: 'none', marginRight: 6, fontSize: '14px', opacity: 0.9 }` — `marginRight: 6` ve `fontSize: '14px'` doğrudan sayı değerleri, token değil.
@@ -285,6 +290,7 @@ className={cx(
 ---
 
 ### 5. `DiffView` içinde güvenli olmayan düz early-return kullanımı
+
 `src/renderer/src/features/diff-viewer/index.tsx:21–35`
 
 **Ne:** `DiffView` bileşeni `clean` ve `model.files.length === 0` durumlarını üst üste iki early-return ile işliyor. Proje kuralı whole-component early-return'ü "what to render" kararı için yasaklıyor.
@@ -318,6 +324,7 @@ export function DiffView({ model, clean, … }: DiffViewProps) {
 ---
 
 ### 6. Satır içi hesaplama içeren JSX ifadeleri
+
 `src/renderer/src/features/worktree-list/unpushed-commits-section/index.tsx:76–78`
 
 **Ne:**
@@ -338,12 +345,13 @@ Sayaç suffix'i markup içinde koşullu string birleştirme olarak ifade ediliyo
 ```tsx
 const countLabel = truncated ? `${commits.length}+` : String(commits.length);
 // …
-<span className={styles['unpushed-commits__count']}>{countLabel}</span>
+<span className={styles['unpushed-commits__count']}>{countLabel}</span>;
 ```
 
 ---
 
 ### 7. `worktree-list-container` sarmalayıcısı anlamsız
+
 `src/renderer/src/features/worktree-list/index.tsx:17–18`
 
 **Ne:** `<div className={styles['worktree-list-container']}>` wraps `<ul>` fakat `worktree-list-container` sınıfı SCSS dosyasında tanımlı değil (dosya sadece `.worktree-list` tanımlıyor). Bu "ceremony" wrapper — bir rolü yok ve kullanılmayan bir class adı taşıyor.
@@ -365,6 +373,7 @@ return (
 ## Nice-to-Have (İyileştirme Önerileri)
 
 ### 8. SCSS'te sihirli piksel değerleri — tokenlar eksik
+
 `src/renderer/src/features/repository-sidebar/index.module.scss:11` — `min-height: 88px`, `padding: 42px 18px 12px`  
 `src/renderer/src/features/welcome/index.module.scss:24` — `min-height: 420px`, `padding: 42px`  
 `src/renderer/src/features/worktree-detail-sidebar/index.module.scss:21` — `height: 44px`, `padding: 0 14px`  
@@ -379,6 +388,7 @@ return (
 ---
 
 ### 9. `segmented-control/index.module.scss` — hardcoded `0.2s` geçiş süresi
+
 `src/renderer/src/shared/ui/segmented-control/index.module.scss:20`
 
 **Ne:** `transition: left 0.2s var(--gb-ease), width 0.2s var(--gb-ease)` — `0.2s` doğrudan yazılmış, `var(--gb-dur-quick)` veya `var(--gb-dur-base)` gibi mevcut token'lardan biri kullanılabilir.
@@ -388,6 +398,7 @@ return (
 ---
 
 ### 10. `badge/index.module.scss` ve `segmented-control/index.module.scss` — literal border-radius değerleri
+
 `src/renderer/src/shared/ui/badge/index.module.scss:7` — `border-radius: 9px`  
 `src/renderer/src/shared/ui/segmented-control/index.module.scss:13,32` — `border-radius: 5px`
 

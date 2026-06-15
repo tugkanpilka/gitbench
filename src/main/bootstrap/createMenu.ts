@@ -2,10 +2,9 @@ import { Menu, shell, type MenuItemConstructorOptions } from 'electron';
 
 import { isExternalUrlSafe } from './createWindow';
 
-export function createMenu(): void {
-  const isMac = process.platform === 'darwin';
-
-  const template: MenuItemConstructorOptions[] = [
+// eslint-disable-next-line max-lines-per-function -- flat menu data structure, one entry per line; cannot split meaningfully
+function buildMenuTemplate(isMac: boolean): MenuItemConstructorOptions[] {
+  return [
     ...(isMac ? [{ role: 'appMenu' } as MenuItemConstructorOptions] : []),
     { role: 'fileMenu' },
     { role: 'editMenu' },
@@ -39,6 +38,8 @@ export function createMenu(): void {
       ],
     },
   ];
+}
 
-  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+export function createMenu(): void {
+  Menu.setApplicationMenu(Menu.buildFromTemplate(buildMenuTemplate(process.platform === 'darwin')));
 }

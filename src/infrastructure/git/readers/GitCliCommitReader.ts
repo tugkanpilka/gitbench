@@ -8,6 +8,14 @@ import { resolveUnpushedStrategy } from '../unpushedStrategy';
 // sidebar. We request one extra to detect (and flag) truncation honestly.
 const MAX_COMMITS = 100;
 
+const COMMIT_LOG_PREFIX_ARGS = ['-c', 'core.quotePath=false', '--no-pager', 'log'] as const;
+const COMMIT_LOG_SUFFIX_ARGS = [
+  '--no-color',
+  `--max-count=${MAX_COMMITS + 1}`,
+  '--name-status',
+  `--format=${COMMIT_LOG_FORMAT}`,
+] as const;
+
 export class GitCliCommitReader {
   async listUnpushedCommits(worktreePath: string): Promise<UnpushedCommits> {
     // The probes are independent read-only rev-parses, so run them together.
@@ -28,24 +36,27 @@ export class GitCliCommitReader {
     }
     const range = strategy === 'upstream' ? ['@{upstream}..HEAD'] : ['HEAD', '--not', '--remotes'];
 
+    return this.fetchUnpushedCommits(worktreePath, range);
+  }
+
+  private async fetchUnpushedCommits(
+    worktreePath: string,
+    range: string[]
+  ): Promise<UnpushedCommits> {
     // `-c core.quotePath=false` keeps non-ASCII paths literal instead of \xNN-escaped.
     const stdout = await runGit(worktreePath, [
-      '-c',
-      'core.quotePath=false',
-      '--no-pager',
-      'log',
+      ...COMMIT_LOG_PREFIX_ARGS,
       ...range,
-      '--no-color',
-      `--max-count=${MAX_COMMITS + 1}`,
-      '--name-status',
-      `--format=${COMMIT_LOG_FORMAT}`,
+      ...COMMIT_LOG_SUFFIX_ARGS,
     ]);
-
-    const parsed = parseCommitLog(stdout);
-    const truncated = parsed.length > MAX_COMMITS;
-    return {
-      commits: truncated ? parsed.slice(0, MAX_COMMITS) : parsed,
-      truncated,
-    };
+    return truncateCommits(parseCommitLog(stdout));
   }
+}
+
+function truncateCommits(parsed: ReturnType<typeof parseCommitLog>): UnpushedCommits {
+  const truncated = parsed.length > MAX_COMMITS;
+  return {
+    commits: truncated ? parsed.slice(0, MAX_COMMITS) : parsed,
+    truncated,
+  };
 }

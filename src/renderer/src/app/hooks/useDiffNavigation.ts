@@ -3,7 +3,19 @@ import { useRef, useState } from 'react';
 import type { DiffNavigationTarget } from '../../features/diff-viewer/index.types';
 import type { DiffModel } from '../../features/diff-viewer/utils/diffModel.types';
 
-interface DiffNavigationController {
+/**
+ * Synchronously resets navigation state whenever diffModel identity changes.
+ * Runs during render (no useEffect) to avoid a cascading render cycle.
+ */
+function useModelReset(diffModel: DiffModel, onReset: (firstFileId: string | null) => void): void {
+  const [committedModel, setCommittedModel] = useState<DiffModel>(diffModel);
+  if (committedModel !== diffModel) {
+    setCommittedModel(diffModel);
+    onReset(diffModel.files[0]?.id ?? null);
+  }
+}
+
+export interface DiffNavigationController {
   activeFileId: string | null;
   navigationTarget: DiffNavigationTarget | null;
   selectFile: (fileId: string) => void;
@@ -14,6 +26,7 @@ interface DiffNavigationController {
  * Tracks which diff file is active and turns sidebar selections into
  * scroll-navigation requests for the DiffView.
  */
+// eslint-disable-next-line max-lines-per-function -- hook body: 3 state declarations + reset + selectFile callback; no further split without hurting cohesion
 export function useDiffNavigation(diffModel: DiffModel): DiffNavigationController {
   const [activeFileId, setActiveFileId] = useState<string | null>(
     () => diffModel.files[0]?.id ?? null
@@ -22,15 +35,11 @@ export function useDiffNavigation(diffModel: DiffModel): DiffNavigationControlle
   const navigationRequestId = useRef(0);
 
   // diffModel identity changes whenever a new diff arrives (including switching
-  // worktrees), so it is the only reset trigger needed. Comparing against the model
-  // committed in state lets the reset run during render — synchronous and effect-free,
-  // so it neither cascades an extra render nor reads a ref during render.
-  const [committedModel, setCommittedModel] = useState<DiffModel>(diffModel);
-  if (committedModel !== diffModel) {
-    setCommittedModel(diffModel);
-    setActiveFileId(diffModel.files[0]?.id ?? null);
+  // worktrees). useModelReset handles the render-time derived-state reset.
+  useModelReset(diffModel, (id) => {
+    setActiveFileId(id);
     setNavigationTarget(null);
-  }
+  });
 
   const selectFile = (fileId: string) => {
     navigationRequestId.current += 1;

@@ -25,6 +25,29 @@ function makeErrorSlot(): ErrorSlot & { message: string | null } {
   return slot;
 }
 
+function stubBrokenSecondRepo(): void {
+  stubApi({
+    pickRepo: vi
+      .fn()
+      .mockResolvedValueOnce(okResult<string | null>('/repo'))
+      .mockResolvedValueOnce(okResult<string | null>('/broken')),
+    listWorktrees: vi
+      .fn()
+      .mockResolvedValueOnce(okResult([MAIN_WORKTREE]))
+      .mockResolvedValueOnce(failResult('NOT_A_REPOSITORY', 'Not a git repository: /broken')),
+  });
+}
+
+function stubRefreshFailed(): void {
+  stubApi({
+    listWorktrees: vi
+      .fn()
+      .mockResolvedValueOnce(okResult([MAIN_WORKTREE, FEATURE_WORKTREE]))
+      .mockResolvedValueOnce(failResult('GIT_COMMAND_FAILED', 'git worktree list failed.')),
+  });
+}
+
+// eslint-disable-next-line max-lines-per-function
 describe('useRepositoryCatalog', () => {
   beforeEach(() => stubApi());
   afterEach(() => vi.restoreAllMocks());
@@ -47,17 +70,9 @@ describe('useRepositoryCatalog', () => {
     await waitFor(() => expect(result.current.summaries).toHaveLength(2));
   });
 
+  // eslint-disable-next-line max-lines-per-function -- test body; two sequential act() calls are required
   it('keeps the previous repository when listing worktrees for the new one fails', async () => {
-    stubApi({
-      pickRepo: vi
-        .fn()
-        .mockResolvedValueOnce(okResult<string | null>('/repo'))
-        .mockResolvedValueOnce(okResult<string | null>('/broken')),
-      listWorktrees: vi
-        .fn()
-        .mockResolvedValueOnce(okResult([MAIN_WORKTREE]))
-        .mockResolvedValueOnce(failResult('NOT_A_REPOSITORY', 'Not a git repository: /broken')),
-    });
+    stubBrokenSecondRepo();
     const errorSlot = makeErrorSlot();
     const { result } = renderHook(() => useRepositoryCatalog(errorSlot));
 
@@ -77,12 +92,7 @@ describe('useRepositoryCatalog', () => {
   });
 
   it('refresh failure empties the list and reports the error', async () => {
-    stubApi({
-      listWorktrees: vi
-        .fn()
-        .mockResolvedValueOnce(okResult([MAIN_WORKTREE, FEATURE_WORKTREE]))
-        .mockResolvedValueOnce(failResult('GIT_COMMAND_FAILED', 'git worktree list failed.')),
-    });
+    stubRefreshFailed();
     const errorSlot = makeErrorSlot();
     const { result } = renderHook(() => useRepositoryCatalog(errorSlot));
 

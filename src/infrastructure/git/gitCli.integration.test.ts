@@ -22,24 +22,27 @@ function gitAvailable(): boolean {
   }
 }
 
+const GIT_IDENT_ARGS = [
+  '-c',
+  'user.name=Test',
+  '-c',
+  'user.email=test@example.com',
+  '-c',
+  'commit.gpgsign=false',
+];
+
 function git(repoPath: string, ...args: string[]): void {
-  execFileSync(
-    'git',
-    [
-      '-C',
-      repoPath,
-      '-c',
-      'user.name=Test',
-      '-c',
-      'user.email=test@example.com',
-      '-c',
-      'commit.gpgsign=false',
-      ...args,
-    ],
-    { stdio: 'pipe' }
-  );
+  execFileSync('git', ['-C', repoPath, ...GIT_IDENT_ARGS, ...args], { stdio: 'pipe' });
 }
 
+function makeUnbornRepo(root: string, name: string): string {
+  const dir = join(root, name);
+  mkdirSync(dir);
+  git(dir, 'init', '-b', 'main');
+  return dir;
+}
+
+// eslint-disable-next-line max-lines-per-function
 describe.skipIf(!gitAvailable())('git CLI readers (integration)', () => {
   const worktreeReader = new GitCliWorktreeReader();
   const diffReader = new GitCliDiffReader();
@@ -185,10 +188,7 @@ describe.skipIf(!gitAvailable())('git CLI readers (integration)', () => {
   });
 
   it('reports an unborn HEAD as "no commits yet", not a fake empty diff', async () => {
-    const unborn = join(root, 'unborn');
-    mkdirSync(unborn);
-    git(unborn, 'init', '-b', 'main');
-
+    const unborn = makeUnbornRepo(root, 'unborn');
     const rejection = expect(diffReader.getUncommittedDiff(unborn)).rejects;
 
     await rejection.toBeInstanceOf(GitCommandFailedError);
@@ -196,9 +196,7 @@ describe.skipIf(!gitAvailable())('git CLI readers (integration)', () => {
   });
 
   it('summarizes an unborn HEAD with no diff against HEAD and no push counts', async () => {
-    const unborn = join(root, 'unborn-summary');
-    mkdirSync(unborn);
-    git(unborn, 'init', '-b', 'main');
+    const unborn = makeUnbornRepo(root, 'unborn-summary');
     writeFileSync(join(unborn, 'draft.txt'), 'wip\n');
 
     // No commit yet → `git diff HEAD` is impossible, so stats stay zero, but the
@@ -217,6 +215,68 @@ describe.skipIf(!gitAvailable())('git CLI readers (integration)', () => {
   });
 });
 
+/** A repo with one pushed commit on `main` and a bare remote wired as `origin`. */
+function makeRepoWithRemote(root: string, name: string, options: { setUpstream: boolean }): string {
+  const repo = join(root, name);
+  const remote = join(root, `${name}-remote.git`);
+  mkdirSync(repo);
+  execFileSync('git', ['init', '--bare', remote], { stdio: 'pipe' });
+  git(repo, 'init', '-b', 'main');
+  writeFileSync(join(repo, 'file.txt'), 'hello\n');
+  git(repo, 'add', '.');
+  git(repo, 'commit', '-m', 'initial');
+  git(repo, 'remote', 'add', 'origin', remote);
+  git(repo, 'push', ...(options.setUpstream ? ['-u'] : []), 'origin', 'main');
+  return repo;
+}
+
+function addTwoCommitsAhead(repo: string): void {
+  writeFileSync(join(repo, 'file.txt'), 'hello\nworld\n');
+  writeFileSync(join(repo, 'added.txt'), 'new\n');
+  git(repo, 'add', '.');
+  git(repo, 'commit', '-m', 'second');
+  rmSync(join(repo, 'added.txt'));
+  git(repo, 'add', '.');
+  git(repo, 'commit', '-m', 'third');
+}
+
+type AheadResult = {
+  truncated: boolean;
+  commits: {
+    subject: string;
+    files: { status: string; path: string; previousPath: string | null }[];
+    sha: string;
+    shortSha: string;
+  }[];
+};
+
+function assertThirdCommitFiles(commits: AheadResult['commits']): void {
+  expect(commits[0].files).toEqual([{ status: 'deleted', path: 'added.txt', previousPath: null }]);
+  expect(commits[0].sha).toMatch(/^[0-9a-f]{40}$/);
+  expect(commits[0].shortSha).toMatch(/^[0-9a-f]{7,}$/);
+}
+
+function assertSecondCommitFiles(commits: AheadResult['commits']): void {
+  expect(commits[1].files).toContainEqual({
+    status: 'modified',
+    path: 'file.txt',
+    previousPath: null,
+  });
+  expect(commits[1].files).toContainEqual({
+    status: 'added',
+    path: 'added.txt',
+    previousPath: null,
+  });
+}
+
+function assertAheadCommitFiles(result: AheadResult): void {
+  expect(result.truncated).toBe(false);
+  expect(result.commits.map((c) => c.subject)).toEqual(['third', 'second']);
+  assertThirdCommitFiles(result.commits);
+  assertSecondCommitFiles(result.commits);
+}
+
+// eslint-disable-next-line max-lines-per-function
 describe.skipIf(!gitAvailable())('GitCliCommitReader (integration)', () => {
   const reader = new GitCliCommitReader();
   const summaryReader = new GitCliWorktreeSummaryReader();
@@ -230,22 +290,6 @@ describe.skipIf(!gitAvailable())('GitCliCommitReader (integration)', () => {
   afterAll(() => {
     rmSync(root, { recursive: true, force: true });
   });
-
-  // A repo with one pushed commit on `main` and a bare remote wired as `origin`.
-  function repoWithRemote(name: string, options: { setUpstream: boolean }): string {
-    const repo = join(root, name);
-    const remote = join(root, `${name}-remote.git`);
-    mkdirSync(repo);
-    execFileSync('git', ['init', '--bare', remote], { stdio: 'pipe' });
-
-    git(repo, 'init', '-b', 'main');
-    writeFileSync(join(repo, 'file.txt'), 'hello\n');
-    git(repo, 'add', '.');
-    git(repo, 'commit', '-m', 'initial');
-    git(repo, 'remote', 'add', 'origin', remote);
-    git(repo, 'push', ...(options.setUpstream ? ['-u'] : []), 'origin', 'main');
-    return repo;
-  }
 
   it('returns no commits when there is no remote to push to', async () => {
     const repo = join(root, 'local-only');
@@ -262,7 +306,7 @@ describe.skipIf(!gitAvailable())('GitCliCommitReader (integration)', () => {
   });
 
   it('returns no commits when HEAD is level with its upstream', async () => {
-    const repo = repoWithRemote('level', { setUpstream: true });
+    const repo = makeRepoWithRemote(root, 'level', { setUpstream: true });
 
     await expect(reader.listUnpushedCommits(repo)).resolves.toEqual({
       commits: [],
@@ -271,39 +315,13 @@ describe.skipIf(!gitAvailable())('GitCliCommitReader (integration)', () => {
   });
 
   it('lists commits ahead of upstream, newest first, with file statuses', async () => {
-    const repo = repoWithRemote('ahead', { setUpstream: true });
-
-    writeFileSync(join(repo, 'file.txt'), 'hello\nworld\n');
-    writeFileSync(join(repo, 'added.txt'), 'new\n');
-    git(repo, 'add', '.');
-    git(repo, 'commit', '-m', 'second');
-    rmSync(join(repo, 'added.txt'));
-    git(repo, 'add', '.');
-    git(repo, 'commit', '-m', 'third');
-
-    const result = await reader.listUnpushedCommits(repo);
-
-    expect(result.truncated).toBe(false);
-    expect(result.commits.map((commit) => commit.subject)).toEqual(['third', 'second']);
-    expect(result.commits[0].files).toEqual([
-      { status: 'deleted', path: 'added.txt', previousPath: null },
-    ]);
-    expect(result.commits[1].files).toContainEqual({
-      status: 'modified',
-      path: 'file.txt',
-      previousPath: null,
-    });
-    expect(result.commits[1].files).toContainEqual({
-      status: 'added',
-      path: 'added.txt',
-      previousPath: null,
-    });
-    expect(result.commits[0].sha).toMatch(/^[0-9a-f]{40}$/);
-    expect(result.commits[0].shortSha).toMatch(/^[0-9a-f]{7,}$/);
+    const repo = makeRepoWithRemote(root, 'ahead', { setUpstream: true });
+    addTwoCommitsAhead(repo);
+    assertAheadCommitFiles(await reader.listUnpushedCommits(repo));
   });
 
   it('falls back to commits absent from any remote when no upstream is set', async () => {
-    const repo = repoWithRemote('no-upstream', { setUpstream: false });
+    const repo = makeRepoWithRemote(root, 'no-upstream', { setUpstream: false });
     git(repo, 'checkout', '-b', 'feature');
     writeFileSync(join(repo, 'feature.txt'), 'x\n');
     git(repo, 'add', '.');
@@ -315,7 +333,7 @@ describe.skipIf(!gitAvailable())('GitCliCommitReader (integration)', () => {
   });
 
   it('summarizes commits ahead of an upstream without loading commit details', async () => {
-    const repo = repoWithRemote('summary-ahead', { setUpstream: true });
+    const repo = makeRepoWithRemote(root, 'summary-ahead', { setUpstream: true });
     writeFileSync(join(repo, 'file.txt'), 'hello\nworld\n');
     git(repo, 'add', '.');
     git(repo, 'commit', '-m', 'local work');

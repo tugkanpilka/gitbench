@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { languageFromPath, refractor } from './syntaxHighlight';
 
+// eslint-disable-next-line max-lines-per-function
 describe('languageFromPath', () => {
   it.each([
     ['Dockerfile', 'docker'],

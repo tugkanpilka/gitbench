@@ -21,6 +21,7 @@ index 1111111..2222222 100644
 Binary files a/logo.png and b/logo.png differ
 `;
 
+// eslint-disable-next-line max-lines-per-function
 describe('diffModel', () => {
   it('splits file paths into directory and filename', () => {
     expect(splitPath('src/auth/session.ts')).toEqual({

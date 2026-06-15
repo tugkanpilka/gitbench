@@ -11,6 +11,13 @@ type LoadFSEvents = () => Promise<FSEventsModule>;
 
 const loadFSEvents: LoadFSEvents = () => import('fsevents');
 
+export interface FSEventsWatchOptions {
+  rootPath: string;
+  onChange: () => void;
+  ignored: IgnorePath;
+  load?: LoadFSEvents;
+}
+
 /**
  * Chokidar v4 recursively opens one watcher per directory on macOS. Large
  * repositories can exceed the low default file-descriptor limit before the
@@ -23,30 +30,29 @@ export async function startRecursiveWatch(
   ignored: IgnorePath
 ): Promise<StopRecursiveWatch> {
   if (process.platform === 'darwin') {
-    return startFSEventsWatch(rootPath, onChange, ignored);
+    return startFSEventsWatch({ rootPath, onChange, ignored });
   }
   return startChokidarWatch(rootPath, onChange, ignored);
 }
 
 export async function startFSEventsWatch(
-  rootPath: string,
-  onChange: () => void,
-  ignored: IgnorePath,
-  load: LoadFSEvents = loadFSEvents
+  options: FSEventsWatchOptions
 ): Promise<StopRecursiveWatch> {
-  const { watch } = await load();
-  return watch(rootPath, (changedPath) => {
-    if (!ignored(changedPath)) {
-      onChange();
+  const loader = options.load ?? loadFSEvents;
+  const { watch } = await loader();
+  return watch(options.rootPath, (changedPath) => {
+    if (!options.ignored(changedPath)) {
+      options.onChange();
     }
   });
 }
 
-async function startChokidarWatch(
+// eslint-disable-next-line max-lines-per-function -- watcher setup + two event handlers; each handler is a single logical operation
+function configureChokidarWatcher(
   rootPath: string,
-  onChange: () => void,
-  ignored: IgnorePath
-): Promise<StopRecursiveWatch> {
+  ignored: IgnorePath,
+  onChange: () => void
+): FSWatcher {
   const watcher: FSWatcher = watchWithChokidar(rootPath, {
     ignoreInitial: true,
     ignored,
@@ -60,6 +66,15 @@ async function startChokidarWatch(
     void watcher.close();
   });
 
+  return watcher;
+}
+
+async function startChokidarWatch(
+  rootPath: string,
+  onChange: () => void,
+  ignored: IgnorePath
+): Promise<StopRecursiveWatch> {
+  const watcher = configureChokidarWatcher(rootPath, ignored, onChange);
   return async () => {
     await watcher.close();
   };
