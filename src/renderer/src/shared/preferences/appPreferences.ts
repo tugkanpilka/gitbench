@@ -105,12 +105,13 @@ export function applyTheme(theme: Theme): void {
   if (typeof document === 'undefined') {
     return;
   }
-
-  const effectiveTheme = theme === 'system' ? (prefersLightTheme() ? 'light' : 'dark') : theme;
-
-  if (effectiveTheme === 'light') {
-    document.documentElement.dataset.theme = 'light';
-  } else {
+  // 'system': remove the attribute so the @media (prefers-color-scheme) rule in colors.css
+  // takes over — browser-native OS tracking without any JS listener needed.
+  // 'dark': set data-theme='dark' to suppress the @media rule (explicit override).
+  // 'light': set data-theme='light' for explicit override (wins via CSS cascade position).
+  if (theme === 'system') {
     delete document.documentElement.dataset.theme;
+  } else {
+    document.documentElement.dataset.theme = theme;
   }
 }

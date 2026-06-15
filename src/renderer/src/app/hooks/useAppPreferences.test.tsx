@@ -70,7 +70,7 @@ describe('useAppPreferences', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Toggle theme' }));
 
     expect(screen.getByLabelText('Theme').textContent).toBe('dark');
-    expect(document.documentElement.dataset.theme).toBeUndefined();
+    expect(document.documentElement.dataset.theme).toBe('dark');
     expect(storedPreferences()).toEqual({
       theme: 'dark',
       fileListMode: 'tree',

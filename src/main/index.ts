@@ -23,7 +23,7 @@ function spawnWindow(): void {
 
 app.whenReady().then(() => {
   registerHandlers(services, watchController);
-  createMenu();
+  createMenu(spawnWindow);
   spawnWindow();
   setupAutoUpdater();
 
