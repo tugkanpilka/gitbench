@@ -5,6 +5,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { stubApi } from '../../../test/fixtures';
 import { useRepositoryWatcher } from './useRepositoryWatcher';
 
+function makeSignalAndUnsubscribe(): { getSignal: () => () => void; unsubscribe: ReturnType<typeof vi.fn> } {
+  let signal!: () => void;
+  const unsubscribe = vi.fn();
+  stubApi({
+    onRepoChanged: vi.fn().mockImplementation((fn: () => void) => {
+      signal = fn;
+      return unsubscribe;
+    }),
+  });
+  return { getSignal: () => signal, unsubscribe };
+}
+
+// eslint-disable-next-line max-lines-per-function
 describe('useRepositoryWatcher', () => {
   beforeEach(() => stubApi());
   afterEach(() => vi.restoreAllMocks());
@@ -30,24 +43,16 @@ describe('useRepositoryWatcher', () => {
   });
 
   it('restarts only when the worktree-root set changes, not on unrelated re-renders', () => {
+    const singleRoot = { repoPath: '/repo', worktreePaths: ['/repo'], onRepoChanged: () => {} };
     const { rerender } = renderHook((props) => useRepositoryWatcher(props), {
-      initialProps: {
-        repoPath: '/repo',
-        worktreePaths: ['/repo'],
-        onRepoChanged: () => {},
-      },
+      initialProps: singleRoot,
     });
     expect(window.api.startWatch).toHaveBeenCalledTimes(1);
 
-    // A new onRepoChanged identity must not restart the watch.
     rerender({ repoPath: '/repo', worktreePaths: ['/repo'], onRepoChanged: () => {} });
     expect(window.api.startWatch).toHaveBeenCalledTimes(1);
 
-    rerender({
-      repoPath: '/repo',
-      worktreePaths: ['/repo', '/repo-feature'],
-      onRepoChanged: () => {},
-    });
+    rerender({ repoPath: '/repo', worktreePaths: ['/repo', '/repo-feature'], onRepoChanged: () => {} });
     expect(window.api.startWatch).toHaveBeenCalledTimes(2);
     expect(window.api.startWatch).toHaveBeenLastCalledWith('/repo', ['/repo', '/repo-feature']);
   });
@@ -63,14 +68,7 @@ describe('useRepositoryWatcher', () => {
   });
 
   it('forwards the latest repo:changed handler without re-subscribing', () => {
-    let signal!: () => void;
-    const unsubscribe = vi.fn();
-    stubApi({
-      onRepoChanged: vi.fn().mockImplementation((fn: () => void) => {
-        signal = fn;
-        return unsubscribe;
-      }),
-    });
+    const { getSignal, unsubscribe } = makeSignalAndUnsubscribe();
     const first = vi.fn();
     const second = vi.fn();
     const { rerender, unmount } = renderHook((props) => useRepositoryWatcher(props), {
@@ -78,7 +76,7 @@ describe('useRepositoryWatcher', () => {
     });
 
     rerender({ repoPath: '/repo', worktreePaths: ['/repo'], onRepoChanged: second });
-    signal();
+    getSignal()();
 
     expect(window.api.onRepoChanged).toHaveBeenCalledTimes(1);
     expect(first).not.toHaveBeenCalled();

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { MutableRefObject } from 'react';
 
 import type { ErrorSlot } from './hooks/useRepositoryCatalog';
 import { useRepositoryCatalog } from './hooks/useRepositoryCatalog';
@@ -17,81 +18,54 @@ import { useSelectedWorktreeDetails } from './hooks/useSelectedWorktreeDetails';
  * repository error; a refresh clears a diff error). The returned shape is unchanged so
  * `App` is unaffected by the internal split.
  */
-export function useWorktreeBrowser() {
+type CatalogResource = ReturnType<typeof useRepositoryCatalog>;
+type DetailsResource = ReturnType<typeof useSelectedWorktreeDetails>;
+
+function useErrorSlot(): [string | null, ErrorSlot] {
   const [error, setError] = useState<string | null>(null);
-  const errorSlot = useMemo<ErrorSlot>(
-    () => ({
-      set: (message) => setError(message),
-      clear: () => setError(null),
-    }),
+  const slot = useMemo<ErrorSlot>(
+    () => ({ set: (message) => setError(message), clear: () => setError(null) }),
     []
   );
+  return [error, slot];
+}
 
-  const catalog = useRepositoryCatalog(errorSlot);
-  const details = useSelectedWorktreeDetails(errorSlot);
+function usePickRepository(catalog: CatalogResource, details: DetailsResource): () => Promise<void> {
+  return useCallback(async () => {
+    const opened = await catalog.openRepository();
+    if (opened !== null) { details.reset(); }
+  }, [catalog, details]);
+}
 
-  // Latest repo/selection, read by the stable repo:changed subscription without
-  // re-subscribing on every change. Mirrored in an effect (not during render) so a
-  // discarded transition render can't leave the refs ahead of committed state — the
-  // subscription would otherwise refresh a selection that was never committed.
+interface WatcherState {
+  selectedPathRef: MutableRefObject<string | null>;
+  onRepoChanged: () => void;
+}
+
+function useWatcherState(catalog: CatalogResource, details: DetailsResource): WatcherState {
   const repoPathRef = useRef<string | null>(null);
   const selectedPathRef = useRef<string | null>(null);
   useEffect(() => {
     repoPathRef.current = catalog.repoPath;
     selectedPathRef.current = details.selectedPath;
   }, [catalog.repoPath, details.selectedPath]);
-
   const onRepoChanged = useCallback(() => {
-    if (repoPathRef.current !== null) {
-      void catalog.reloadWorktrees(repoPathRef.current);
-    }
-    if (selectedPathRef.current !== null) {
-      details.reloadDetails(selectedPathRef.current);
-    }
+    if (repoPathRef.current !== null) { void catalog.reloadWorktrees(repoPathRef.current); }
+    if (selectedPathRef.current !== null) { details.reloadDetails(selectedPathRef.current); }
   }, [catalog, details]);
+  return { selectedPathRef, onRepoChanged };
+}
 
-  const watchedWorktreePaths = useMemo(
-    () => catalog.worktrees.map((worktree) => worktree.path),
-    [catalog.worktrees]
-  );
-
-  useRepositoryWatcher({
-    repoPath: catalog.repoPath,
-    worktreePaths: watchedWorktreePaths,
-    onRepoChanged,
-  });
-
-  const pickRepository = useCallback(async () => {
-    const opened = await catalog.openRepository();
-    // A successful open replaces the repository: drop the previous selection and
-    // invalidate any in-flight detail requests before they can commit stale data.
-    if (opened !== null) {
-      details.reset();
-    }
-  }, [catalog, details]);
-
-  const selectWorktree = useCallback(
-    async (worktreePath: string) => {
-      // Set the ref synchronously: App wraps this call in startTransition, so the
-      // committed selection may lag, but a watcher tick mid-load must reload this path.
-      selectedPathRef.current = worktreePath;
-      await details.selectWorktree(worktreePath);
-    },
-    [details]
-  );
-
-  return {
-    repoPath: catalog.repoPath,
-    worktrees: catalog.worktrees,
-    summaries: catalog.summaries,
-    selectedPath: details.selectedPath,
-    diff: details.diff,
-    commits: details.commits,
-    error,
-    loading: catalog.loading,
-    diffLoading: details.diffLoading,
-    pickRepository,
-    refreshRepository: catalog.refreshRepository,
-    selectWorktree,
-  };
+export function useWorktreeBrowser() {
+  const [error, errorSlot] = useErrorSlot();
+  const catalog = useRepositoryCatalog(errorSlot);
+  const details = useSelectedWorktreeDetails(errorSlot);
+  const { selectedPathRef, onRepoChanged } = useWatcherState(catalog, details);
+  const worktreePaths = useMemo(() => catalog.worktrees.map((w) => w.path), [catalog.worktrees]);
+  useRepositoryWatcher({ repoPath: catalog.repoPath, worktreePaths, onRepoChanged });
+  const pickRepository = usePickRepository(catalog, details);
+  const selectWorktree = useCallback(async (path: string) => { selectedPathRef.current = path; await details.selectWorktree(path); }, [details, selectedPathRef]);
+  const { repoPath, worktrees, summaries, loading, refreshRepository } = catalog;
+  const { selectedPath, diff, commits, diffLoading } = details;
+  return { repoPath, worktrees, summaries, selectedPath, diff, commits, error, loading, diffLoading, pickRepository, refreshRepository, selectWorktree };
 }

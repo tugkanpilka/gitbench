@@ -6,6 +6,7 @@ import { DiffStat } from '.';
 
 afterEach(() => cleanup());
 
+// eslint-disable-next-line max-lines-per-function
 describe('DiffStat', () => {
   it('exposes diff statistics with one accessible label', () => {
     render(<DiffStat additions={12} deletions={3} />);

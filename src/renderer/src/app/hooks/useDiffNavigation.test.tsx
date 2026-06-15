@@ -2,6 +2,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
+import type { DiffNavigationTarget } from '../../features/diff-viewer/index.types';
 import type { DiffModel } from '../../features/diff-viewer/utils/diffModel.types';
 import { buildDiffModel, EMPTY_DIFF_MODEL } from '../../features/diff-viewer/utils/diffModel';
 import { useDiffNavigation } from './useDiffNavigation';
@@ -22,32 +23,37 @@ index 3333333..4444444 100644
 +export const c = 2;
 `;
 
+function formatNavigationTarget(target: DiffNavigationTarget | null): string {
+  return target === null ? '(none)' : `${target.fileId}@${target.requestId}`;
+}
+
+type NavigationControls = ReturnType<typeof useDiffNavigation>;
+
+function NavigationButtons({ navigation, secondFileId }: { navigation: NavigationControls; secondFileId: string }) {
+  return (
+    <>
+      <button type="button" onClick={() => navigation.selectFile(secondFileId)}>Select second file</button>
+      <button type="button" onClick={() => navigation.setActiveFileId(secondFileId)}>Scroll to second file</button>
+      <button type="button" onClick={() => navigation.setActiveFileId(null)}>Scroll past every file</button>
+    </>
+  );
+}
+
 function NavigationHarness({ model }: { model: DiffModel }) {
   const navigation = useDiffNavigation(model);
-
+  const secondFileId = model.files[1]?.id ?? '';
   return (
     <>
       <output aria-label="Active file">{navigation.activeFileId ?? '(none)'}</output>
-      <output aria-label="Navigation target">
-        {navigation.navigationTarget === null
-          ? '(none)'
-          : `${navigation.navigationTarget.fileId}@${navigation.navigationTarget.requestId}`}
-      </output>
-      <button type="button" onClick={() => navigation.selectFile(model.files[1].id)}>
-        Select second file
-      </button>
-      <button type="button" onClick={() => navigation.setActiveFileId(model.files[1].id)}>
-        Scroll to second file
-      </button>
-      <button type="button" onClick={() => navigation.setActiveFileId(null)}>
-        Scroll past every file
-      </button>
+      <output aria-label="Navigation target">{formatNavigationTarget(navigation.navigationTarget)}</output>
+      <NavigationButtons navigation={navigation} secondFileId={secondFileId} />
     </>
   );
 }
 
 afterEach(() => cleanup());
 
+// eslint-disable-next-line max-lines-per-function
 describe('useDiffNavigation', () => {
   it('activates the first file of a new diff model without requesting navigation', () => {
     const model = buildDiffModel(MULTI_FILE_DIFF);

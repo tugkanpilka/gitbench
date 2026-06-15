@@ -1,9 +1,5 @@
 import { useState } from 'react';
-import type {
-  CommitDto,
-  CommitFileChange,
-  CommitFileChangeStatus,
-} from '../../../../../contracts/ipc';
+import type { CommitDto, CommitFileChange, CommitFileChangeStatus } from '../../../../../contracts/ipc';
 import { toggledSet } from '../../../shared/collections/toggledSet';
 import { cx } from '../../../shared/ui/cx';
 import { Visibility } from '../../../shared/ui/visibility';
@@ -29,16 +25,8 @@ const STATUS_META: Record<CommitFileChangeStatus, StatusMeta> = {
   unknown: { group: 'Changed', tone: 'neutral' },
 };
 
-// Stable group order so a commit's files always read added → modified → deleted → ….
 const GROUP_ORDER: CommitFileChangeStatus[] = [
-  'added',
-  'modified',
-  'deleted',
-  'renamed',
-  'copied',
-  'typeChanged',
-  'unmerged',
-  'unknown',
+  'added', 'modified', 'deleted', 'renamed', 'copied', 'typeChanged', 'unmerged', 'unknown',
 ];
 
 type FileGroup = { status: CommitFileChangeStatus; meta: StatusMeta; files: CommitFileChange[] };
@@ -46,137 +34,112 @@ type FileGroup = { status: CommitFileChangeStatus; meta: StatusMeta; files: Comm
 function groupFilesByStatus(files: CommitFileChange[]): FileGroup[] {
   const byStatus = new Map<CommitFileChangeStatus, CommitFileChange[]>();
   for (const file of files) {
-    const bucket = byStatus.get(file.status);
-    if (bucket) {
-      bucket.push(file);
-    } else {
-      byStatus.set(file.status, [file]);
-    }
+    byStatus.set(file.status, [...(byStatus.get(file.status) ?? []), file]);
   }
-  return GROUP_ORDER.filter((status) => byStatus.has(status)).map((status) => ({
-    status,
-    meta: STATUS_META[status],
-    files: byStatus.get(status) ?? [],
-  }));
+  return GROUP_ORDER.filter((s) => byStatus.has(s)).map((s) => ({ status: s, meta: STATUS_META[s], files: byStatus.get(s) ?? [] }));
+}
+
+function CommitListItems({ commits, expandedCommits, onToggle }: { commits: CommitDto[]; expandedCommits: Set<string>; onToggle: (sha: string) => void }) {
+  return (
+    <ul className={styles['unpushed-commits__list']}>
+      {commits.map((commit) => (
+        <CommitItem key={commit.sha} commit={commit} expanded={expandedCommits.has(commit.sha)} onToggle={() => onToggle(commit.sha)} />
+      ))}
+    </ul>
+  );
+}
+
+function CommitList({ commits, expandedCommits, onToggle, truncated }: { commits: CommitDto[]; expandedCommits: Set<string>; onToggle: (sha: string) => void; truncated: boolean }) {
+  return (
+    <div className={styles['unpushed-commits__content']}>
+      <CommitListItems commits={commits} expandedCommits={expandedCommits} onToggle={onToggle} />
+      <Visibility isVisible={truncated}>
+        <p className={styles['unpushed-commits__truncated']}>Showing the latest {commits.length} commits.</p>
+      </Visibility>
+    </div>
+  );
+}
+
+function SectionHeader({ countLabel, expanded, onToggle }: { countLabel: string; expanded: boolean; onToggle: () => void }) {
+  return (
+    <button type="button" className={styles['unpushed-commits__header']} onClick={onToggle} aria-expanded={expanded}>
+      <span className={styles['unpushed-commits__label']}>Unpushed</span>
+      <span className={styles['unpushed-commits__count']}>{countLabel}</span>
+      <Chevron collapsed={!expanded} className={styles['unpushed-commits__chevron']} />
+    </button>
+  );
 }
 
 export function UnpushedCommitsSection({ commits, truncated }: UnpushedCommitsSectionProps) {
   const [expanded, setExpanded] = useState(false);
   const [expandedCommits, setExpandedCommits] = useState<Set<string>>(() => new Set());
   const countLabel = truncated ? `${commits.length}+` : String(commits.length);
-
+  const onToggle = (sha: string) => setExpandedCommits((c) => toggledSet(c, sha));
   return (
     <section className={styles['unpushed-commits']} aria-label="Unpushed commits">
-      <button
-        type="button"
-        className={styles['unpushed-commits__header']}
-        onClick={() => setExpanded(!expanded)}
-        aria-expanded={expanded}
-      >
-        <span className={styles['unpushed-commits__label']}>Unpushed</span>
-        <span className={styles['unpushed-commits__count']}>{countLabel}</span>
-        <Chevron collapsed={!expanded} className={styles['unpushed-commits__chevron']} />
-      </button>
-
+      <SectionHeader countLabel={countLabel} expanded={expanded} onToggle={() => setExpanded(!expanded)} />
       <Visibility isVisible={expanded}>
-        <div className={styles['unpushed-commits__content']}>
-          <ul className={styles['unpushed-commits__list']}>
-            {commits.map((commit) => (
-              <CommitItem
-                key={commit.sha}
-                commit={commit}
-                expanded={expandedCommits.has(commit.sha)}
-                onToggle={() => setExpandedCommits((current) => toggledSet(current, commit.sha))}
-              />
-            ))}
-          </ul>
-
-          <Visibility isVisible={truncated}>
-            <p className={styles['unpushed-commits__truncated']}>
-              Showing the latest {commits.length} commits.
-            </p>
-          </Visibility>
-        </div>
+        <CommitList commits={commits} expandedCommits={expandedCommits} onToggle={onToggle} truncated={truncated} />
       </Visibility>
     </section>
   );
 }
 
-function CommitItem({
-  commit,
-  expanded,
-  onToggle,
-}: {
-  commit: CommitDto;
-  expanded: boolean;
-  onToggle: () => void;
-}) {
+function CommitHeader({ commit, expanded, onToggle }: { commit: CommitDto; expanded: boolean; onToggle: () => void }) {
+  return (
+    <button type="button" className={styles['commit__header']}
+      title={`${commit.shortSha} · ${commit.author}`} aria-expanded={expanded} onClick={onToggle}
+    >
+      <Chevron collapsed={!expanded} className={styles['commit__chevron']} />
+      <span className={styles['commit__sha']}>{commit.shortSha}</span>
+      <span className={styles['commit__subject']}>{commit.subject}</span>
+      <span className={styles['commit__file-count']}>{commit.files.length}</span>
+    </button>
+  );
+}
+
+function CommitItem({ commit, expanded, onToggle }: { commit: CommitDto; expanded: boolean; onToggle: () => void }) {
   const groups = groupFilesByStatus(commit.files);
   return (
     <li className={styles['commit']}>
-      <button
-        type="button"
-        className={styles['commit__header']}
-        title={`${commit.shortSha} · ${commit.author}`}
-        aria-expanded={expanded}
-        onClick={onToggle}
-      >
-        <Chevron collapsed={!expanded} className={styles['commit__chevron']} />
-        <span className={styles['commit__sha']}>{commit.shortSha}</span>
-        <span className={styles['commit__subject']}>{commit.subject}</span>
-        <span className={styles['commit__file-count']}>{commit.files.length}</span>
-      </button>
+      <CommitHeader commit={commit} expanded={expanded} onToggle={onToggle} />
       <Visibility isVisible={expanded}>
-        {groups.map((group) => (
-          <FileGroupView key={group.status} group={group} />
-        ))}
+        {groups.map((group) => <FileGroupView key={group.status} group={group} />)}
       </Visibility>
     </li>
+  );
+}
+
+function GroupLabel({ label, tone, count }: { label: string; tone: Tone; count: number }) {
+  return (
+    <span className={cx(styles['commit-group__label'], styles[`commit-group__label--${tone}`])}>
+      {label}
+      <span className={styles['commit-group__count']}>{count}</span>
+    </span>
   );
 }
 
 function FileGroupView({ group }: { group: FileGroup }) {
   return (
     <div className={styles['commit-group']}>
-      <span
-        className={cx(
-          styles['commit-group__label'],
-          styles[`commit-group__label--${group.meta.tone}`]
-        )}
-      >
-        {group.meta.group}
-        <span className={styles['commit-group__count']}>{group.files.length}</span>
-      </span>
+      <GroupLabel label={group.meta.group} tone={group.meta.tone} count={group.files.length} />
       <ul className={styles['commit-group__files']}>
-        {group.files.map((file, index) => (
-          <CommitFileRow key={`${file.path}:${index}`} file={file} />
-        ))}
+        {group.files.map((file, i) => <CommitFileRow key={`${file.path}:${i}`} file={file} />)}
       </ul>
     </div>
   );
 }
 
-function CommitFileRow({ file }: { file: CommitFileChange }) {
+function ReadOnlyFileRow({ file }: { file: CommitFileChange }) {
   const { directory, name } = splitPath(file.path);
   const nameTitle = file.previousPath !== null ? `${file.previousPath} → ${file.path}` : file.path;
-
   return (
-    <li>
-      <div
-        className={cx(
-          sharedStyles['file-navigation-row'],
-          sharedStyles['file-navigation-row--flat']
-        )}
-        // Read-only row: it borrows the changed-file row layout but is not selectable.
-        style={{ cursor: 'default' }}
-      >
-        <FlatFileRowContent
-          status={commitFileStatusBadge(file.status)}
-          name={name}
-          nameTitle={nameTitle}
-          directory={directoryLabel(directory)}
-        />
-      </div>
-    </li>
+    <div className={cx(sharedStyles['file-navigation-row'], sharedStyles['file-navigation-row--flat'])} style={{ cursor: 'default' }}>
+      <FlatFileRowContent status={commitFileStatusBadge(file.status)} name={name} nameTitle={nameTitle} directory={directoryLabel(directory)} />
+    </div>
   );
+}
+
+function CommitFileRow({ file }: { file: CommitFileChange }) {
+  return <li><ReadOnlyFileRow file={file} /></li>;
 }

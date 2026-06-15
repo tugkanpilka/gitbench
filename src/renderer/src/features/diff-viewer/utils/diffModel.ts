@@ -4,6 +4,7 @@ import {
   parseDiff,
   tokenize,
   type FileData,
+  type HunkData,
   type HunkTokens,
 } from 'react-diff-view';
 import { languageFromPath, refractor } from './syntaxHighlight';
@@ -65,18 +66,29 @@ function isBinarySection(file: FileData, rawSection: string): boolean {
   );
 }
 
+function countHunkChanges(hunk: HunkData): { additions: number; deletions: number } {
+  let additions = 0;
+  let deletions = 0;
+
+  for (const change of hunk.changes) {
+    if (isInsert(change)) {
+      additions += 1;
+    } else if (isDelete(change)) {
+      deletions += 1;
+    }
+  }
+
+  return { additions, deletions };
+}
+
 function countChanges(file: FileData): { additions: number; deletions: number } {
   let additions = 0;
   let deletions = 0;
 
   for (const hunk of file.hunks) {
-    for (const change of hunk.changes) {
-      if (isInsert(change)) {
-        additions += 1;
-      } else if (isDelete(change)) {
-        deletions += 1;
-      }
-    }
+    const result = countHunkChanges(hunk);
+    additions += result.additions;
+    deletions += result.deletions;
   }
 
   return { additions, deletions };
@@ -93,20 +105,24 @@ function tokenizeHunks(file: FileData, language: string | null): HunkTokens | nu
   });
 }
 
-function buildFileModel(file: FileData, index: number, rawSection: string): DiffFileModel {
-  const binary = isBinarySection(file, rawSection);
-  const path = splitPath(displayPath(file));
-  const language = languageFromPath(displayPath(file));
-  const { additions, deletions } = countChanges(file);
+function fileModelId(file: FileData, index: number): string {
+  return `${file.type}:${file.oldPath}:${file.newPath}:${index}`;
+}
 
+function previousPath(file: FileData): string | null {
+  return file.type === 'rename' || file.type === 'copy' ? file.oldPath : null;
+}
+
+function buildFileModel(file: FileData, index: number, rawSection: string): DiffFileModel {
+  const display = displayPath(file);
+  const binary = isBinarySection(file, rawSection);
+  const path = splitPath(display);
+  const language = languageFromPath(display);
+  const { additions, deletions } = countChanges(file);
   return {
-    id: `${file.type}:${file.oldPath}:${file.newPath}:${index}`,
-    file,
-    path,
-    previousPath: file.type === 'rename' || file.type === 'copy' ? file.oldPath : null,
-    binary,
-    additions,
-    deletions,
+    id: fileModelId(file, index),
+    file, path, binary, additions, deletions,
+    previousPath: previousPath(file),
     tokens: tokenizeHunks(file, language),
     noTextReason: noTextReason(file, binary),
   };

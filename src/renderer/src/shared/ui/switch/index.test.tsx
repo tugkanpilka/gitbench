@@ -6,6 +6,7 @@ import { Match, Switch } from '.';
 
 afterEach(() => cleanup());
 
+// eslint-disable-next-line max-lines-per-function
 describe('Switch', () => {
   it('renders only the first matching branch (first-match-wins)', () => {
     render(

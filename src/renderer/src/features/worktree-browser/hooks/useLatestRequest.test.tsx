@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import { useLatestRequest } from './useLatestRequest';
 
+// eslint-disable-next-line max-lines-per-function
 describe('useLatestRequest', () => {
   it('aborts the previous signal when a new request begins', () => {
     const { result } = renderHook(() => useLatestRequest());

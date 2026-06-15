@@ -10,6 +10,19 @@ const WORKTREE = makeWorktree({ path: '/Users/dev/gitbench' });
 
 afterEach(() => cleanup());
 
+function renderRepositorySidebar() {
+  return render(
+    <RepositorySidebar
+      repoPath="/Users/dev/gitbench"
+      worktrees={[WORKTREE]}
+      summaries={[]}
+      selectedPath={null}
+      onSelectWorktree={() => undefined}
+    />
+  );
+}
+
+// eslint-disable-next-line max-lines-per-function
 describe('RepositorySidebar', () => {
   it('derives repository names from POSIX and Windows paths', () => {
     expect(nameFromPath('/Users/dev/gitbench')).toBe('gitbench');
@@ -17,15 +30,7 @@ describe('RepositorySidebar', () => {
   });
 
   it('renders a compact repository context without toolbar actions', () => {
-    render(
-      <RepositorySidebar
-        repoPath="/Users/dev/gitbench"
-        worktrees={[WORKTREE]}
-        summaries={[]}
-        selectedPath={null}
-        onSelectWorktree={() => undefined}
-      />
-    );
+    renderRepositorySidebar();
 
     expect(screen.getByRole('heading', { name: 'Worktrees' })).toBeTruthy();
     expect(screen.getByTitle('/Users/dev/gitbench')).toBeTruthy();
@@ -35,15 +40,7 @@ describe('RepositorySidebar', () => {
   });
 
   it('keeps the worktree navigation as the only interactive sidebar content', () => {
-    render(
-      <RepositorySidebar
-        repoPath="/Users/dev/gitbench"
-        worktrees={[WORKTREE]}
-        summaries={[]}
-        selectedPath={null}
-        onSelectWorktree={() => undefined}
-      />
-    );
+    renderRepositorySidebar();
 
     expect(screen.getAllByRole('button')).toHaveLength(1);
     expect(

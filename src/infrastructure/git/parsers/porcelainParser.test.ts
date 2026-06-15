@@ -5,13 +5,42 @@ import { parseWorktreeListPorcelain } from './porcelainParser';
 const SHA_A = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 const SHA_B = 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
 
+function mainOnlyFixture(): string {
+  return `worktree /Users/dev/repo\nHEAD ${SHA_A}\nbranch refs/heads/main\n`;
+}
+
+function twoWorktreeFixture(): string {
+  return (
+    `worktree /Users/dev/repo\nHEAD ${SHA_A}\nbranch refs/heads/main\n\n` +
+    `worktree /Users/dev/repo-feature\nHEAD ${SHA_B}\nbranch refs/heads/feature/login\n`
+  );
+}
+
+function detachedFixture(): string {
+  return (
+    `worktree /Users/dev/repo\nHEAD ${SHA_A}\nbranch refs/heads/main\n\n` +
+    `worktree /Users/dev/repo-detached\nHEAD ${SHA_B}\ndetached\n`
+  );
+}
+
+function bareMainFixture(): string {
+  return (
+    `worktree /Users/dev/bare-repo\nbare\n\n` +
+    `worktree /Users/dev/repo-feature\nHEAD ${SHA_B}\nbranch refs/heads/feature/login\n`
+  );
+}
+
+function prunableFixture(): string {
+  return (
+    `worktree /Users/dev/repo\nHEAD ${SHA_A}\nbranch refs/heads/main\n\n` +
+    `worktree /Users/dev/repo-stale\nHEAD ${SHA_B}\nbranch refs/heads/stale\nprunable gitdir file points to non-existent location\n`
+  );
+}
+
+// eslint-disable-next-line max-lines-per-function
 describe('parseWorktreeListPorcelain', () => {
   it('parses a single main worktree', () => {
-    const fixture = `worktree /Users/dev/repo
-HEAD ${SHA_A}
-branch refs/heads/main
-`;
-    expect(parseWorktreeListPorcelain(fixture)).toEqual([
+    expect(parseWorktreeListPorcelain(mainOnlyFixture())).toEqual([
       {
         path: '/Users/dev/repo',
         headSha: SHA_A,
@@ -23,15 +52,7 @@ branch refs/heads/main
   });
 
   it('parses multiple worktrees — only the first is main', () => {
-    const fixture = `worktree /Users/dev/repo
-HEAD ${SHA_A}
-branch refs/heads/main
-
-worktree /Users/dev/repo-feature
-HEAD ${SHA_B}
-branch refs/heads/feature/login
-`;
-    const worktrees = parseWorktreeListPorcelain(fixture);
+    const worktrees = parseWorktreeListPorcelain(twoWorktreeFixture());
     expect(worktrees).toHaveLength(2);
     expect(worktrees[0]).toMatchObject({ path: '/Users/dev/repo', isMain: true, branch: 'main' });
     expect(worktrees[1]).toMatchObject({
@@ -42,15 +63,7 @@ branch refs/heads/feature/login
   });
 
   it('maps detached HEAD to branch: null', () => {
-    const fixture = `worktree /Users/dev/repo
-HEAD ${SHA_A}
-branch refs/heads/main
-
-worktree /Users/dev/repo-detached
-HEAD ${SHA_B}
-detached
-`;
-    expect(parseWorktreeListPorcelain(fixture)[1]).toMatchObject({
+    expect(parseWorktreeListPorcelain(detachedFixture())[1]).toMatchObject({
       path: '/Users/dev/repo-detached',
       branch: null,
       headSha: SHA_B,
@@ -58,32 +71,17 @@ detached
   });
 
   it('parses locked without a reason', () => {
-    const fixture = `worktree /Users/dev/repo
-HEAD ${SHA_A}
-branch refs/heads/main
-locked
-`;
+    const fixture = `worktree /Users/dev/repo\nHEAD ${SHA_A}\nbranch refs/heads/main\nlocked\n`;
     expect(parseWorktreeListPorcelain(fixture)[0]).toMatchObject({ isLocked: true });
   });
 
   it('parses locked with a reason on the same line', () => {
-    const fixture = `worktree /Users/dev/repo
-HEAD ${SHA_A}
-branch refs/heads/main
-locked working tree is on a portable device
-`;
+    const fixture = `worktree /Users/dev/repo\nHEAD ${SHA_A}\nbranch refs/heads/main\nlocked working tree is on a portable device\n`;
     expect(parseWorktreeListPorcelain(fixture)[0]).toMatchObject({ isLocked: true });
   });
 
   it('tolerates a bare main worktree carrying only the bare attribute', () => {
-    const fixture = `worktree /Users/dev/bare-repo
-bare
-
-worktree /Users/dev/repo-feature
-HEAD ${SHA_B}
-branch refs/heads/feature/login
-`;
-    const worktrees = parseWorktreeListPorcelain(fixture);
+    const worktrees = parseWorktreeListPorcelain(bareMainFixture());
     expect(worktrees[0]).toEqual({
       path: '/Users/dev/bare-repo',
       headSha: '',
@@ -95,16 +93,7 @@ branch refs/heads/feature/login
   });
 
   it('ignores prunable lines', () => {
-    const fixture = `worktree /Users/dev/repo
-HEAD ${SHA_A}
-branch refs/heads/main
-
-worktree /Users/dev/repo-stale
-HEAD ${SHA_B}
-branch refs/heads/stale
-prunable gitdir file points to non-existent location
-`;
-    const worktrees = parseWorktreeListPorcelain(fixture);
+    const worktrees = parseWorktreeListPorcelain(prunableFixture());
     expect(worktrees).toHaveLength(2);
     expect(worktrees[1]).toMatchObject({ path: '/Users/dev/repo-stale', branch: 'stale' });
   });

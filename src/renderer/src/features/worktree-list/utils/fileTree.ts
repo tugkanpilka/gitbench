@@ -27,26 +27,30 @@ function toFileTree(directory: MutableDirectory): FileTree {
   };
 }
 
+function insertFileIntoTree(root: MutableDirectory, file: ChangedFileItem): void {
+  const directoryNames = file.path.directory.split('/').filter(Boolean);
+  let current = root;
+
+  for (const name of directoryNames) {
+    const path = `${current.path}${name}/`;
+    let child = current.directories.get(name);
+
+    if (child === undefined) {
+      child = createDirectory(name, path);
+      current.directories.set(name, child);
+    }
+
+    current = child;
+  }
+
+  current.files.push(file);
+}
+
 export function buildFileTree(files: ChangedFileItem[]): FileTree {
   const root = createDirectory('', '');
 
   for (const file of files) {
-    const directoryNames = file.path.directory.split('/').filter(Boolean);
-    let current = root;
-
-    for (const name of directoryNames) {
-      const path = `${current.path}${name}/`;
-      let child = current.directories.get(name);
-
-      if (child === undefined) {
-        child = createDirectory(name, path);
-        current.directories.set(name, child);
-      }
-
-      current = child;
-    }
-
-    current.files.push(file);
+    insertFileIntoTree(root, file);
   }
 
   return toFileTree(root);

@@ -19,6 +19,30 @@ const FULL_SHA = /^[0-9a-f]{40}$/;
  */
 export const COMMIT_LOG_FORMAT = `%x1e%H%x1f%h%x1f%an%x1f%cI%x1f%s`;
 
+function parseFileChanges(lines: string[]): CommitFileChange[] {
+  const files: CommitFileChange[] = [];
+  for (const line of lines) {
+    if (line.length === 0 || !line.includes('\t')) continue;
+    files.push(parseNameStatusLine(line));
+  }
+  return files;
+}
+
+function parseCommitRecord(record: string): UnpushedCommit | null {
+  if (record.trim().length === 0) return null;
+  const lines = record.split('\n');
+  const [sha, shortSha, author, committedAt, subject] = lines[0].split(FIELD_SEP);
+  if (sha === undefined || !FULL_SHA.test(sha)) return null;
+  return {
+    sha,
+    shortSha: shortSha ?? '',
+    author: author ?? '',
+    committedAt: committedAt ?? '',
+    subject: subject ?? '',
+    files: parseFileChanges(lines.slice(1)),
+  };
+}
+
 /**
  * Pure parser for `git log --name-status --format=COMMIT_LOG_FORMAT` output.
  * Tolerates merge/empty commits (no file lines). Paths containing literal tabs or
@@ -26,36 +50,10 @@ export const COMMIT_LOG_FORMAT = `%x1e%H%x1f%h%x1f%an%x1f%cI%x1f%s`;
  */
 export function parseCommitLog(stdout: string): UnpushedCommit[] {
   const commits: UnpushedCommit[] = [];
-
   for (const record of stdout.split(RECORD_SEP)) {
-    if (record.trim().length === 0) {
-      continue; // leading empty chunk before the first separator, or trailing blank
-    }
-
-    const lines = record.split('\n');
-    const [sha, shortSha, author, committedAt, subject] = lines[0].split(FIELD_SEP);
-    if (sha === undefined || !FULL_SHA.test(sha)) {
-      continue; // phantom record from a separator byte smuggled into a subject
-    }
-    const files: CommitFileChange[] = [];
-
-    for (const line of lines.slice(1)) {
-      if (line.length === 0 || !line.includes('\t')) {
-        continue; // blank separator line between header and name-status block
-      }
-      files.push(parseNameStatusLine(line));
-    }
-
-    commits.push({
-      sha,
-      shortSha: shortSha ?? '',
-      author: author ?? '',
-      committedAt: committedAt ?? '',
-      subject: subject ?? '',
-      files,
-    });
+    const commit = parseCommitRecord(record);
+    if (commit !== null) commits.push(commit);
   }
-
   return commits;
 }
 
@@ -74,19 +72,14 @@ function parseNameStatusLine(line: string): CommitFileChange {
   return { status: statusFromLetter(letter), path: parts[1] ?? '', previousPath: null };
 }
 
+const STATUS_BY_LETTER: Record<string, CommitFileChangeStatus> = {
+  A: 'added',
+  M: 'modified',
+  D: 'deleted',
+  T: 'typeChanged',
+  U: 'unmerged',
+};
+
 function statusFromLetter(letter: string): CommitFileChangeStatus {
-  switch (letter) {
-    case 'A':
-      return 'added';
-    case 'M':
-      return 'modified';
-    case 'D':
-      return 'deleted';
-    case 'T':
-      return 'typeChanged';
-    case 'U':
-      return 'unmerged';
-    default:
-      return 'unknown';
-  }
+  return STATUS_BY_LETTER[letter] ?? 'unknown';
 }

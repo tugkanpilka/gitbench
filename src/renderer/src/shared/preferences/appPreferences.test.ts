@@ -24,6 +24,7 @@ function createStorage(initialValue: string | null = null): {
   };
 }
 
+// eslint-disable-next-line max-lines-per-function
 describe('appPreferences', () => {
   it("defaults to the 'system' theme when no stored preference exists", () => {
     const { storage } = createStorage();

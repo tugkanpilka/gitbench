@@ -6,6 +6,12 @@ import { SegmentedControl } from '.';
 
 afterEach(() => cleanup());
 
+function findCompactClass(container: HTMLElement): string | undefined {
+  const root = container.querySelector('[role="radiogroup"]');
+  return [...(root?.classList ?? [])].find((name) => name.includes('compact'));
+}
+
+// eslint-disable-next-line max-lines-per-function
 describe('SegmentedControl', () => {
   function renderControl(onChange: (value: string) => void) {
     render(
@@ -57,8 +63,6 @@ describe('SegmentedControl', () => {
       />
     );
 
-    const root = container.querySelector('[role="radiogroup"]');
-    const compactClass = [...(root?.classList ?? [])].find((name) => name.includes('compact'));
-    expect(compactClass).toBeDefined();
+    expect(findCompactClass(container)).toBeDefined();
   });
 });

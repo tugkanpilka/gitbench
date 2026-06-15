@@ -16,6 +16,7 @@ function stubDesktopApi(overrides: Partial<Window['api']> = {}): void {
   stubApi({ listWorktrees: vi.fn().mockResolvedValue(okResult([MAIN_WORKTREE])), ...overrides });
 }
 
+// eslint-disable-next-line max-lines-per-function
 describe('desktopApi', () => {
   beforeEach(() => {
     stubDesktopApi();

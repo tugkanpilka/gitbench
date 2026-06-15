@@ -29,6 +29,7 @@ index 5555555..6666666 100644
 `).files
 );
 
+// eslint-disable-next-line max-lines-per-function
 describe('fileTree', () => {
   it('groups files into nested directories while retaining root files', () => {
     const tree = buildFileTree(FILES);

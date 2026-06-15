@@ -7,6 +7,17 @@ import { deferred, failResult, okResult, stubApi } from '../../../test/fixtures'
 import type { ErrorSlot } from './useRepositoryCatalog';
 import { useSelectedWorktreeDetails } from './useSelectedWorktreeDetails';
 
+type DiffDeferred = ReturnType<typeof deferred<Result<{ diffText: string }>>>;
+
+function stubRacingDiffs(): { featureDiff: DiffDeferred; mainDiff: DiffDeferred } {
+  const featureDiff = deferred<Result<{ diffText: string }>>();
+  const mainDiff = deferred<Result<{ diffText: string }>>();
+  stubApi({
+    getDiff: vi.fn().mockReturnValueOnce(featureDiff.promise).mockReturnValueOnce(mainDiff.promise),
+  });
+  return { featureDiff, mainDiff };
+}
+
 function makeErrorSlot(): ErrorSlot & { message: string | null } {
   const slot = {
     message: null as string | null,
@@ -20,6 +31,7 @@ function makeErrorSlot(): ErrorSlot & { message: string | null } {
   return slot;
 }
 
+// eslint-disable-next-line max-lines-per-function
 describe('useSelectedWorktreeDetails', () => {
   beforeEach(() => stubApi());
   afterEach(() => vi.restoreAllMocks());
@@ -38,26 +50,15 @@ describe('useSelectedWorktreeDetails', () => {
   });
 
   it('keeps only the latest selection when diff requests resolve out of order', async () => {
-    const featureDiff = deferred<Result<{ diffText: string }>>();
-    const mainDiff = deferred<Result<{ diffText: string }>>();
-    stubApi({
-      getDiff: vi
-        .fn()
-        .mockReturnValueOnce(featureDiff.promise)
-        .mockReturnValueOnce(mainDiff.promise),
-    });
+    const { featureDiff, mainDiff } = stubRacingDiffs();
     const { result } = renderHook(() => useSelectedWorktreeDetails(makeErrorSlot()));
 
     act(() => {
       void result.current.selectWorktree('/repo-feature');
       void result.current.selectWorktree('/repo');
     });
-    await act(async () => {
-      mainDiff.resolve(okResult({ diffText: 'main changes' }));
-    });
-    await act(async () => {
-      featureDiff.resolve(okResult({ diffText: 'stale feature changes' }));
-    });
+    await act(async () => { mainDiff.resolve(okResult({ diffText: 'main changes' })); });
+    await act(async () => { featureDiff.resolve(okResult({ diffText: 'stale feature changes' })); });
 
     expect(result.current.diff).toEqual({ worktreePath: '/repo', diffText: 'main changes' });
   });
@@ -67,17 +68,11 @@ describe('useSelectedWorktreeDetails', () => {
     stubApi({ getDiff: vi.fn().mockReturnValue(pendingDiff.promise) });
     const { result } = renderHook(() => useSelectedWorktreeDetails(makeErrorSlot()));
 
-    act(() => {
-      void result.current.selectWorktree('/repo-feature');
-    });
+    act(() => { void result.current.selectWorktree('/repo-feature'); });
     expect(result.current.diffLoading).toBe(true);
 
-    act(() => {
-      result.current.reset();
-    });
-    await act(async () => {
-      pendingDiff.resolve(okResult({ diffText: 'stale diff' }));
-    });
+    act(() => { result.current.reset(); });
+    await act(async () => { pendingDiff.resolve(okResult({ diffText: 'stale diff' })); });
 
     expect(result.current.selectedPath).toBeNull();
     expect(result.current.diff).toBeNull();

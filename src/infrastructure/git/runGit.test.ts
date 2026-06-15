@@ -14,22 +14,29 @@ vi.mock('node:child_process', () => ({
 
 type ExecFileCallback = (error: Error | null, stdout: string, stderr: string) => void;
 
-/** Makes the mocked execFile invoke its callback with the given outcome. */
-function stubGitOutcome(error: Error | null, stdout = '', stderr = ''): void {
-  execFileMock.mockImplementation(
-    (_file: string, _args: string[], _options: object, callback: ExecFileCallback) => {
-      callback(error, stdout, stderr);
-    }
-  );
+interface StubGitOutcomeOptions {
+  error: Error | null;
+  stdout?: string;
+  stderr?: string;
 }
 
+/** Makes the mocked execFile invoke its callback with the given outcome. */
+function stubGitOutcome({ error, stdout = '', stderr = '' }: StubGitOutcomeOptions): void {
+  function impl(...execArgs: unknown[]): void {
+    const callback = execArgs[3] as ExecFileCallback;
+    callback(error, stdout, stderr);
+  }
+  execFileMock.mockImplementation(impl);
+}
+
+// eslint-disable-next-line max-lines-per-function
 describe('runGit', () => {
   beforeEach(() => {
     execFileMock.mockReset();
   });
 
   it('spawns git with an argument array [-C, targetPath, ...args] and a prompt-free, lock-free, LC_ALL=C environment', async () => {
-    stubGitOutcome(null, 'stdout payload');
+    stubGitOutcome({ error: null, stdout: 'stdout payload' });
 
     await expect(runGit('/tmp/repo', ['diff', 'HEAD'])).resolves.toBe('stdout payload');
 
@@ -44,17 +51,16 @@ describe('runGit', () => {
   });
 
   it('maps ENOENT from execFile to GitNotInstalledError', async () => {
-    stubGitOutcome(Object.assign(new Error('spawn git ENOENT'), { code: 'ENOENT' }));
+    stubGitOutcome({ error: Object.assign(new Error('spawn git ENOENT'), { code: 'ENOENT' }) });
 
     await expect(runGit('/tmp/repo', ['status'])).rejects.toBeInstanceOf(GitNotInstalledError);
   });
 
   it("classifies 'not a git repository' on stderr as NotARepositoryError carrying the target path", async () => {
-    stubGitOutcome(
-      Object.assign(new Error('Command failed'), { code: 128 }),
-      '',
-      'fatal: not a git repository (or any of the parent directories): .git\n'
-    );
+    stubGitOutcome({
+      error: Object.assign(new Error('Command failed'), { code: 128 }),
+      stderr: 'fatal: not a git repository (or any of the parent directories): .git\n',
+    });
 
     await expect(runGit('/tmp/not-a-repo', ['status'])).rejects.toThrowError(
       new NotARepositoryError('/tmp/not-a-repo')
@@ -62,11 +68,10 @@ describe('runGit', () => {
   });
 
   it("classifies 'cannot change to' on stderr (removed worktree) as WorktreeNotFoundError carrying the target path", async () => {
-    stubGitOutcome(
-      Object.assign(new Error('Command failed'), { code: 128 }),
-      '',
-      "fatal: cannot change to '/tmp/gone': No such file or directory\n"
-    );
+    stubGitOutcome({
+      error: Object.assign(new Error('Command failed'), { code: 128 }),
+      stderr: "fatal: cannot change to '/tmp/gone': No such file or directory\n",
+    });
 
     await expect(runGit('/tmp/gone', ['status'])).rejects.toThrowError(
       new WorktreeNotFoundError('/tmp/gone')
@@ -74,7 +79,7 @@ describe('runGit', () => {
   });
 
   it('falls back to GitCommandFailedError with error.message when stderr is empty', async () => {
-    stubGitOutcome(Object.assign(new Error('Command failed: git diff'), { code: 1 }), '', '');
+    stubGitOutcome({ error: Object.assign(new Error('Command failed: git diff'), { code: 1 }) });
 
     await expect(runGit('/tmp/repo', ['diff'])).rejects.toThrowError(
       new GitCommandFailedError('Command failed: git diff')
@@ -83,7 +88,7 @@ describe('runGit', () => {
 
   it('accepts an explicitly allowed data-bearing exit code when stderr is empty', async () => {
     const diff = 'diff --git a/new.txt b/new.txt\n';
-    stubGitOutcome(Object.assign(new Error('files differ'), { code: 1 }), diff, '');
+    stubGitOutcome({ error: Object.assign(new Error('files differ'), { code: 1 }), stdout: diff });
 
     await expect(
       runGit('/tmp/repo', ['diff', '--no-index', '/dev/null', 'new.txt'], {
@@ -93,11 +98,10 @@ describe('runGit', () => {
   });
 
   it('does not accept an allowed exit code when git also reports an error', async () => {
-    stubGitOutcome(
-      Object.assign(new Error('files differ'), { code: 1 }),
-      '',
-      "error: Could not access 'missing.txt'\n"
-    );
+    stubGitOutcome({
+      error: Object.assign(new Error('files differ'), { code: 1 }),
+      stderr: "error: Could not access 'missing.txt'\n",
+    });
 
     await expect(
       runGit('/tmp/repo', ['diff', '--no-index', '/dev/null', 'missing.txt'], {

@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { type Dispatch, type SetStateAction, useCallback, useEffect, useState } from 'react';
 
 import {
   applyTheme,
+  type AppPreferences,
   type FileListMode,
   type FlatGroupMode,
   readAppPreferences,
@@ -10,7 +11,13 @@ import {
   writeAppPreferences,
 } from '../../shared/preferences/appPreferences';
 
-interface AppPreferenceController {
+function cycleTheme(current: Theme): Theme {
+  if (current === 'system') return 'light';
+  if (current === 'light') return 'dark';
+  return 'system';
+}
+
+export interface AppPreferenceController {
   theme: Theme;
   fileListMode: FileListMode;
   flatGroupMode: FlatGroupMode;
@@ -19,46 +26,23 @@ interface AppPreferenceController {
   setFlatGroupMode: (mode: FlatGroupMode) => void;
 }
 
+type Setter = Dispatch<SetStateAction<AppPreferences>>;
+
+function makeFieldSetter<K extends keyof AppPreferences>(
+  set: Setter,
+  key: K
+): (value: AppPreferences[K]) => void {
+  return (value) => set((current) => ({ ...current, [key]: value }));
+}
+
 export function useAppPreferences(): AppPreferenceController {
   const [preferences, setPreferences] = useState(readAppPreferences);
-
-  useEffect(() => {
-    applyTheme(preferences.theme);
-    writeAppPreferences(preferences);
-  }, [preferences]);
-
-  // Re-apply the theme when the OS preference flips, but only while following it.
-  // Re-subscribes on theme change only, not on every preference write.
+  useEffect(() => { applyTheme(preferences.theme); writeAppPreferences(preferences); }, [preferences]);
   useEffect(() => watchSystemTheme(() => applyTheme(preferences.theme)), [preferences.theme]);
-
   const toggleTheme = useCallback(() => {
-    setPreferences((current) => {
-      const nextTheme: Theme =
-        current.theme === 'system' ? 'light' : current.theme === 'light' ? 'dark' : 'system';
-      return { ...current, theme: nextTheme };
-    });
+    setPreferences((current) => ({ ...current, theme: cycleTheme(current.theme) }));
   }, []);
-
-  const setFileListMode = useCallback((fileListMode: FileListMode) => {
-    setPreferences((current) => ({
-      ...current,
-      fileListMode,
-    }));
-  }, []);
-
-  const setFlatGroupMode = useCallback((flatGroupMode: FlatGroupMode) => {
-    setPreferences((current) => ({
-      ...current,
-      flatGroupMode,
-    }));
-  }, []);
-
-  return {
-    theme: preferences.theme,
-    fileListMode: preferences.fileListMode,
-    flatGroupMode: preferences.flatGroupMode,
-    toggleTheme,
-    setFileListMode,
-    setFlatGroupMode,
-  };
+  const setFileListMode = useCallback(makeFieldSetter(setPreferences, 'fileListMode'), []);
+  const setFlatGroupMode = useCallback(makeFieldSetter(setPreferences, 'flatGroupMode'), []);
+  return { ...preferences, toggleTheme, setFileListMode, setFlatGroupMode };
 }

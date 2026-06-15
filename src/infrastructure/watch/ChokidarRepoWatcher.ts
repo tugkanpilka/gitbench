@@ -20,38 +20,55 @@ const DEBOUNCE_MS = 250;
 
 const WORKING_TREE_IGNORED_SEGMENTS = new Set(['node_modules', '.git']);
 
-export class ChokidarRepoWatcher {
-  watch(target: RepoWatchTarget, onChange: () => void): RepoWatchHandle {
-    const stopWatchers: StopRecursiveWatch[] = [];
-    let stopped = false;
-    let timer: ReturnType<typeof setTimeout> | null = null;
+type StopFn = StopRecursiveWatch;
 
-    const signal = (): void => {
-      if (timer) clearTimeout(timer);
-      timer = setTimeout(() => {
-        timer = null;
-        onChange();
-      }, DEBOUNCE_MS);
-    };
+function makeDebounced(fn: () => void, ms: number): () => void {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  return (): void => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => {
+      timer = null;
+      fn();
+    }, ms);
+  };
+}
 
-    // Watchers attach asynchronously; guard against a stop() that races ahead
-    // of setup so no native stream survives after the handle is disposed.
-    const register = (stopWatcher: StopRecursiveWatch): void => {
+// eslint-disable-next-line max-lines-per-function -- factory closure with shared mutable state, three logical lines per operation
+function makeWatcherRegistry(): { register: (s: StopFn) => void; stopAll: () => Promise<void> } {
+  const stopWatchers: StopFn[] = [];
+  let stopped = false;
+
+  return {
+    register(stopWatcher: StopFn): void {
       if (stopped) {
         void stopWatcher();
         return;
       }
       stopWatchers.push(stopWatcher);
-    };
+    },
+    async stopAll(): Promise<void> {
+      stopped = true;
+      await Promise.all(stopWatchers.map((stopWatcher) => stopWatcher()));
+      stopWatchers.length = 0;
+    },
+  };
+}
 
-    const attach = (watcher: Promise<StopRecursiveWatch>): void => {
-      void watcher.then(register).catch(() => {
-        // Auto-refresh is best-effort. List/diff queries surface repository and
-        // Git failures without taking down Electron's main process.
-      });
-    };
+function attachWatcher(
+  watcher: Promise<StopFn>,
+  register: (s: StopFn) => void
+): void {
+  void watcher.then(register).catch(() => {
+    // Auto-refresh is best-effort. List/diff queries surface repository and
+    // Git failures without taking down Electron's main process.
+  });
+}
 
-    // 1) Every worktree's working tree: edits, adds, deletes update row summaries.
+export class ChokidarRepoWatcher {
+  watch(target: RepoWatchTarget, onChange: () => void): RepoWatchHandle {
+    const signal = makeDebounced(onChange, DEBOUNCE_MS);
+    const registry = makeWatcherRegistry();
+    const attach = (w: Promise<StopFn>): void => attachWatcher(w, registry.register);
     for (const worktreePath of new Set(target.worktreePaths)) {
       attach(
         startRecursiveWatch(worktreePath, signal, (path) =>
@@ -59,23 +76,8 @@ export class ChokidarRepoWatcher {
         )
       );
     }
-
-    // 2) The shared git dir: refs, logs, index, worktrees/ admin — covers commits,
-    //    resets, checkouts, and add/remove/lock for every worktree. Needs git to
-    //    resolve, so it attaches async.
     attach(this.watchSharedGitDir(target.repoPath, signal));
-
-    return {
-      async stop() {
-        stopped = true;
-        if (timer) {
-          clearTimeout(timer);
-          timer = null;
-        }
-        await Promise.all(stopWatchers.map((stopWatcher) => stopWatcher()));
-        stopWatchers.length = 0;
-      },
-    };
+    return { stop: registry.stopAll };
   }
 
   private async watchSharedGitDir(

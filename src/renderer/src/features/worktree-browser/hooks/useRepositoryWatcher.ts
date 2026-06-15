@@ -2,6 +2,10 @@ import { useEffect, useRef } from 'react';
 
 import { desktopApi } from '../../../shared/api/desktopApi';
 
+function parseWatchedPaths(joined: string): string[] {
+  return joined.length === 0 ? [] : joined.split('\0');
+}
+
 export interface RepositoryWatcherOptions {
   repoPath: string | null;
   // The set of worktree roots to watch, joined into a stable key by the caller.
@@ -16,6 +20,34 @@ export interface RepositoryWatcherOptions {
  * watch when the root set changes, stops it on unmount, and forwards the debounced
  * repo:changed signal to the caller.
  */
+function startWatchSilently(repoPath: string, paths: string[]): void {
+  void desktopApi.startWatch(repoPath, paths).catch(() => {});
+}
+
+function useWatchLifecycle(repoPath: string | null, watchedWorktreePaths: string): void {
+  useEffect(() => {
+    if (repoPath === null) {
+      return;
+    }
+    startWatchSilently(repoPath, parseWatchedPaths(watchedWorktreePaths));
+  }, [repoPath, watchedWorktreePaths]);
+
+  useEffect(
+    () => () => {
+      void desktopApi.stopWatch().catch(() => {});
+    },
+    []
+  );
+}
+
+function useStableRepoChangedRef(onRepoChanged: () => void): void {
+  const onRepoChangedRef = useRef(onRepoChanged);
+  useEffect(() => {
+    onRepoChangedRef.current = onRepoChanged;
+  }, [onRepoChanged]);
+  useEffect(() => desktopApi.onRepoChanged(() => onRepoChangedRef.current()), []);
+}
+
 export function useRepositoryWatcher({
   repoPath,
   worktreePaths,
@@ -24,37 +56,6 @@ export function useRepositoryWatcher({
   // Filesystem paths cannot contain NUL, so this is a stable dependency key for
   // restarting the watcher only when the set/order of worktree roots changes.
   const watchedWorktreePaths = worktreePaths.join('\0');
-
-  // Watch every worktree so non-selected row summaries stay current as agents edit.
-  // startWatch replaces any prior watch on the main side.
-  useEffect(() => {
-    if (repoPath === null) {
-      return;
-    }
-    void desktopApi
-      .startWatch(
-        repoPath,
-        watchedWorktreePaths.length === 0 ? [] : watchedWorktreePaths.split('\0')
-      )
-      .catch(() => {
-        // A watch failure is non-fatal — manual refresh still works.
-      });
-  }, [repoPath, watchedWorktreePaths]);
-
-  // Stop watching when the browser unmounts.
-  useEffect(
-    () => () => {
-      void desktopApi.stopWatch().catch(() => {});
-    },
-    []
-  );
-
-  // Auto-refresh on the debounced "repo changed" signal. Reads the latest handler via a
-  // ref so the subscription stays mounted across selection changes.
-  const onRepoChangedRef = useRef(onRepoChanged);
-  useEffect(() => {
-    onRepoChangedRef.current = onRepoChanged;
-  }, [onRepoChanged]);
-
-  useEffect(() => desktopApi.onRepoChanged(() => onRepoChangedRef.current()), []);
+  useWatchLifecycle(repoPath, watchedWorktreePaths);
+  useStableRepoChangedRef(onRepoChanged);
 }

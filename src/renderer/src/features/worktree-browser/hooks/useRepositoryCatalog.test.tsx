@@ -25,6 +25,29 @@ function makeErrorSlot(): ErrorSlot & { message: string | null } {
   return slot;
 }
 
+function stubBrokenSecondRepo(): void {
+  stubApi({
+    pickRepo: vi
+      .fn()
+      .mockResolvedValueOnce(okResult<string | null>('/repo'))
+      .mockResolvedValueOnce(okResult<string | null>('/broken')),
+    listWorktrees: vi
+      .fn()
+      .mockResolvedValueOnce(okResult([MAIN_WORKTREE]))
+      .mockResolvedValueOnce(failResult('NOT_A_REPOSITORY', 'Not a git repository: /broken')),
+  });
+}
+
+function stubRefreshFailed(): void {
+  stubApi({
+    listWorktrees: vi
+      .fn()
+      .mockResolvedValueOnce(okResult([MAIN_WORKTREE, FEATURE_WORKTREE]))
+      .mockResolvedValueOnce(failResult('GIT_COMMAND_FAILED', 'git worktree list failed.')),
+  });
+}
+
+// eslint-disable-next-line max-lines-per-function
 describe('useRepositoryCatalog', () => {
   beforeEach(() => stubApi());
   afterEach(() => vi.restoreAllMocks());
@@ -48,28 +71,15 @@ describe('useRepositoryCatalog', () => {
   });
 
   it('keeps the previous repository when listing worktrees for the new one fails', async () => {
-    stubApi({
-      pickRepo: vi
-        .fn()
-        .mockResolvedValueOnce(okResult<string | null>('/repo'))
-        .mockResolvedValueOnce(okResult<string | null>('/broken')),
-      listWorktrees: vi
-        .fn()
-        .mockResolvedValueOnce(okResult([MAIN_WORKTREE]))
-        .mockResolvedValueOnce(failResult('NOT_A_REPOSITORY', 'Not a git repository: /broken')),
-    });
+    stubBrokenSecondRepo();
     const errorSlot = makeErrorSlot();
     const { result } = renderHook(() => useRepositoryCatalog(errorSlot));
 
-    await act(async () => {
-      await result.current.openRepository();
-    });
+    await act(async () => { await result.current.openRepository(); });
     expect(result.current.repoPath).toBe('/repo');
 
     let opened: string | null = '/unchanged';
-    await act(async () => {
-      opened = await result.current.openRepository();
-    });
+    await act(async () => { opened = await result.current.openRepository(); });
 
     expect(opened).toBeNull();
     expect(result.current.repoPath).toBe('/repo');
@@ -77,23 +87,14 @@ describe('useRepositoryCatalog', () => {
   });
 
   it('refresh failure empties the list and reports the error', async () => {
-    stubApi({
-      listWorktrees: vi
-        .fn()
-        .mockResolvedValueOnce(okResult([MAIN_WORKTREE, FEATURE_WORKTREE]))
-        .mockResolvedValueOnce(failResult('GIT_COMMAND_FAILED', 'git worktree list failed.')),
-    });
+    stubRefreshFailed();
     const errorSlot = makeErrorSlot();
     const { result } = renderHook(() => useRepositoryCatalog(errorSlot));
 
-    await act(async () => {
-      await result.current.openRepository();
-    });
+    await act(async () => { await result.current.openRepository(); });
     expect(result.current.worktrees).toHaveLength(2);
 
-    await act(async () => {
-      await result.current.refreshRepository();
-    });
+    await act(async () => { await result.current.refreshRepository(); });
 
     expect(result.current.worktrees).toHaveLength(0);
     expect(result.current.loading).toBe(false);

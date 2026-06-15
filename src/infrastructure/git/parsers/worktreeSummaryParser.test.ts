@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { parseNumstat, parseWorktreeStatus } from './worktreeSummaryParser';
 
+// eslint-disable-next-line max-lines-per-function
 describe('parseWorktreeStatus', () => {
   it('counts changed, untracked, renamed, and conflicted files', () => {
     const stdout = [

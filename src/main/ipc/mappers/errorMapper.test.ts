@@ -6,6 +6,7 @@ import { GitCommandFailedError } from '../../../infrastructure/git/errors/GitCom
 import { GitNotInstalledError } from '../../../infrastructure/git/errors/GitNotInstalledError';
 import { toErrorDto } from './errorMapper';
 
+// eslint-disable-next-line max-lines-per-function
 describe('toErrorDto', () => {
   it('maps GitNotInstalledError to GIT_NOT_INSTALLED', () => {
     expect(toErrorDto(new GitNotInstalledError())).toEqual({

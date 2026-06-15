@@ -34,6 +34,7 @@ function storedPreferences(): unknown {
   return JSON.parse(window.localStorage.getItem(APP_PREFERENCES_STORAGE_KEY) ?? '');
 }
 
+// eslint-disable-next-line max-lines-per-function
 describe('useAppPreferences', () => {
   beforeEach(() => {
     installMemoryStorage();
