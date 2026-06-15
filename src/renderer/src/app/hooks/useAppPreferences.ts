@@ -7,6 +7,7 @@ import {
   type FlatGroupMode,
   readAppPreferences,
   type Theme,
+  watchSystemTheme,
   writeAppPreferences,
 } from '../../shared/preferences/appPreferences';
 
@@ -34,17 +35,13 @@ function makeFieldSetter<K extends keyof AppPreferences>(
   return (value) => set((current) => ({ ...current, [key]: value }));
 }
 
-// eslint-disable-next-line max-lines-per-function -- two effects + three callbacks; prettier expands the nativeTheme effect to 4 lines; body already minimal
 export function useAppPreferences(): AppPreferenceController {
   const [preferences, setPreferences] = useState(readAppPreferences);
   useEffect(() => {
     applyTheme(preferences.theme);
     writeAppPreferences(preferences);
   }, [preferences]);
-  useEffect(
-    () => window.api.onNativeThemeChanged(() => applyTheme(preferences.theme)),
-    [preferences.theme]
-  );
+  useEffect(() => watchSystemTheme(() => applyTheme(preferences.theme)), [preferences.theme]);
   const toggleTheme = useCallback(() => {
     setPreferences((current) => ({ ...current, theme: cycleTheme(current.theme) }));
   }, []);

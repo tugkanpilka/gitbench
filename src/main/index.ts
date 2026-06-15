@@ -1,11 +1,10 @@
-import { BrowserWindow, app, nativeTheme } from 'electron';
+import { BrowserWindow, app } from 'electron';
 
 import { createApplicationServices } from './bootstrap/compositionRoot';
 import { createMenu } from './bootstrap/createMenu';
 import { createWindow } from './bootstrap/createWindow';
 import { setupAutoUpdater } from './bootstrap/setupAutoUpdater';
 import { registerHandlers } from './ipc/registerHandlers';
-import { IPC_CHANNELS } from '../contracts/ipc';
 import { createWatchController } from './ipc/watchController';
 
 app.setName('GitBench');
@@ -22,15 +21,9 @@ function spawnWindow(): void {
   });
 }
 
-nativeTheme.on('updated', () => {
-  for (const win of BrowserWindow.getAllWindows()) {
-    win.webContents.send(IPC_CHANNELS.nativeThemeChanged);
-  }
-});
-
 app.whenReady().then(() => {
   registerHandlers(services, watchController);
-  createMenu(spawnWindow);
+  createMenu();
   spawnWindow();
   setupAutoUpdater();
 

@@ -73,7 +73,6 @@ export function stubApi(overrides: Partial<Window['api']> = {}): void {
     listRecentRepos: vi.fn().mockResolvedValue(okResult([])),
     addRecentRepo: vi.fn().mockResolvedValue(okResult(null)),
     onRepoChanged: vi.fn().mockReturnValue(() => {}),
-    onNativeThemeChanged: vi.fn().mockReturnValue(() => {}),
     ...overrides,
   };
 }
