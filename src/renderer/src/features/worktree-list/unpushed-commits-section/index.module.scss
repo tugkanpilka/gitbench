@@ -8,7 +8,7 @@
 .unpushed-commits__header {
   display: flex;
   height: 40px;
-  padding: 0 16px;
+  padding: 0 var(--gb-space-6);
   align-items: center;
   gap: var(--gb-space-3);
   background: transparent;

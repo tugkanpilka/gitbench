@@ -1,10 +1,9 @@
-import type { CSSProperties } from 'react';
 import type { IconType } from 'react-icons';
 import { VscFile, VscJson, VscMarkdown } from 'react-icons/vsc';
 import { SiTypescript, SiJavascript, SiReact, SiCss, SiHtml5 } from 'react-icons/si';
 import type { FileIconProps } from './index.types';
+import styles from './index.module.scss';
 
-const ICON_LAYOUT: CSSProperties = { flex: 'none', marginRight: 6, fontSize: '14px', opacity: 0.9 };
 const FALLBACK_COLOR = 'var(--gb-dim)';
 
 const ICONS_BY_SUFFIX: ReadonlyArray<readonly [suffix: string, Icon: IconType, color: string]> = [
@@ -21,5 +20,5 @@ const ICONS_BY_SUFFIX: ReadonlyArray<readonly [suffix: string, Icon: IconType, c
 export function FileIcon({ name }: FileIconProps) {
   const match = ICONS_BY_SUFFIX.find(([suffix]) => name.endsWith(suffix));
   const [, Icon, color] = match ?? ['', VscFile, FALLBACK_COLOR];
-  return <Icon style={{ ...ICON_LAYOUT, color }} />;
+  return <Icon className={styles['file-icon']} style={{ color }} />;
 }
