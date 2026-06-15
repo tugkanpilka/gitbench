@@ -60,8 +60,20 @@ const SINGLE_COMMIT_EXPECTED = [
   },
 ];
 
-const SECOND_META = { sha: SHA_A, shortSha: 'aaaaaaa', author: 'Ada', date: '2026-06-12T10:30:00+03:00', subject: 'second' };
-const FIRST_META = { sha: SHA_B, shortSha: 'bbbbbbb', author: 'Ada', date: '2026-06-12T09:00:00+03:00', subject: 'first' };
+const SECOND_META = {
+  sha: SHA_A,
+  shortSha: 'aaaaaaa',
+  author: 'Ada',
+  date: '2026-06-12T10:30:00+03:00',
+  subject: 'second',
+};
+const FIRST_META = {
+  sha: SHA_B,
+  shortSha: 'bbbbbbb',
+  author: 'Ada',
+  date: '2026-06-12T09:00:00+03:00',
+  subject: 'first',
+};
 
 function twoCommitFixture(): string {
   return record(SECOND_META, ['M\ta.ts']) + record(FIRST_META, ['A\tb.ts']);

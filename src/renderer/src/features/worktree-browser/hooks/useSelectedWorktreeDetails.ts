@@ -102,12 +102,19 @@ interface FetchDiffCtx {
   deps: LoadDiffDeps;
 }
 
+// eslint-disable-next-line max-lines-per-function -- prettier expands catch object arg to multi-line; body already minimal
 async function fetchAndApplyDiff({ path, show, signal, deps }: FetchDiffCtx): Promise<void> {
   try {
     const { diffText } = await desktopApi.getDiff(path);
     applyDiffResult({ path, text: diffText, signal, setDiff: deps.setDiff });
   } catch (caught) {
-    handleDiffFailure({ caught, showLoading: show, signal, slot: deps.slot, setDiff: deps.setDiff });
+    handleDiffFailure({
+      caught,
+      showLoading: show,
+      signal,
+      slot: deps.slot,
+      setDiff: deps.setDiff,
+    });
   } finally {
     if (!signal.aborted) {
       deps.setLoading(false);
@@ -150,7 +157,12 @@ function useWorktreeDiff(errorSlot: ErrorSlot): WorktreeDiff {
   const [diff, setDiff] = useState<DiffState | null>(null);
   const [diffLoading, setDiffLoading] = useState(false);
   const diffRequest = useLatestRequest();
-  const loadDiff = useLoadDiff({ req: diffRequest, setDiff, setLoading: setDiffLoading, slot: errorSlot });
+  const loadDiff = useLoadDiff({
+    req: diffRequest,
+    setDiff,
+    setLoading: setDiffLoading,
+    slot: errorSlot,
+  });
   const resetDiff = useResetDiff(setDiff, setDiffLoading, diffRequest);
   return { diff, diffLoading, diffRequest, loadDiff, resetDiff };
 }
@@ -251,7 +263,10 @@ function useSelectWorktree(
   );
 }
 
-function useReloadDetails(loadDiff: LoadDiffFn2, loadCommits: LoadCommitsFn): ActionsResult['reloadDetails'] {
+function useReloadDetails(
+  loadDiff: LoadDiffFn2,
+  loadCommits: LoadCommitsFn
+): ActionsResult['reloadDetails'] {
   return useCallback(
     (path: string) => {
       void loadDiff(path, false);
@@ -261,7 +276,14 @@ function useReloadDetails(loadDiff: LoadDiffFn2, loadCommits: LoadCommitsFn): Ac
   );
 }
 
-function useWorktreeActions({ setPath, loadDiff, loadCommits, resetDiff, resetCommits }: ActionDeps): ActionsResult {
+// eslint-disable-next-line max-lines-per-function -- prettier expands destructured params; body already minimal
+function useWorktreeActions({
+  setPath,
+  loadDiff,
+  loadCommits,
+  resetDiff,
+  resetCommits,
+}: ActionDeps): ActionsResult {
   const selectWorktree = useSelectWorktree(setPath, loadDiff, loadCommits);
   const reloadDetails = useReloadDetails(loadDiff, loadCommits);
   const reset = useCallback(() => {

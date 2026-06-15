@@ -54,7 +54,12 @@ interface RepoChangedDeps {
   selectedPathRef: MutableRefObject<string | null>;
 }
 
-function useOnRepoChanged({ catalog, details, repoPathRef, selectedPathRef }: RepoChangedDeps): () => void {
+function useOnRepoChanged({
+  catalog,
+  details,
+  repoPathRef,
+  selectedPathRef,
+}: RepoChangedDeps): () => void {
   return useCallback(() => {
     if (repoPathRef.current !== null) {
       void catalog.reloadWorktrees(repoPathRef.current);
@@ -98,16 +103,24 @@ function useBrowserActions(catalog: CatalogResource, details: DetailsResource) {
   return { pickRepository, selectWorktree };
 }
 
+// eslint-disable-next-line max-lines-per-function -- prettier expands return object to one-per-line; body already minimal
 export function useWorktreeBrowser() {
   const [error, errorSlot] = useErrorSlot();
   const catalog = useRepositoryCatalog(errorSlot);
   const details = useSelectedWorktreeDetails(errorSlot);
   const { pickRepository, selectWorktree } = useBrowserActions(catalog, details);
   return {
-    repoPath: catalog.repoPath, worktrees: catalog.worktrees, summaries: catalog.summaries,
-    loading: catalog.loading, refreshRepository: catalog.refreshRepository,
-    selectedPath: details.selectedPath, diff: details.diff,
-    commits: details.commits, diffLoading: details.diffLoading,
-    error, pickRepository, selectWorktree,
+    repoPath: catalog.repoPath,
+    worktrees: catalog.worktrees,
+    summaries: catalog.summaries,
+    loading: catalog.loading,
+    refreshRepository: catalog.refreshRepository,
+    selectedPath: details.selectedPath,
+    diff: details.diff,
+    commits: details.commits,
+    diffLoading: details.diffLoading,
+    error,
+    pickRepository,
+    selectWorktree,
   };
 }

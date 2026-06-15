@@ -59,8 +59,7 @@ function useDiffModelDerivatives(browser: BrowserController) {
 function useOpenRepositoryModel(browser: BrowserController): OpenRepositoryModel {
   const [repositorySidebarOpen, setRepositorySidebarOpen] = useState(true);
   const scrollContainerRef = useRef<HTMLElement | null>(null);
-  const { isCleanWorktree, diffModel, changedFiles, diffStats } =
-    useDiffModelDerivatives(browser);
+  const { isCleanWorktree, diffModel, changedFiles, diffStats } = useDiffModelDerivatives(browser);
   const navigation = useDiffNavigation(diffModel);
   const selectedWorktree = browser.worktrees.find((w) => w.path === browser.selectedPath) ?? null;
   return {
@@ -186,6 +185,7 @@ function WelcomeSlot({ browser }: { browser: BrowserController }) {
   );
 }
 
+// eslint-disable-next-line max-lines-per-function -- pure JSX; prettier expands Switch/Match spread
 export default function App() {
   const browser = useWorktreeBrowser();
   const preferences = useAppPreferences();
@@ -195,7 +195,11 @@ export default function App() {
         <WelcomeSlot browser={browser} />
       </Match>
       <Match when={true}>
-        <OpenRepositoryView repoPath={browser.repoPath ?? ''} browser={browser} preferences={preferences} />
+        <OpenRepositoryView
+          repoPath={browser.repoPath ?? ''}
+          browser={browser}
+          preferences={preferences}
+        />
       </Match>
     </Switch>
   );

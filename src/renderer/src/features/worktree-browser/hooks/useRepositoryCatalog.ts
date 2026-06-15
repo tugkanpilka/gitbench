@@ -231,22 +231,53 @@ interface CatalogActionDeps {
   loadSummaries: SummariesFn;
 }
 
+// eslint-disable-next-line max-lines-per-function -- prettier expands destructuring + object args; body already minimal
 function useCatalogActions(deps: CatalogActionDeps) {
-  const { errorSlot, repoPath, setLoading, loadWorktrees, setWorktrees, setRepoPath, loadSummaries } = deps;
+  const {
+    errorSlot,
+    repoPath,
+    setLoading,
+    loadWorktrees,
+    setWorktrees,
+    setRepoPath,
+    loadSummaries,
+  } = deps;
   const applyReload = useApplyReload(loadWorktrees, setWorktrees, loadSummaries);
   const refreshRepository = useRefreshRepository({ repoPath, applyReload, errorSlot, setLoading });
   const reloadWorktrees = useCallback(async (path: string) => applyReload(path), [applyReload]);
-  const openRepository = useOpenRepository({ errorSlot, loadSummaries, loadWorktrees, setWorktrees, setRepoPath, setLoading });
+  const openRepository = useOpenRepository({
+    errorSlot,
+    loadSummaries,
+    loadWorktrees,
+    setWorktrees,
+    setRepoPath,
+    setLoading,
+  });
   return { refreshRepository, reloadWorktrees, openRepository };
 }
 
+// eslint-disable-next-line max-lines-per-function -- prettier expands object args and return; body already minimal
 export function useRepositoryCatalog(errorSlot: ErrorSlot): RepositoryCatalog {
   const [repoPath, setRepoPath] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const { summaries, loadSummaries, invalidateSummaries } = useSummaries();
   const { worktrees, setWorktrees, loadWorktrees } = useWorktrees(errorSlot, invalidateSummaries);
-  const { refreshRepository, reloadWorktrees, openRepository } = useCatalogActions(
-    { errorSlot, repoPath, setLoading, loadWorktrees, setWorktrees, setRepoPath, loadSummaries }
-  );
-  return { repoPath, worktrees, summaries, loading, openRepository, refreshRepository, reloadWorktrees };
+  const { refreshRepository, reloadWorktrees, openRepository } = useCatalogActions({
+    errorSlot,
+    repoPath,
+    setLoading,
+    loadWorktrees,
+    setWorktrees,
+    setRepoPath,
+    loadSummaries,
+  });
+  return {
+    repoPath,
+    worktrees,
+    summaries,
+    loading,
+    openRepository,
+    refreshRepository,
+    reloadWorktrees,
+  };
 }

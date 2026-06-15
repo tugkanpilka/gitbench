@@ -257,8 +257,16 @@ function assertThirdCommitFiles(commits: AheadResult['commits']): void {
 }
 
 function assertSecondCommitFiles(commits: AheadResult['commits']): void {
-  expect(commits[1].files).toContainEqual({ status: 'modified', path: 'file.txt', previousPath: null });
-  expect(commits[1].files).toContainEqual({ status: 'added', path: 'added.txt', previousPath: null });
+  expect(commits[1].files).toContainEqual({
+    status: 'modified',
+    path: 'file.txt',
+    previousPath: null,
+  });
+  expect(commits[1].files).toContainEqual({
+    status: 'added',
+    path: 'added.txt',
+    previousPath: null,
+  });
 }
 
 function assertAheadCommitFiles(result: AheadResult): void {
