@@ -2,12 +2,13 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 
 import App from './App';
-import { applyTheme, readAppPreferences } from '../shared/preferences/appPreferences';
+import { desktopApi } from '../shared/api/desktopApi';
+import { applyColorScheme } from '../shared/theme/colorScheme';
 import '../styles/global.css';
 
-// Apply the stored theme before the first paint so the window never flashes
-// the default theme; useAppPreferences re-applies it (idempotently) on mount.
-applyTheme(readAppPreferences().theme);
+// Paint the OS-resolved theme before the first frame so the window never flashes the
+// wrong scheme; useColorScheme then tracks live OS switches for the rest of the session.
+applyColorScheme(desktopApi.initialColorScheme);
 
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

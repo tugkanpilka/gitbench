@@ -94,13 +94,29 @@ function useSelectWorktree(
   );
 }
 
+function useOpenRecent(
+  catalog: CatalogResource,
+  details: DetailsResource
+): (repoPath: string) => Promise<void> {
+  return useCallback(
+    async (repoPath: string) => {
+      const opened = await catalog.openRecentRepository(repoPath);
+      if (opened !== null) {
+        details.reset();
+      }
+    },
+    [catalog, details]
+  );
+}
+
 function useBrowserActions(catalog: CatalogResource, details: DetailsResource) {
   const { selectedPathRef, onRepoChanged } = useWatcherState(catalog, details);
   const worktreePaths = useMemo(() => catalog.worktrees.map((w) => w.path), [catalog.worktrees]);
   useRepositoryWatcher({ repoPath: catalog.repoPath, worktreePaths, onRepoChanged });
   const pickRepository = usePickRepository(catalog, details);
   const selectWorktree = useSelectWorktree(details, selectedPathRef);
-  return { pickRepository, selectWorktree };
+  const openRecentRepository = useOpenRecent(catalog, details);
+  return { pickRepository, selectWorktree, openRecentRepository };
 }
 
 // eslint-disable-next-line max-lines-per-function -- prettier expands return object to one-per-line; body already minimal
@@ -108,7 +124,7 @@ export function useWorktreeBrowser() {
   const [error, errorSlot] = useErrorSlot();
   const catalog = useRepositoryCatalog(errorSlot);
   const details = useSelectedWorktreeDetails(errorSlot);
-  const { pickRepository, selectWorktree } = useBrowserActions(catalog, details);
+  const { pickRepository, selectWorktree, openRecentRepository } = useBrowserActions(catalog, details);
   return {
     repoPath: catalog.repoPath,
     worktrees: catalog.worktrees,
@@ -122,5 +138,6 @@ export function useWorktreeBrowser() {
     error,
     pickRepository,
     selectWorktree,
+    openRecentRepository,
   };
 }

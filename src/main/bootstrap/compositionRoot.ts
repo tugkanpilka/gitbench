@@ -1,7 +1,10 @@
+import { app } from 'electron';
+
 import { GitCliCommitReader } from '../../infrastructure/git/readers/GitCliCommitReader';
 import { GitCliDiffReader } from '../../infrastructure/git/readers/GitCliDiffReader';
 import { GitCliWorktreeReader } from '../../infrastructure/git/readers/GitCliWorktreeReader';
 import { GitCliWorktreeSummaryReader } from '../../infrastructure/git/readers/GitCliWorktreeSummaryReader';
+import { JsonFileRecentReposStore } from '../../infrastructure/recentRepos/JsonFileRecentReposStore';
 import { ChokidarRepoWatcher } from '../../infrastructure/watch/ChokidarRepoWatcher';
 
 /**
@@ -16,6 +19,7 @@ export interface ApplicationServices {
   diffReader: GitCliDiffReader;
   commitReader: GitCliCommitReader;
   watcher: ChokidarRepoWatcher;
+  recentReposStore: JsonFileRecentReposStore;
 }
 
 export function createApplicationServices(): ApplicationServices {
@@ -25,5 +29,6 @@ export function createApplicationServices(): ApplicationServices {
     diffReader: new GitCliDiffReader(),
     commitReader: new GitCliCommitReader(),
     watcher: new ChokidarRepoWatcher(),
+    recentReposStore: new JsonFileRecentReposStore(app.getPath('userData')),
   };
 }

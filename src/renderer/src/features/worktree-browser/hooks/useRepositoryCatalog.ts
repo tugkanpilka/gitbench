@@ -19,6 +19,9 @@ export interface RepositoryCatalog {
   // Picks a repository and, on success, commits its path + worktrees. Returns the newly
   // committed repository path, or null when nothing changed (dialog cancelled or failure).
   openRepository(): Promise<string | null>;
+  // Opens a known repository path directly (e.g. from recent list). Returns the path on
+  // success, or null on failure.
+  openRecentRepository(repoPath: string): Promise<string | null>;
   // Manual full refresh of the open repository (shows the loading state).
   refreshRepository(): Promise<void>;
   // Quiet list reload for auto-refresh: no loading flag, so a watcher signal does not
@@ -180,6 +183,7 @@ async function commitPickedRepo(picked: string, deps: OpenDeps): Promise<string 
   deps.setRepoPath(picked);
   deps.setWorktrees(next);
   void deps.loadSummaries(next, true);
+  void desktopApi.addRecentRepo(picked);
   return picked;
 }
 
@@ -215,6 +219,27 @@ function useOpenRepository(deps: OpenDeps): () => Promise<string | null> {
   );
 }
 
+// eslint-disable-next-line max-lines-per-function -- try/finally + catch exhausts 15 lines after prettier expansion; body already minimal
+function useOpenRecentRepository(deps: OpenDeps): (repoPath: string) => Promise<string | null> {
+  const { errorSlot, loadSummaries, loadWorktrees, setWorktrees, setRepoPath, setLoading } = deps;
+  return useCallback(
+    async (repoPath: string) => {
+      setLoading(true);
+      errorSlot.clear();
+      try {
+        return await commitPickedRepo(repoPath, deps);
+      } catch (caught) {
+        errorSlot.set(describeError(caught));
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [errorSlot, loadSummaries, loadWorktrees, setWorktrees, setRepoPath, setLoading]
+  );
+}
+
 /**
  * Repository-catalog resource: the open repository path, its worktrees, the per-worktree
  * summaries, and the open/refresh/reload workflows. The shared error slot is injected so
@@ -245,15 +270,17 @@ function useCatalogActions(deps: CatalogActionDeps) {
   const applyReload = useApplyReload(loadWorktrees, setWorktrees, loadSummaries);
   const refreshRepository = useRefreshRepository({ repoPath, applyReload, errorSlot, setLoading });
   const reloadWorktrees = useCallback(async (path: string) => applyReload(path), [applyReload]);
-  const openRepository = useOpenRepository({
+  const openDeps: OpenDeps = {
     errorSlot,
     loadSummaries,
     loadWorktrees,
     setWorktrees,
     setRepoPath,
     setLoading,
-  });
-  return { refreshRepository, reloadWorktrees, openRepository };
+  };
+  const openRepository = useOpenRepository(openDeps);
+  const openRecentRepository = useOpenRecentRepository(openDeps);
+  return { refreshRepository, reloadWorktrees, openRepository, openRecentRepository };
 }
 
 // eslint-disable-next-line max-lines-per-function -- prettier expands object args and return; body already minimal
@@ -262,7 +289,7 @@ export function useRepositoryCatalog(errorSlot: ErrorSlot): RepositoryCatalog {
   const [loading, setLoading] = useState(false);
   const { summaries, loadSummaries, invalidateSummaries } = useSummaries();
   const { worktrees, setWorktrees, loadWorktrees } = useWorktrees(errorSlot, invalidateSummaries);
-  const { refreshRepository, reloadWorktrees, openRepository } = useCatalogActions({
+  const { refreshRepository, reloadWorktrees, openRepository, openRecentRepository } = useCatalogActions({
     errorSlot,
     repoPath,
     setLoading,
@@ -277,6 +304,7 @@ export function useRepositoryCatalog(errorSlot: ErrorSlot): RepositoryCatalog {
     summaries,
     loading,
     openRepository,
+    openRecentRepository,
     refreshRepository,
     reloadWorktrees,
   };

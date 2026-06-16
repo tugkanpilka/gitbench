@@ -1,4 +1,10 @@
-/* Dark is the default theme. Apply data-theme="light" to the document root for light mode. */
+/*
+ * Dark is the default palette. The main process resolves the OS appearance and the
+ * renderer sets <html data-theme="dark|light"> to match (see colorScheme.ts); light
+ * therefore applies only via :root[data-theme='light'] below. No @media
+ * (prefers-color-scheme) rule — the renderer's media query is not a reliable OS signal
+ * in Electron, which is exactly what broke every earlier attempt.
+ */
 :root {
   color-scheme: dark;
 

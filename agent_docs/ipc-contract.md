@@ -23,6 +23,7 @@ src/contracts/ipc/
   errors.ts       # ErrorDto
   repository.ts   # repository picker response
   result.ts       # Result<T>
+  theme.ts        # ColorScheme + toColorScheme + the additionalArguments key
   watch.ts        # watch lifecycle request
   worktreeSummaries.ts # per-worktree status/stat/push summaries
   worktrees.ts    # worktree request/response and WorktreeDto
@@ -166,8 +167,14 @@ Error mapping lives in `src/main/ipc/mappers/errorMapper.ts` (it imports `ERROR_
 
 ### `repo:changed` (push: main -> renderer)
 
-- This is the **only** main-initiated channel; every other channel is renderer-initiated request/response.
+- One of two main-initiated push channels (the other is `theme:changed`); every other channel is renderer-initiated request/response.
 - **No payload and not a `Result` envelope** — it is a debounced "something changed, re-query now" signal, not data. The renderer responds by re-invoking `worktrees:list`, `worktrees:summaries`, and the selected `diff:get` / `commits:unpushed` queries. Git stays the single source of truth; the watcher never computes data itself.
+
+### `theme:changed` (push: main -> renderer)
+
+- Emitted whenever the OS appearance changes (`nativeTheme.on('updated')` in `src/main/bootstrap/themeBridge.ts`), broadcast to every open window.
+- **Carries a `ColorScheme` (`'dark' | 'light'`) payload** — unlike `repo:changed`. The payload is mandatory: the main process is the single source of truth for light/dark (`nativeTheme.shouldUseDarkColors`), and the renderer applies exactly what it receives. It must **never** re-derive the scheme from its own `prefers-color-scheme` / `matchMedia`, which does not reliably track the OS in Electron — that was the root cause of every earlier theme bug.
+- The renderer applies the scheme to `<html data-theme>`; `colors.css` keys its palette off that attribute. The **initial** scheme (before the first `updated` event) is delivered out-of-band via `initialColorScheme` (below), not this channel.
 
 ## Preload
 
@@ -183,15 +190,53 @@ interface DesktopApi {
   startWatch(repoPath: string, worktreePaths: string[]): Promise<Result<null>>;
   stopWatch(): Promise<Result<null>>;
   onRepoChanged(listener: () => void): () => void; // returns an unsubscribe fn
+  initialColorScheme: ColorScheme; // synchronous bootstrap value, not a Promise
+  onThemeChanged(listener: (scheme: ColorScheme) => void): () => void; // unsubscribe fn
 }
 ```
 
-`onRepoChanged` is the one non-`Promise` member: it subscribes to the `repo:changed`
-push event via `ipcRenderer.on` and returns an unsubscribe function. The listener
-receives no arguments — the preload wrapper strips Electron's event object, which is
-not structured-clone-safe.
+`onRepoChanged` and `onThemeChanged` are subscription members (not `Promise`s): they
+subscribe via `ipcRenderer.on` and return an unsubscribe function. The preload wrapper
+strips Electron's event object (not structured-clone-safe); `onThemeChanged` forwards the
+`ColorScheme` payload, `onRepoChanged` forwards nothing.
+
+`initialColorScheme` is the one **synchronous value** member. The main process resolves the
+OS scheme at window creation and passes it through `webPreferences.additionalArguments`
+(keyed by `COLOR_SCHEME_ARG_PREFIX`); the preload reads it back off `process.argv` and
+exposes it so the renderer can paint the correct theme **before the first frame** (no
+flash). Live changes after that arrive via `theme:changed`.
 
 `contextIsolation: true` and `nodeIntegration: false` are non-negotiable.
+
+### `recentRepos:list`
+
+- Request: none
+- Response: `Result<RecentRepoDto[]>`
+- Returns up to 10 recently opened repositories, newest first. Each entry includes a live `worktreeCount` sourced from `git worktree list` — `null` when the repository is temporarily unreadable. Entries are never omitted for git failures; the full stored list is always returned.
+- Flow: IPC handler → `JsonFileRecentReposStore.list` → fan-out to `GitCliWorktreeReader.listWorktrees` per entry (capped concurrency 3) → `recentRepoMapper` → `RecentRepoDto[]`.
+- An empty array is a valid "no history yet" response, never an error.
+
+### `recentRepos:add`
+
+- Request: `AddRecentRepoRequest` with `{ repoPath: string }`
+- Response: `Result<null>`
+- Upserts `repoPath` to the front of the recent list and trims to 10 entries. Idempotent — an already-present path is moved to the front. Storage failures are swallowed; the response is always `ok: true`.
+- Flow: IPC handler → `JsonFileRecentReposStore.add`.
+- Called by `useRepositoryCatalog` inside `commitPickedRepo` after `listWorktrees` returns successfully. Also called when a recent repo is re-opened. Fire-and-forget from the renderer.
+
+```ts
+interface RecentRepoDto {
+  repoPath: string;
+  openedAt: string;      // ISO 8601 timestamp of last open
+  worktreeCount: number | null; // null when git call failed for this entry
+}
+
+interface AddRecentRepoRequest {
+  repoPath: string;
+}
+```
+
+Contract file: `src/contracts/ipc/recentRepos.ts`
 
 ## Adding a channel
 

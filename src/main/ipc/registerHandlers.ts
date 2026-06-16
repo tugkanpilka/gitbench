@@ -4,6 +4,7 @@ import { registerListUnpushedCommitsHandler } from './handlers/listUnpushedCommi
 import { registerListWorktreeSummariesHandler } from './handlers/listWorktreeSummariesHandler';
 import { registerListWorktreesHandler } from './handlers/listWorktreesHandler';
 import { registerPickRepositoryHandler } from './handlers/pickRepositoryHandler';
+import { registerRecentReposHandlers } from './handlers/recentReposHandlers';
 import { registerWatchHandlers } from './handlers/watchHandlers';
 import type { WatchController } from './watchController';
 
@@ -17,4 +18,5 @@ export function registerHandlers(
   registerGetDiffHandler(services);
   registerListUnpushedCommitsHandler(services);
   registerWatchHandlers(watchController);
+  registerRecentReposHandlers(services.recentReposStore, services.worktreeReader);
 }
