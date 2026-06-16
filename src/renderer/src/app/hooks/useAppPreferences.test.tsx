@@ -11,11 +11,7 @@ function PreferenceHarness() {
 
   return (
     <>
-      <output aria-label="Theme">{preferences.theme}</output>
       <output aria-label="File list mode">{preferences.fileListMode}</output>
-      <button type="button" onClick={preferences.toggleTheme}>
-        Toggle theme
-      </button>
       <button type="button" onClick={() => preferences.setFileListMode('flat')}>
         Switch to flat view
       </button>
@@ -26,7 +22,7 @@ function PreferenceHarness() {
 function seedStoredPreferences(): void {
   window.localStorage.setItem(
     APP_PREFERENCES_STORAGE_KEY,
-    JSON.stringify({ theme: 'light', sidebarOpen: false, fileListMode: 'tree' })
+    JSON.stringify({ sidebarOpen: false, fileListMode: 'tree' })
   );
 }
 
@@ -38,12 +34,10 @@ function storedPreferences(): unknown {
 describe('useAppPreferences', () => {
   beforeEach(() => {
     installMemoryStorage();
-    delete document.documentElement.dataset.theme;
   });
 
   afterEach(() => {
     cleanup();
-    delete document.documentElement.dataset.theme;
   });
 
   it('restores stored preferences', () => {
@@ -51,31 +45,7 @@ describe('useAppPreferences', () => {
 
     render(<PreferenceHarness />);
 
-    expect(screen.getByLabelText('Theme').textContent).toBe('light');
     expect(screen.getByLabelText('File list mode').textContent).toBe('tree');
-  });
-
-  it('applies the stored theme to the document', () => {
-    seedStoredPreferences();
-
-    render(<PreferenceHarness />);
-
-    expect(document.documentElement.dataset.theme).toBe('light');
-  });
-
-  it('toggleTheme applies and persists the next theme', () => {
-    seedStoredPreferences();
-    render(<PreferenceHarness />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Toggle theme' }));
-
-    expect(screen.getByLabelText('Theme').textContent).toBe('dark');
-    expect(document.documentElement.dataset.theme).toBe('dark');
-    expect(storedPreferences()).toEqual({
-      theme: 'dark',
-      fileListMode: 'tree',
-      flatGroupMode: 'status',
-    });
   });
 
   it('drops the legacy sidebar visibility preference', () => {
@@ -83,7 +53,6 @@ describe('useAppPreferences', () => {
     render(<PreferenceHarness />);
 
     expect(storedPreferences()).toEqual({
-      theme: 'light',
       fileListMode: 'tree',
       flatGroupMode: 'status',
     });
@@ -97,7 +66,6 @@ describe('useAppPreferences', () => {
 
     expect(screen.getByLabelText('File list mode').textContent).toBe('flat');
     expect(storedPreferences()).toEqual({
-      theme: 'light',
       fileListMode: 'flat',
       flatGroupMode: 'status',
     });

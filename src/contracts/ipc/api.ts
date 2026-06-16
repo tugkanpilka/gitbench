@@ -3,6 +3,7 @@ import type { GetDiffResponse } from './diff';
 import type { AddRecentRepoRequest, ListRecentReposResponse } from './recentRepos';
 import type { PickRepositoryResponse } from './repository';
 import type { Result } from './result';
+import type { ColorScheme } from './theme';
 import type { ListWorktreeSummariesResponse } from './worktreeSummaries';
 import type { ListWorktreesResponse } from './worktrees';
 
@@ -18,4 +19,11 @@ export interface DesktopApi {
   addRecentRepo(request: AddRecentRepoRequest): Promise<Result<null>>;
   /** Subscribe to the "repo changed, re-query now" signal. Returns an unsubscribe fn. */
   onRepoChanged(listener: () => void): () => void;
+  /**
+   * The OS color scheme resolved by the main process at window creation, read
+   * synchronously so the renderer can paint the correct theme before first frame.
+   */
+  initialColorScheme: ColorScheme;
+  /** Subscribe to OS appearance changes. Receives the resolved scheme. Returns an unsubscribe fn. */
+  onThemeChanged(listener: (scheme: ColorScheme) => void): () => void;
 }

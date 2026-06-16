@@ -1,5 +1,6 @@
 // The ONLY renderer code that sees Result envelopes — unwraps them into data or ApiError.
 import type {
+  ColorScheme,
   GetDiffResponse,
   ListRecentReposResponse,
   ListUnpushedCommitsResponse,
@@ -48,5 +49,15 @@ export const desktopApi = {
   // Not a Result envelope — a direct subscription that returns its unsubscribe fn.
   onRepoChanged(listener: () => void): () => void {
     return window.api.onRepoChanged(listener);
+  },
+  // Resolved OS scheme at window creation; the renderer applies this before first paint.
+  // A getter (not a plain field) so it reads window.api lazily — desktopApi is imported
+  // before the preload bridge/test stub installs window.api.
+  get initialColorScheme(): ColorScheme {
+    return window.api.initialColorScheme;
+  },
+  // Live OS appearance changes — also a direct subscription, not a Result envelope.
+  onThemeChanged(listener: (scheme: ColorScheme) => void): () => void {
+    return window.api.onThemeChanged(listener);
   },
 };

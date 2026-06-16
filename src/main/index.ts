@@ -4,6 +4,7 @@ import { createApplicationServices } from './bootstrap/compositionRoot';
 import { createMenu } from './bootstrap/createMenu';
 import { createWindow } from './bootstrap/createWindow';
 import { setupAutoUpdater } from './bootstrap/setupAutoUpdater';
+import { broadcastThemeChanges } from './bootstrap/themeBridge';
 import { registerHandlers } from './ipc/registerHandlers';
 import { createWatchController } from './ipc/watchController';
 
@@ -23,6 +24,7 @@ function spawnWindow(): void {
 
 app.whenReady().then(() => {
   registerHandlers(services, watchController);
+  broadcastThemeChanges();
   createMenu(spawnWindow);
   spawnWindow();
   setupAutoUpdater();

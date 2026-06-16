@@ -1,27 +1,16 @@
 import { type Dispatch, type SetStateAction, useCallback, useEffect, useState } from 'react';
 
 import {
-  applyTheme,
   type AppPreferences,
   type FileListMode,
   type FlatGroupMode,
   readAppPreferences,
-  type Theme,
-  watchSystemTheme,
   writeAppPreferences,
 } from '../../shared/preferences/appPreferences';
 
-function cycleTheme(current: Theme): Theme {
-  if (current === 'system') return 'light';
-  if (current === 'light') return 'dark';
-  return 'system';
-}
-
 export interface AppPreferenceController {
-  theme: Theme;
   fileListMode: FileListMode;
   flatGroupMode: FlatGroupMode;
-  toggleTheme: () => void;
   setFileListMode: (mode: FileListMode) => void;
   setFlatGroupMode: (mode: FlatGroupMode) => void;
 }
@@ -38,14 +27,9 @@ function makeFieldSetter<K extends keyof AppPreferences>(
 export function useAppPreferences(): AppPreferenceController {
   const [preferences, setPreferences] = useState(readAppPreferences);
   useEffect(() => {
-    applyTheme(preferences.theme);
     writeAppPreferences(preferences);
   }, [preferences]);
-  useEffect(() => watchSystemTheme(() => applyTheme(preferences.theme)), [preferences.theme]);
-  const toggleTheme = useCallback(() => {
-    setPreferences((current) => ({ ...current, theme: cycleTheme(current.theme) }));
-  }, []);
   const setFileListMode = useCallback(makeFieldSetter(setPreferences, 'fileListMode'), []);
   const setFlatGroupMode = useCallback(makeFieldSetter(setPreferences, 'flatGroupMode'), []);
-  return { ...preferences, toggleTheme, setFileListMode, setFlatGroupMode };
+  return { ...preferences, setFileListMode, setFlatGroupMode };
 }

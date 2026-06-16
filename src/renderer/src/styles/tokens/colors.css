@@ -1,9 +1,9 @@
 /*
- * Dark is the default. Light tokens activate in two ways:
- *   1. @media (prefers-color-scheme: light) — browser-native OS tracking for "system" mode.
- *      :not([data-theme='dark']) ensures explicit dark mode suppresses the @media rule.
- *   2. :root[data-theme='light'] — explicit user override that wins via cascade position.
- * :root[data-theme='dark'] blocks the @media rule without needing extra token declarations.
+ * Dark is the default palette. The main process resolves the OS appearance and the
+ * renderer sets <html data-theme="dark|light"> to match (see colorScheme.ts); light
+ * therefore applies only via :root[data-theme='light'] below. No @media
+ * (prefers-color-scheme) rule — the renderer's media query is not a reliable OS signal
+ * in Electron, which is exactly what broke every earlier attempt.
  */
 :root {
   color-scheme: dark;
@@ -67,67 +67,6 @@
   --gb-surface-alert: rgba(46, 47, 53, 0.92);
 
   --gb-toolbar-bg: rgba(36, 37, 42, 0.9);
-}
-
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme='dark']) {
-    color-scheme: light;
-
-    --gb-bg: #ffffff;
-    --gb-panel: #f5f5f7;
-    --gb-sidebar: rgba(238, 238, 240, 0.55);
-
-    --gb-border: #d9d9de;
-    --gb-border-soft: #e8e8ec;
-    --gb-sidebar-edge: rgba(0, 0, 0, 0.1);
-    --gb-window-edge: transparent;
-
-    --gb-text: #1d1d1f;
-    --gb-dim: #48484d;
-    --gb-faint: #636369;
-
-    --gb-accent: #0a6ce8;
-    --gb-accent-bg: rgba(10, 108, 232, 0.1);
-    --gb-sel-bg: var(--gb-row-sel);
-    --gb-sel-text: var(--gb-text);
-    --gb-sel-muted-text: var(--gb-faint);
-    --gb-sel-badge-bg: var(--gb-badge-bg);
-    --gb-sel-add-text: var(--gb-add-text);
-    --gb-sel-del-text: var(--gb-del-text);
-    --gb-row-sel: rgba(0, 0, 0, 0.07);
-    --gb-hover: rgba(0, 0, 0, 0.04);
-    --gb-badge-bg: rgba(0, 0, 0, 0.06);
-    --gb-control-bg: rgba(0, 0, 0, 0.055);
-    --gb-control-active: #ffffff;
-
-    --gb-add-bg: #e9f6ec;
-    --gb-add-gutter: #d3ebd8;
-    --gb-add-text: #1e8a3c;
-    --gb-mod-text: #8a6a00;
-
-    --gb-del-bg: #fdedec;
-    --gb-del-gutter: #f6d6d3;
-    --gb-del-text: #c5403a;
-
-    --gb-hunk-bg: #eef3fb;
-    --gb-hunk-text: #5a76a8;
-    --gb-gutter-text: #b3b3b9;
-
-    --gb-syn-kw: #a13bb0;
-    --gb-syn-fn: #3263c8;
-    --gb-syn-str: #c43a31;
-    --gb-syn-num: #2b3acb;
-    --gb-syn-cm: #7a8793;
-    --gb-syn-ty: #4a21b0;
-    --gb-syn-pr: #0f7d72;
-    --gb-syn-pl: #222226;
-
-    --gb-surface-float: rgba(250, 250, 251, 0.78);
-    --gb-surface-menu: rgba(248, 248, 250, 0.86);
-    --gb-surface-alert: rgba(248, 248, 250, 0.92);
-
-    --gb-toolbar-bg: rgba(252, 252, 253, 0.9);
-  }
 }
 
 :root[data-theme='light'] {

@@ -26,13 +26,10 @@ function createStorage(initialValue: string | null = null): {
 
 // eslint-disable-next-line max-lines-per-function
 describe('appPreferences', () => {
-  it("defaults to the 'system' theme when no stored preference exists", () => {
+  it('falls back to defaults when no stored preference exists', () => {
     const { storage } = createStorage();
 
-    // 'system' is a first-class stored value; it is resolved to light/dark at
-    // apply time (see applyTheme), not when reading preferences.
     expect(readAppPreferences(storage)).toEqual({
-      theme: 'system',
       fileListMode: 'flat',
       flatGroupMode: 'status',
     });
@@ -41,14 +38,12 @@ describe('appPreferences', () => {
   it('prefers valid stored values and falls back per invalid field', () => {
     const { storage } = createStorage(
       JSON.stringify({
-        theme: 'light',
         sidebarOpen: false,
         fileListMode: 'invalid',
       })
     );
 
     expect(readAppPreferences(storage)).toEqual({
-      theme: 'light',
       fileListMode: 'flat',
       flatGroupMode: 'status',
     });
@@ -58,7 +53,6 @@ describe('appPreferences', () => {
     const { storage } = createStorage('{not-json');
 
     expect(readAppPreferences(storage)).toEqual({
-      theme: 'system',
       fileListMode: 'flat',
       flatGroupMode: 'status',
     });
@@ -67,11 +61,9 @@ describe('appPreferences', () => {
   it('writes the versioned preference payload', () => {
     const { storage, getValue } = createStorage();
 
-    writeAppPreferences({ theme: 'light', fileListMode: 'tree', flatGroupMode: 'none' }, storage);
+    writeAppPreferences({ fileListMode: 'tree', flatGroupMode: 'none' }, storage);
 
-    expect(getValue()).toBe(
-      JSON.stringify({ theme: 'light', fileListMode: 'tree', flatGroupMode: 'none' })
-    );
+    expect(getValue()).toBe(JSON.stringify({ fileListMode: 'tree', flatGroupMode: 'none' }));
   });
 
   it('exposes the versioned storage key', () => {

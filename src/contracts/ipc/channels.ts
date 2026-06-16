@@ -9,6 +9,8 @@ export const IPC_CHANNELS = {
   stopWatch: 'watch:stop',
   // Change signal: main -> renderer, push event with no payload ("re-query now").
   repoChanged: 'repo:changed',
+  // OS appearance change: main -> renderer, push event carrying the resolved ColorScheme.
+  themeChanged: 'theme:changed',
   listRecentRepos: 'recentRepos:list',
   addRecentRepo: 'recentRepos:add',
 } as const;

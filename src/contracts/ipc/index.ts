@@ -12,6 +12,8 @@ export { ERROR_CODES } from './errors';
 export type { ErrorCode, ErrorDto } from './errors';
 export type { PickRepositoryResponse } from './repository';
 export type { Result } from './result';
+export type { ColorScheme } from './theme';
+export { COLOR_SCHEME_ARG_PREFIX, toColorScheme } from './theme';
 export type { StartWatchRequest } from './watch';
 export type {
   ListWorktreeSummariesRequest,

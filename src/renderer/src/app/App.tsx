@@ -20,6 +20,7 @@ import { AppShell } from './app-shell';
 import { toChangedFileItems } from './changedFileItems';
 import type { AppPreferenceController } from './hooks/useAppPreferences';
 import { useAppPreferences } from './hooks/useAppPreferences';
+import { useColorScheme } from './hooks/useColorScheme';
 import type { DiffNavigationController } from './hooks/useDiffNavigation';
 import { useDiffNavigation } from './hooks/useDiffNavigation';
 import { Workspace } from './workspace';
@@ -196,6 +197,7 @@ function WelcomeSlot({ browser }: { browser: BrowserController }) {
 export default function App() {
   const browser = useWorktreeBrowser();
   const preferences = useAppPreferences();
+  useColorScheme();
   return (
     <Switch>
       <Match when={browser.repoPath === null}>

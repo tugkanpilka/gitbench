@@ -30,12 +30,10 @@ async function openRepository(): Promise<HTMLElement> {
 describe('App', () => {
   beforeEach(() => {
     installMemoryStorage();
-    delete document.documentElement.dataset.theme;
     stubAppApi();
   });
   afterEach(() => {
     cleanup();
-    delete document.documentElement.dataset.theme;
   });
 
   it('starts on the repository welcome screen', () => {
@@ -71,7 +69,6 @@ describe('App', () => {
     await openRepository();
 
     expect(screen.queryByRole('radiogroup', { name: 'Diff view' })).toBeNull();
-    expect(screen.queryByRole('button', { name: /Switch to .* theme/ })).toBeNull();
   });
 
   it('closes the worktree sidebar on selection and restores it from the detail header', async () => {
