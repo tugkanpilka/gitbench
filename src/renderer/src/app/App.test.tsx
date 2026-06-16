@@ -111,9 +111,7 @@ describe('App', () => {
 
     clickOpenRepository();
 
-    expect(
-      await screen.findByRole('button', { name: 'Open Repository…' })
-    ).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Open Repository…' })).toBeTruthy();
     expect(window.api.listWorktrees).not.toHaveBeenCalled();
   });
 

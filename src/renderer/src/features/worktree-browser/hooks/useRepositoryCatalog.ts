@@ -289,15 +289,16 @@ export function useRepositoryCatalog(errorSlot: ErrorSlot): RepositoryCatalog {
   const [loading, setLoading] = useState(false);
   const { summaries, loadSummaries, invalidateSummaries } = useSummaries();
   const { worktrees, setWorktrees, loadWorktrees } = useWorktrees(errorSlot, invalidateSummaries);
-  const { refreshRepository, reloadWorktrees, openRepository, openRecentRepository } = useCatalogActions({
-    errorSlot,
-    repoPath,
-    setLoading,
-    loadWorktrees,
-    setWorktrees,
-    setRepoPath,
-    loadSummaries,
-  });
+  const { refreshRepository, reloadWorktrees, openRepository, openRecentRepository } =
+    useCatalogActions({
+      errorSlot,
+      repoPath,
+      setLoading,
+      loadWorktrees,
+      setWorktrees,
+      setRepoPath,
+      loadSummaries,
+    });
   return {
     repoPath,
     worktrees,

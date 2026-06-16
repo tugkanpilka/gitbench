@@ -124,7 +124,10 @@ export function useWorktreeBrowser() {
   const [error, errorSlot] = useErrorSlot();
   const catalog = useRepositoryCatalog(errorSlot);
   const details = useSelectedWorktreeDetails(errorSlot);
-  const { pickRepository, selectWorktree, openRecentRepository } = useBrowserActions(catalog, details);
+  const { pickRepository, selectWorktree, openRecentRepository } = useBrowserActions(
+    catalog,
+    details
+  );
   return {
     repoPath: catalog.repoPath,
     worktrees: catalog.worktrees,

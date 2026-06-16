@@ -56,7 +56,11 @@ function WelcomeError({ error }: Pick<WelcomeScreenProps, 'error'>) {
   );
 }
 
-function WelcomePanel({ loading, error, onOpenRepository }: Omit<WelcomeScreenProps, 'recentRepos'>) {
+function WelcomePanel({
+  loading,
+  error,
+  onOpenRepository,
+}: Omit<WelcomeScreenProps, 'recentRepos'>) {
   return (
     <section className={styles['welcome-card']} aria-labelledby="welcome-title" aria-busy={loading}>
       <WelcomeIcon />
@@ -67,7 +71,13 @@ function WelcomePanel({ loading, error, onOpenRepository }: Omit<WelcomeScreenPr
   );
 }
 
-export function WelcomeScreen({ loading, error, onOpenRepository, recentRepos }: WelcomeScreenProps) {
+// eslint-disable-next-line max-lines-per-function -- pure JSX render; multi-line destructure inflates count
+export function WelcomeScreen({
+  loading,
+  error,
+  onOpenRepository,
+  recentRepos,
+}: WelcomeScreenProps) {
   return (
     <main className={styles['welcome-screen']}>
       <div className={styles['welcome-screen__drag-region']} aria-hidden="true" />
