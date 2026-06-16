@@ -2,11 +2,22 @@ import { Menu, shell, type MenuItemConstructorOptions } from 'electron';
 
 import { isExternalUrlSafe } from './createWindow';
 
+function buildFileSubmenu(onNewWindow: () => void): MenuItemConstructorOptions {
+  return {
+    label: 'File',
+    submenu: [
+      { label: 'New Window', accelerator: 'CmdOrCtrl+N', click: onNewWindow },
+      { type: 'separator' },
+      { role: 'close' },
+    ],
+  };
+}
+
 // eslint-disable-next-line max-lines-per-function -- flat menu data structure, one entry per line; cannot split meaningfully
-function buildMenuTemplate(isMac: boolean): MenuItemConstructorOptions[] {
+function buildMenuTemplate(isMac: boolean, onNewWindow: () => void): MenuItemConstructorOptions[] {
   return [
     ...(isMac ? [{ role: 'appMenu' } as MenuItemConstructorOptions] : []),
-    { role: 'fileMenu' },
+    buildFileSubmenu(onNewWindow),
     { role: 'editMenu' },
     {
       label: 'View',
@@ -40,6 +51,8 @@ function buildMenuTemplate(isMac: boolean): MenuItemConstructorOptions[] {
   ];
 }
 
-export function createMenu(): void {
-  Menu.setApplicationMenu(Menu.buildFromTemplate(buildMenuTemplate(process.platform === 'darwin')));
+export function createMenu(onNewWindow: () => void): void {
+  Menu.setApplicationMenu(
+    Menu.buildFromTemplate(buildMenuTemplate(process.platform === 'darwin', onNewWindow))
+  );
 }
