@@ -227,7 +227,7 @@ flash). Live changes after that arrive via `theme:changed`.
 ```ts
 interface RecentRepoDto {
   repoPath: string;
-  openedAt: string;      // ISO 8601 timestamp of last open
+  openedAt: string; // ISO 8601 timestamp of last open
   worktreeCount: number | null; // null when git call failed for this entry
 }
 

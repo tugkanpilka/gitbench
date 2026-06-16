@@ -1,7 +1,4 @@
-import type {
-  AddRecentRepoRequest,
-  ListRecentReposResponse,
-} from '../../../contracts/ipc';
+import type { AddRecentRepoRequest, ListRecentReposResponse } from '../../../contracts/ipc';
 import { IPC_CHANNELS } from '../../../contracts/ipc';
 import type { GitCliWorktreeReader } from '../../../infrastructure/git/readers/GitCliWorktreeReader';
 import type { RecentReposStore } from '../../../infrastructure/recentRepos/RecentReposStore';
@@ -49,9 +46,8 @@ export function registerRecentReposHandlers(
   store: RecentReposStore,
   worktreeReader: GitCliWorktreeReader
 ): void {
-  handle<void, ListRecentReposResponse>(
-    IPC_CHANNELS.listRecentRepos,
-    () => listWithCounts(store, worktreeReader)
+  handle<void, ListRecentReposResponse>(IPC_CHANNELS.listRecentRepos, () =>
+    listWithCounts(store, worktreeReader)
   );
 
   handle<AddRecentRepoRequest, null>(IPC_CHANNELS.addRecentRepo, async (request) => {
