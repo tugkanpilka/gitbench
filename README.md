@@ -79,15 +79,16 @@ npm run lint
 Clean Architecture, with the Electron process boundaries as delivery adapters:
 
 ```text
-renderer → preload (window.api) → main IPC handlers → application → domain
+renderer → preload (window.api) → main IPC handlers → infrastructure readers
                                                     │
-                                                    └→ infrastructure implements application ports
+                                                    └→ application (errors/types); domain reserved for future entities
 ```
 
-- `src/domain` and `src/application` are pure TypeScript — no `electron`, no `node:*`. Side effects live behind application ports, implemented in `src/infrastructure`.
-- `src/contracts/ipc` holds the channel names, DTOs, and the `Result<T>` envelope. Nothing throws across IPC; handlers return `Result<T>`, and domain entities never cross the boundary.
+- `src/application` is pure TypeScript — no `electron`, no `node:*`. Side effects live in `src/infrastructure` (concrete Git CLI readers and the Chokidar watcher), wired directly by main — no application port layer.
+- `src/domain` is reserved for future entities with real invariants; the directory is currently absent.
+- `src/contracts/ipc` holds the channel names, DTOs, and the `Result<T>` envelope. Nothing throws across IPC; handlers return `Result<T>`, and reader/application entities never cross the boundary — map them to DTOs in `src/main/ipc/mappers`.
 - `ipcRenderer` exists in exactly one file: `src/preload/index.ts`. The renderer talks only to `window.api`. `contextIsolation: true`, `nodeIntegration: false`.
-- The MVP surface is three IPC channels: `repo:pick`, `worktrees:list`, `diff:get`.
+- Capabilities map to IPC channels — see [`agent_docs/ipc-contract.md`](agent_docs/ipc-contract.md) for the full list (`repo:pick`, `worktrees:list`, `worktrees:summaries`, `diff:get`, `commits:unpushed`, file watching, theme, recent repos, and more).
 - Diffs are rendered with [`react-diff-view`](https://github.com/otakustay/react-diff-view), which consumes git's unified diff output directly.
 
 Details live in `agent_docs/`:
@@ -114,7 +115,7 @@ Contributions are welcome — see [`CONTRIBUTING.md`](CONTRIBUTING.md) for the f
 3. Anything that runs git or parses git output: read [`agent_docs/git-notes.md`](agent_docs/git-notes.md) first, and route every invocation through `runGit.ts`.
 4. Run `npm run typecheck`, `npm run test`, and `npm run lint` before submitting.
 
-The MVP scope is deliberately small — `repo:pick` → `worktrees:list` → `diff:get`. Please resist scope creep.
+The core flow is `repo:pick` → `worktrees:list` → `diff:get` → `commits:unpushed`, with supporting channels for summaries, watching, theme, and recent repos — all documented in [`agent_docs/ipc-contract.md`](agent_docs/ipc-contract.md). Please resist scope creep.
 
 ## License
 

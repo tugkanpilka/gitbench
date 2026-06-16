@@ -21,21 +21,22 @@ A few rules are non-negotiable (the full list lives in [`CLAUDE.md`](CLAUDE.md))
 1. `contextIsolation: true`, `nodeIntegration: false` — never weaken these.
 2. `ipcRenderer` exists in exactly one file: `src/preload/index.ts`.
 3. `src/domain` and `src/application` are pure TypeScript — no `electron`, no `node:*`.
-4. Nothing throws across IPC. Handlers return `Result<T>` envelopes; domain entities
-   never cross the boundary — map them under `src/main/ipc/mappers`.
+4. Nothing throws across IPC. Handlers return `Result<T>` envelopes; reader/application
+   entities never cross the boundary — map them under `src/main/ipc/mappers`.
 5. Git is spawned only through `src/infrastructure/git/runGit.ts`, with argument arrays.
    Never interpolate a path into a shell string.
 6. `diffText === ""` is a valid success state ("clean worktree"), never an error.
 
 ## Designing a new capability
 
-The MVP surface is three IPC channels: `repo:pick` → `worktrees:list` → `diff:get`.
-Any **new capability starts as a new IPC channel designed in
-[`agent_docs/ipc-contract.md`](agent_docs/ipc-contract.md) first, code second.** Changes
-to channels, DTOs, or error codes must update that document **in the same commit**.
+The core flow is `repo:pick` → `worktrees:list` → `diff:get` → `commits:unpushed`, with
+supporting channels for summaries, watching, theme, and recent repos — all documented in
+[`agent_docs/ipc-contract.md`](agent_docs/ipc-contract.md). Any **new capability starts
+as a new IPC channel designed in that document first, code second.** Changes to channels,
+DTOs, or error codes must update it **in the same commit**.
 
-Please resist scope creep — if a feature stretches the MVP, open an issue to discuss it
-before writing code.
+Please resist scope creep — if a feature stretches beyond the current surface, open an
+issue to discuss it before writing code.
 
 ## Development workflow
 
@@ -56,8 +57,8 @@ The same checks run in CI on every pull request.
 
 ## Testing expectations
 
-- **Domain / application** — unit tests with fake port implementations; no Electron, no
-  child processes.
+- **Application** — unit tests for errors and shared types; no Electron, no child
+  processes.
 - **Git parsers** — pure fixture-based tests.
 - **Git readers** — integration tests against temporary repositories (skipped if `git`
   is unavailable).
@@ -78,7 +79,7 @@ New behavior should arrive with the matching kind of test.
 
 Use the issue templates. For bugs, include your OS, your `git --version`, and the exact
 steps to reproduce. For features, describe the worktree/agent workflow you're trying to
-support — that context helps us keep the MVP coherent.
+support — that context helps us keep the scope coherent.
 
 ## License
 
