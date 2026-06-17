@@ -4,25 +4,25 @@ import { autoUpdater, type UpdateInfo } from 'electron-updater';
 let isChecking = false;
 let globalListenerRegistered = false;
 
-// eslint-disable-next-line max-lines-per-function -- sequential event setup for update download completion
-function registerGlobalListeners(): void {
-  if (globalListenerRegistered) return;
-  globalListenerRegistered = true;
-
-  autoUpdater.on('update-downloaded', (info: UpdateInfo) => {
-    void dialog.showMessageBox({
+function onUpdateDownloaded(info: UpdateInfo): void {
+  void dialog
+    .showMessageBox({
       type: 'info',
       title: 'Update Ready',
       message: `Version ${info.version} has been downloaded and is ready to install.`,
       buttons: ['Restart and Install', 'Later'],
       defaultId: 0,
       cancelId: 1,
-    }).then(({ response }) => {
-      if (response === 0) {
-        autoUpdater.quitAndInstall();
-      }
+    })
+    .then(({ response }) => {
+      if (response === 0) autoUpdater.quitAndInstall();
     });
-  });
+}
+
+function registerGlobalListeners(): void {
+  if (globalListenerRegistered) return;
+  globalListenerRegistered = true;
+  autoUpdater.on('update-downloaded', onUpdateDownloaded);
 }
 
 /**
@@ -35,7 +35,8 @@ export function checkForUpdatesSilently(): void {
 
   isChecking = true;
 
-  autoUpdater.checkForUpdates()
+  autoUpdater
+    .checkForUpdates()
     .finally(() => {
       isChecking = false;
     })
@@ -83,33 +84,40 @@ export function checkForUpdatesInteractive(): void {
   };
 
   const onUpdateAvailable = (info: UpdateInfo): void => {
-    void dialog.showMessageBox({
-      type: 'info',
-      title: 'Update Available',
-      message: `A new version (${info.version}) is available.`,
-      detail: 'It is downloading in the background and you will be notified when it is ready to install.',
-      buttons: ['OK'],
-    }).finally(() => cleanup());
+    void dialog
+      .showMessageBox({
+        type: 'info',
+        title: 'Update Available',
+        message: `A new version (${info.version}) is available.`,
+        detail:
+          'It is downloading in the background and you will be notified when it is ready to install.',
+        buttons: ['OK'],
+      })
+      .finally(() => cleanup());
   };
 
   const onUpdateNotAvailable = (): void => {
-    void dialog.showMessageBox({
-      type: 'info',
-      title: 'Check for Updates',
-      message: 'You are up to date!',
-      detail: `GitBench v${app.getVersion()} is the latest version.`,
-      buttons: ['OK'],
-    }).finally(() => cleanup());
+    void dialog
+      .showMessageBox({
+        type: 'info',
+        title: 'Check for Updates',
+        message: 'You are up to date!',
+        detail: `GitBench v${app.getVersion()} is the latest version.`,
+        buttons: ['OK'],
+      })
+      .finally(() => cleanup());
   };
 
   const onError = (err: Error): void => {
-    void dialog.showMessageBox({
-      type: 'error',
-      title: 'Check for Updates',
-      message: 'Error checking for updates.',
-      detail: err instanceof Error ? err.message : String(err),
-      buttons: ['OK'],
-    }).finally(() => cleanup());
+    void dialog
+      .showMessageBox({
+        type: 'error',
+        title: 'Check for Updates',
+        message: 'Error checking for updates.',
+        detail: err instanceof Error ? err.message : String(err),
+        buttons: ['OK'],
+      })
+      .finally(() => cleanup());
   };
 
   autoUpdater.on('update-available', onUpdateAvailable);
@@ -117,13 +125,15 @@ export function checkForUpdatesInteractive(): void {
   autoUpdater.on('error', onError);
 
   autoUpdater.checkForUpdates().catch((err) => {
-    void dialog.showMessageBox({
-      type: 'error',
-      title: 'Check for Updates',
-      message: 'Failed to initiate update check.',
-      detail: err instanceof Error ? err.message : String(err),
-      buttons: ['OK'],
-    }).finally(() => cleanup());
+    void dialog
+      .showMessageBox({
+        type: 'error',
+        title: 'Check for Updates',
+        message: 'Failed to initiate update check.',
+        detail: err instanceof Error ? err.message : String(err),
+        buttons: ['OK'],
+      })
+      .finally(() => cleanup());
   });
 }
 
