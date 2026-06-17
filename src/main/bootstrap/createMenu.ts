@@ -1,6 +1,7 @@
-import { Menu, shell, type MenuItemConstructorOptions } from 'electron';
+import { Menu, app, shell, type MenuItemConstructorOptions } from 'electron';
 
 import { isExternalUrlSafe } from './createWindow';
+import { checkForUpdatesInteractive } from './setupAutoUpdater';
 
 function buildFileSubmenu(onNewWindow: () => void): MenuItemConstructorOptions {
   return {
@@ -16,7 +17,31 @@ function buildFileSubmenu(onNewWindow: () => void): MenuItemConstructorOptions {
 // eslint-disable-next-line max-lines-per-function -- flat menu data structure, one entry per line; cannot split meaningfully
 function buildMenuTemplate(isMac: boolean, onNewWindow: () => void): MenuItemConstructorOptions[] {
   return [
-    ...(isMac ? [{ role: 'appMenu' } as MenuItemConstructorOptions] : []),
+    ...(isMac
+      ? [
+          {
+            label: app.name,
+            submenu: [
+              { role: 'about' },
+              { type: 'separator' },
+              {
+                label: 'Check for Updates...',
+                click: (): void => {
+                  checkForUpdatesInteractive();
+                },
+              },
+              { type: 'separator' },
+              { role: 'services' },
+              { type: 'separator' },
+              { role: 'hide' },
+              { role: 'hideOthers' },
+              { role: 'unhide' },
+              { type: 'separator' },
+              { role: 'quit' },
+            ],
+          } as MenuItemConstructorOptions,
+        ]
+      : []),
     buildFileSubmenu(onNewWindow),
     { role: 'editMenu' },
     {
