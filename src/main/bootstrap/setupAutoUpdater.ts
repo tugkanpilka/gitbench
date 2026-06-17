@@ -1,5 +1,8 @@
 import { app, dialog } from 'electron';
+import log from 'electron-log/main';
 import { autoUpdater, type UpdateInfo } from 'electron-updater';
+
+autoUpdater.logger = log;
 
 let isChecking = false;
 let globalListenerRegistered = false;
